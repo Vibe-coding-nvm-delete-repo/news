@@ -1,14 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useStore } from "@/lib/store";
-import { supabase, getSupabaseConfig, configureSupabase, clearSupabaseConfig } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Check, X, Search, Plus, Trash2 } from "lucide-react";
-import { formatCost, isValidOpenRouterApiKey, isValidSupabaseUrl, isValidSupabaseAnonKey } from "@/lib/utils";
+import { Loader2, Search, Plus, Trash2 } from "lucide-react";
+import { formatCost, isValidOpenRouterApiKey } from "@/lib/utils";
 
 export default function SettingsTab() {
   const {
@@ -20,123 +19,22 @@ export default function SettingsTab() {
     setModels,
     setIsLoadingModels,
     addKeyword,
+    removeKeyword,
     toggleKeyword,
     setSearchInstructions,
     setFormatPrompt,
-    loadSettings,
   } = useStore();
 
   // OpenRouter API Key
-  const [apiKeyInput, setApiKeyInput] = useState("");
+  const [apiKeyInput, setApiKeyInput] = useState(settings.apiKey || "");
   const [isValidating, setIsValidating] = useState(false);
   const [validationStatus, setValidationStatus] = useState<
     "idle" | "success" | "error"
   >("idle");
   const [validationMessage, setValidationMessage] = useState("");
   
-  // Supabase Config
-  const [sbUrlInput, setSbUrlInput] = useState("");
-  const [sbAnonKeyInput, setSbAnonKeyInput] = useState("");
-  const [isSbValidating, setIsSbValidating] = useState(false);
-  const [sbValidationStatus, setSbValidationStatus] = useState<
-    "idle" | "success" | "error"
-  >("idle");
-  const [sbValidationMessage, setSbValidationMessage] = useState("");
-  
   const [keywordInput, setKeywordInput] = useState("");
   const [modelSearch, setModelSearch] = useState("");
-
-  // Load settings from Supabase on mount (if configured)
-  useEffect(() => {
-    // Load existing Supabase config from localStorage/env
-    const { url, anonKey } = getSupabaseConfig();
-    if (url) setSbUrlInput(url);
-    if (anonKey) setSbAnonKeyInput(anonKey);
-
-    loadSettingsFromDB();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const loadSettingsFromDB = async () => {
-    try {
-      const { url, anonKey } = getSupabaseConfig();
-      if (!url || !anonKey) {
-        return; // Skip DB calls until Supabase is configured
-      }
-      // Load settings
-      const { data: settingsData } = await supabase
-        .from("settings")
-        .select("*")
-        .eq("id", 1)
-        .single();
-
-      // Load keywords
-      const { data: keywordsData } = await supabase
-        .from("keywords")
-        .select("*")
-        .order("created_at", { ascending: true });
-
-      if (settingsData) {
-        loadSettings({
-          apiKey: settingsData.api_key,
-          selectedModel: settingsData.selected_model,
-          keywords: keywordsData || [],
-          searchInstructions: settingsData.search_instructions,
-          formatPrompt: settingsData.format_prompt,
-        });
-        setApiKeyInput(settingsData.api_key || "");
-      }
-    } catch (error) {
-      console.error("Error loading settings:", error);
-    }
-  };
-
-  const validateAndSaveSupabase = async () => {
-    const url = sbUrlInput.trim();
-    const anon = sbAnonKeyInput.trim();
-
-    if (!url || !anon) return;
-
-    setIsSbValidating(true);
-    setSbValidationStatus("idle");
-    try {
-      if (!isValidSupabaseUrl(url)) {
-        throw new Error("✗ Invalid Supabase URL. Must be an https URL.");
-      }
-      if (!isValidSupabaseAnonKey(anon)) {
-        throw new Error("✗ Invalid anon key format (must be a JWT).");
-      }
-
-      // Save config and test connectivity
-      configureSupabase(url, anon);
-
-      // Try a lightweight request; it's okay if the table doesn't exist yet
-      const { error } = await supabase.from("settings").select("id").limit(1);
-      if (error && !/relation|table/i.test(error.message)) {
-        // If error is not about missing table, surface it
-        throw new Error(`✗ ${error.message}`);
-      }
-
-      setSbValidationStatus("success");
-      setSbValidationMessage("✓ Supabase configured successfully.");
-      // Attempt to load any existing settings
-      await loadSettingsFromDB();
-    } catch (err) {
-      setSbValidationStatus("error");
-      const message = err instanceof Error ? err.message : "✗ Failed to configure Supabase.";
-      setSbValidationMessage(message);
-    } finally {
-      setIsSbValidating(false);
-    }
-  };
-
-  const clearSupabase = async () => {
-    clearSupabaseConfig();
-    setSbUrlInput("");
-    setSbAnonKeyInput("");
-    setSbValidationStatus("idle");
-    setSbValidationMessage("");
-  };
 
   const validateAndSaveApiKey = async () => {
     const trimmedKey = apiKeyInput.trim();
@@ -187,15 +85,9 @@ export default function SettingsTab() {
         throw new Error(`✗ ${apiErrorMessage}`);
       }
 
-      // Save to Supabase
-      await supabase
-        .from("settings")
-        .update({ api_key: trimmedKey, updated_at: new Date().toISOString() })
-        .eq("id", 1);
-
       setApiKey(trimmedKey);
       setValidationStatus("success");
-      setValidationMessage("✓ API key validated and saved successfully!");
+      setValidationMessage("✓ API key validated successfully! You can now fetch models.");
     } catch (error) {
       setValidationStatus("error");
       const message = error instanceof Error ? error.message : "✗ Unexpected error validating key.";
@@ -231,7 +123,7 @@ export default function SettingsTab() {
 
       const data = await response.json();
       
-      // Parse and sort models by price (highest to lowest)
+      // Parse and sort models by price (lowest to highest for cost efficiency)
       const parsedModels = data.data
         .filter((model: any) => model.pricing) // Only models with pricing
         .map((model: any) => ({
@@ -245,7 +137,7 @@ export default function SettingsTab() {
             (parseFloat(model.pricing.prompt) * 1000000 || 0) +
             (parseFloat(model.pricing.completion) * 1000000 || 0),
         }))
-        .sort((a: any, b: any) => b.totalCostPer1M - a.totalCostPer1M);
+        .sort((a: any, b: any) => a.totalCostPer1M - b.totalCostPer1M);
 
       setModels(parsedModels);
     } catch (error) {
@@ -257,15 +149,11 @@ export default function SettingsTab() {
     }
   };
 
-  const handleModelSelect = async (modelId: string) => {
+  const handleModelSelect = (modelId: string) => {
     setSelectedModel(modelId);
-    await supabase
-      .from("settings")
-      .update({ selected_model: modelId, updated_at: new Date().toISOString() })
-      .eq("id", 1);
   };
 
-  const createKeywords = async () => {
+  const createKeywords = () => {
     const keywordsToCreate = keywordInput
       .split(",")
       .map((k) => k.trim())
@@ -275,59 +163,14 @@ export default function SettingsTab() {
 
     for (const keywordText of keywordsToCreate) {
       const newKeyword = {
+        id: Date.now().toString() + Math.random().toString(36).substring(2),
         text: keywordText,
         enabled: true,
       };
-
-      const { data } = await supabase
-        .from("keywords")
-        .insert([newKeyword])
-        .select()
-        .single();
-
-      if (data) {
-        addKeyword(data);
-      }
+      addKeyword(newKeyword);
     }
 
     setKeywordInput("");
-  };
-
-  const handleToggleKeyword = async (id: string) => {
-    const keyword = settings.keywords.find((k) => k.id === id);
-    if (!keyword) return;
-
-    await supabase
-      .from("keywords")
-      .update({ enabled: !keyword.enabled })
-      .eq("id", id);
-
-    toggleKeyword(id);
-  };
-
-  const handleDeleteKeyword = async (id: string) => {
-    await supabase.from("keywords").delete().eq("id", id);
-    loadSettingsFromDB();
-  };
-
-  const handleSearchInstructionsBlur = async () => {
-    await supabase
-      .from("settings")
-      .update({
-        search_instructions: settings.searchInstructions,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", 1);
-  };
-
-  const handleFormatPromptBlur = async () => {
-    await supabase
-      .from("settings")
-      .update({
-        format_prompt: settings.formatPrompt,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", 1);
   };
 
   const filteredModels = models.filter(
@@ -338,51 +181,22 @@ export default function SettingsTab() {
 
   return (
     <div className="space-y-8">
-      {/* Supabase Configuration Section */}
-      <div className="space-y-4">
-        <h2 className="text-2xl font-semibold text-slate-900">Supabase Configuration</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">Supabase URL</label>
-            <Input
-              placeholder="https://YOUR-PROJECT.supabase.co"
-              value={sbUrlInput}
-              onChange={(e) => setSbUrlInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && validateAndSaveSupabase()}
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">Supabase anon key</label>
-            <Input
-              type="password"
-              placeholder="eyJhbGciOiJI..."
-              value={sbAnonKeyInput}
-              onChange={(e) => setSbAnonKeyInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && validateAndSaveSupabase()}
-            />
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <Button onClick={validateAndSaveSupabase} disabled={isSbValidating || !sbUrlInput.trim() || !sbAnonKeyInput.trim()}>
-            {isSbValidating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Validate & Save"}
-          </Button>
-          <Button variant="outline" onClick={clearSupabase}>Clear</Button>
-        </div>
-        {sbValidationStatus !== "idle" && (
-          <p className={`text-sm ${sbValidationStatus === "success" ? "text-green-600" : "text-red-600"}`}>
-            {sbValidationMessage}
-          </p>
-        )}
-      </div>
-
       {/* API Key Section */}
       <div className="space-y-4">
-        <h2 className="text-2xl font-semibold text-slate-900">API Configuration</h2>
+        <h2 className="text-2xl font-semibold text-slate-900">Step 1: Add Your OpenRouter API Key</h2>
+        <p className="text-sm text-slate-600">
+          Get your API key from{" "}
+          <a
+            href="https://openrouter.ai/keys"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:underline"
+          >
+            openrouter.ai/keys
+          </a>
+        </p>
         
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">
-            OpenRouter API Key
-          </label>
           <div className="flex gap-2">
             <Input
               type="password"
@@ -403,9 +217,6 @@ export default function SettingsTab() {
               )}
             </Button>
           </div>
-          <p className="text-xs text-slate-500">
-            Format: <code>sk-or-v1-</code> followed by 64 hex characters.
-          </p>
           
           {validationStatus !== "idle" && (
             <p
@@ -424,7 +235,7 @@ export default function SettingsTab() {
       {/* Model Selection Section */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-semibold text-slate-900">Model Selection</h2>
+          <h2 className="text-2xl font-semibold text-slate-900">Step 2: Fetch & Select a Model</h2>
           <Button onClick={fetchModels} disabled={isLoadingModels || !settings.apiKey}>
             {isLoadingModels ? (
               <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -472,11 +283,14 @@ export default function SettingsTab() {
 
       {/* Keywords Section */}
       <div className="space-y-4">
-        <h2 className="text-2xl font-semibold text-slate-900">Keywords</h2>
+        <h2 className="text-2xl font-semibold text-slate-900">Step 3: Add Keywords</h2>
+        <p className="text-sm text-slate-600">
+          Add keywords to search for (comma-separated for multiple)
+        </p>
         
         <div className="flex gap-2">
           <Input
-            placeholder="Enter keywords (comma-separated)"
+            placeholder="e.g., AI, Crypto, Tech News"
             value={keywordInput}
             onChange={(e) => setKeywordInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && createKeywords()}
@@ -484,44 +298,48 @@ export default function SettingsTab() {
           />
           <Button onClick={createKeywords} disabled={!keywordInput.trim()}>
             <Plus className="h-4 w-4 mr-2" />
-            Create Keywords
+            Add
           </Button>
         </div>
 
-        <div className="space-y-2">
-          {settings.keywords.map((keyword) => (
-            <div
-              key={keyword.id}
-              className="flex items-center justify-between p-3 border rounded-md bg-white"
-            >
-              <div className="flex items-center gap-3">
-                <Switch
-                  checked={keyword.enabled}
-                  onCheckedChange={() => handleToggleKeyword(keyword.id)}
-                />
-                <span className={keyword.enabled ? "text-slate-900" : "text-slate-400"}>
-                  {keyword.text}
-                </span>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleDeleteKeyword(keyword.id)}
+        {settings.keywords.length > 0 && (
+          <div className="space-y-2">
+            {settings.keywords.map((keyword) => (
+              <div
+                key={keyword.id}
+                className="flex items-center justify-between p-3 border rounded-md bg-white"
               >
-                <Trash2 className="h-4 w-4 text-red-500" />
-              </Button>
-            </div>
-          ))}
-        </div>
+                <div className="flex items-center gap-3">
+                  <Switch
+                    checked={keyword.enabled}
+                    onCheckedChange={() => toggleKeyword(keyword.id)}
+                  />
+                  <span className={keyword.enabled ? "text-slate-900" : "text-slate-400"}>
+                    {keyword.text}
+                  </span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => removeKeyword(keyword.id)}
+                >
+                  <Trash2 className="h-4 w-4 text-red-500" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Search Instructions Section */}
       <div className="space-y-4">
-        <h2 className="text-2xl font-semibold text-slate-900">Search Instructions</h2>
+        <h2 className="text-2xl font-semibold text-slate-900">Search Instructions (Optional)</h2>
+        <p className="text-sm text-slate-600">
+          Customize how the AI searches for each keyword
+        </p>
         <Textarea
           value={settings.searchInstructions}
           onChange={(e) => setSearchInstructions(e.target.value)}
-          onBlur={handleSearchInstructionsBlur}
           rows={6}
           placeholder="Enter search instructions..."
           className="font-mono text-sm"
@@ -530,11 +348,13 @@ export default function SettingsTab() {
 
       {/* Format Prompt Section */}
       <div className="space-y-4">
-        <h2 className="text-2xl font-semibold text-slate-900">Format Prompt</h2>
+        <h2 className="text-2xl font-semibold text-slate-900">Format Prompt (Optional)</h2>
+        <p className="text-sm text-slate-600">
+          Customize how the AI formats the final report
+        </p>
         <Textarea
           value={settings.formatPrompt}
           onChange={(e) => setFormatPrompt(e.target.value)}
-          onBlur={handleFormatPromptBlur}
           rows={12}
           placeholder="Enter format prompt..."
           className="font-mono text-sm"
