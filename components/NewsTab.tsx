@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useStore } from "@/lib/store";
-import { supabase, getSupabaseConfig } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { 
   Loader2, 
@@ -11,7 +10,6 @@ import {
   Check, 
   X, 
   Clock,
-  Archive,
   Star
 } from "lucide-react";
 import { parseJSON } from "@/lib/utils";
@@ -24,14 +22,12 @@ interface Stage1Result {
 }
 
 interface Story {
-  id?: string;
   title: string;
   rating: number;
   summary: string;
   source?: string | null;
   url?: string | null;
   date?: string | null;
-  archived?: boolean;
 }
 
 export default function NewsTab() {
@@ -44,53 +40,12 @@ export default function NewsTab() {
   const [stories, setStories] = useState<Story[]>([]);
   const [estimatedCost, setEstimatedCost] = useState(0);
   const [actualCost, setActualCost] = useState(0);
-  const [activeSubTab, setActiveSubTab] = useState<"active" | "archived">("active");
-  const [currentReportId, setCurrentReportId] = useState<string | null>(null);
-
-  // Load latest report on mount
-  useEffect(() => {
-    loadLatestReport();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // Calculate estimated cost whenever keywords or model changes
   useEffect(() => {
     calculateEstimatedCost();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings.keywords, settings.selectedModel, models]);
-
-  const loadLatestReport = async () => {
-    try {
-      const { url, anonKey } = getSupabaseConfig();
-      if (!url || !anonKey) {
-        return;
-      }
-      const { data: latestReport } = await supabase
-        .from("reports")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .single();
-
-      if (latestReport) {
-        setCurrentReportId(latestReport.id);
-        setActualCost(parseFloat(latestReport.total_cost));
-        
-        // Load stories for this report
-        const { data: storiesData } = await supabase
-          .from("stories")
-          .select("*")
-          .eq("report_id", latestReport.id)
-          .order("rating", { ascending: false });
-
-        if (storiesData) {
-          setStories(storiesData);
-        }
-      }
-    } catch (error) {
-      console.error("Error loading latest report:", error);
-    }
-  };
 
   const calculateEstimatedCost = () => {
     const enabledKeywords = settings.keywords.filter((k) => k.enabled);
@@ -272,43 +227,7 @@ export default function NewsTab() {
         (a: Story, b: Story) => b.rating - a.rating
       );
 
-      // Save report to database
-      const { data: reportData } = await supabase
-        .from("reports")
-        .insert([
-          {
-            total_cost: totalCost,
-            stage1_results: completedResults,
-            stage2_result: parsedResult,
-          },
-        ])
-        .select()
-        .single();
-
-      if (reportData) {
-        setCurrentReportId(reportData.id);
-
-        // Save stories to database
-        const storiesToInsert = sortedStories.map((story: Story) => ({
-          report_id: reportData.id,
-          title: story.title,
-          rating: story.rating,
-          summary: story.summary || "",
-          source: story.source,
-          url: story.url,
-          date: story.date,
-          archived: false,
-        }));
-
-        const { data: insertedStories } = await supabase
-          .from("stories")
-          .insert(storiesToInsert)
-          .select();
-
-        if (insertedStories) {
-          setStories(insertedStories);
-        }
-      }
+      setStories(sortedStories);
     } catch (error: any) {
       console.error("Stage 2 error:", error);
       alert(`Failed to generate final report: ${error.message}`);
@@ -329,32 +248,6 @@ export default function NewsTab() {
       return newSet;
     });
   };
-
-  const archiveStory = async (storyId: string) => {
-    await supabase
-      .from("stories")
-      .update({ archived: true })
-      .eq("id", storyId);
-
-    setStories((prev) =>
-      prev.map((s) => (s.id === storyId ? { ...s, archived: true } : s))
-    );
-  };
-
-  const unarchiveStory = async (storyId: string) => {
-    await supabase
-      .from("stories")
-      .update({ archived: false })
-      .eq("id", storyId);
-
-    setStories((prev) =>
-      prev.map((s) => (s.id === storyId ? { ...s, archived: false } : s))
-    );
-  };
-
-  const activeStories = stories.filter((s) => !s.archived);
-  const archivedStories = stories.filter((s) => s.archived);
-  const displayStories = activeSubTab === "active" ? activeStories : archivedStories;
 
   return (
     <div className="space-y-6">
@@ -495,31 +388,12 @@ export default function NewsTab() {
       {/* Final Stories */}
       {stories.length > 0 && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-xl font-semibold text-slate-900">News Stories</h3>
-            
-            <div className="flex gap-2">
-              <Button
-                variant={activeSubTab === "active" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setActiveSubTab("active")}
-              >
-                Active ({activeStories.length})
-              </Button>
-              <Button
-                variant={activeSubTab === "archived" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setActiveSubTab("archived")}
-              >
-                Archived ({archivedStories.length})
-              </Button>
-            </div>
-          </div>
+          <h3 className="text-xl font-semibold text-slate-900">News Stories</h3>
 
           <div className="space-y-3">
-            {displayStories.map((story) => (
+            {stories.map((story, index) => (
               <div
-                key={story.id}
+                key={index}
                 className="border rounded-lg p-4 bg-white hover:shadow-md transition-shadow"
               >
                 <div className="flex items-start justify-between gap-4">
@@ -554,18 +428,6 @@ export default function NewsTab() {
                       </a>
                     )}
                   </div>
-
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      story.archived
-                        ? unarchiveStory(story.id!)
-                        : archiveStory(story.id!)
-                    }
-                  >
-                    <Archive className="h-4 w-4" />
-                  </Button>
                 </div>
               </div>
             ))}
