@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useStore } from "@/lib/store";
-import { supabase } from "@/lib/supabase";
+import { supabase, getSupabaseConfig, configureSupabase, clearSupabaseConfig } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Loader2, Check, X, Search, Plus, Trash2 } from "lucide-react";
-import { formatCost, isValidOpenRouterApiKey } from "@/lib/utils";
+import { formatCost, isValidOpenRouterApiKey, isValidSupabaseUrl, isValidSupabaseAnonKey } from "@/lib/utils";
 
 export default function SettingsTab() {
   const {
@@ -26,6 +26,7 @@ export default function SettingsTab() {
     loadSettings,
   } = useStore();
 
+  // OpenRouter API Key
   const [apiKeyInput, setApiKeyInput] = useState("");
   const [isValidating, setIsValidating] = useState(false);
   const [validationStatus, setValidationStatus] = useState<
@@ -33,17 +34,35 @@ export default function SettingsTab() {
   >("idle");
   const [validationMessage, setValidationMessage] = useState("");
   
+  // Supabase Config
+  const [sbUrlInput, setSbUrlInput] = useState("");
+  const [sbAnonKeyInput, setSbAnonKeyInput] = useState("");
+  const [isSbValidating, setIsSbValidating] = useState(false);
+  const [sbValidationStatus, setSbValidationStatus] = useState<
+    "idle" | "success" | "error"
+  >("idle");
+  const [sbValidationMessage, setSbValidationMessage] = useState("");
+  
   const [keywordInput, setKeywordInput] = useState("");
   const [modelSearch, setModelSearch] = useState("");
 
-  // Load settings from Supabase on mount
+  // Load settings from Supabase on mount (if configured)
   useEffect(() => {
+    // Load existing Supabase config from localStorage/env
+    const { url, anonKey } = getSupabaseConfig();
+    if (url) setSbUrlInput(url);
+    if (anonKey) setSbAnonKeyInput(anonKey);
+
     loadSettingsFromDB();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadSettingsFromDB = async () => {
     try {
+      const { url, anonKey } = getSupabaseConfig();
+      if (!url || !anonKey) {
+        return; // Skip DB calls until Supabase is configured
+      }
       // Load settings
       const { data: settingsData } = await supabase
         .from("settings")
@@ -70,6 +89,53 @@ export default function SettingsTab() {
     } catch (error) {
       console.error("Error loading settings:", error);
     }
+  };
+
+  const validateAndSaveSupabase = async () => {
+    const url = sbUrlInput.trim();
+    const anon = sbAnonKeyInput.trim();
+
+    if (!url || !anon) return;
+
+    setIsSbValidating(true);
+    setSbValidationStatus("idle");
+    try {
+      if (!isValidSupabaseUrl(url)) {
+        throw new Error("✗ Invalid Supabase URL. Must be an https URL.");
+      }
+      if (!isValidSupabaseAnonKey(anon)) {
+        throw new Error("✗ Invalid anon key format (must be a JWT).");
+      }
+
+      // Save config and test connectivity
+      configureSupabase(url, anon);
+
+      // Try a lightweight request; it's okay if the table doesn't exist yet
+      const { error } = await supabase.from("settings").select("id").limit(1);
+      if (error && !/relation|table/i.test(error.message)) {
+        // If error is not about missing table, surface it
+        throw new Error(`✗ ${error.message}`);
+      }
+
+      setSbValidationStatus("success");
+      setSbValidationMessage("✓ Supabase configured successfully.");
+      // Attempt to load any existing settings
+      await loadSettingsFromDB();
+    } catch (err) {
+      setSbValidationStatus("error");
+      const message = err instanceof Error ? err.message : "✗ Failed to configure Supabase.";
+      setSbValidationMessage(message);
+    } finally {
+      setIsSbValidating(false);
+    }
+  };
+
+  const clearSupabase = async () => {
+    clearSupabaseConfig();
+    setSbUrlInput("");
+    setSbAnonKeyInput("");
+    setSbValidationStatus("idle");
+    setSbValidationMessage("");
   };
 
   const validateAndSaveApiKey = async () => {
@@ -272,6 +338,43 @@ export default function SettingsTab() {
 
   return (
     <div className="space-y-8">
+      {/* Supabase Configuration Section */}
+      <div className="space-y-4">
+        <h2 className="text-2xl font-semibold text-slate-900">Supabase Configuration</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-700">Supabase URL</label>
+            <Input
+              placeholder="https://YOUR-PROJECT.supabase.co"
+              value={sbUrlInput}
+              onChange={(e) => setSbUrlInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && validateAndSaveSupabase()}
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-700">Supabase anon key</label>
+            <Input
+              type="password"
+              placeholder="eyJhbGciOiJI..."
+              value={sbAnonKeyInput}
+              onChange={(e) => setSbAnonKeyInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && validateAndSaveSupabase()}
+            />
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <Button onClick={validateAndSaveSupabase} disabled={isSbValidating || !sbUrlInput.trim() || !sbAnonKeyInput.trim()}>
+            {isSbValidating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Validate & Save"}
+          </Button>
+          <Button variant="outline" onClick={clearSupabase}>Clear</Button>
+        </div>
+        {sbValidationStatus !== "idle" && (
+          <p className={`text-sm ${sbValidationStatus === "success" ? "text-green-600" : "text-red-600"}`}>
+            {sbValidationMessage}
+          </p>
+        )}
+      </div>
+
       {/* API Key Section */}
       <div className="space-y-4">
         <h2 className="text-2xl font-semibold text-slate-900">API Configuration</h2>

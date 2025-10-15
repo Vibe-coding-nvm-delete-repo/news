@@ -1,4 +1,4 @@
-import { isValidOpenRouterApiKey } from '@/lib/utils';
+import { isValidOpenRouterApiKey, isValidSupabaseUrl, isValidSupabaseAnonKey } from '@/lib/utils';
 
 describe('isValidOpenRouterApiKey', () => {
   test('accepts valid key format (lowercase hex)', () => {
@@ -37,5 +37,26 @@ describe('isValidOpenRouterApiKey', () => {
     // @ts-expect-error testing runtime guard
     expect(isValidOpenRouterApiKey(undefined)).toBe(false);
     expect(isValidOpenRouterApiKey('')).toBe(false);
+  });
+});
+
+describe('isValidSupabaseUrl', () => {
+  test('accepts https URL', () => {
+    expect(isValidSupabaseUrl('https://abc.supabase.co')).toBe(true);
+  });
+  test('rejects http URL', () => {
+    expect(isValidSupabaseUrl('http://abc.supabase.co')).toBe(false);
+  });
+  test('rejects garbage', () => {
+    expect(isValidSupabaseUrl('not a url')).toBe(false);
+  });
+});
+
+describe('isValidSupabaseAnonKey', () => {
+  test('accepts JWT-like pattern', () => {
+    expect(isValidSupabaseAnonKey('aaa.bbb.ccc')).toBe(true);
+  });
+  test('rejects non-JWT', () => {
+    expect(isValidSupabaseAnonKey('abc')).toBe(false);
   });
 });
