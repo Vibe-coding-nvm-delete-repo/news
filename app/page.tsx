@@ -1,8 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import SettingsTab from "@/components/SettingsTab";
-import NewsTab from "@/components/NewsTab";
+import dynamic from 'next/dynamic';
+
+const SettingsTab = dynamic(() => import("@/components/SettingsTab"), {
+  ssr: false,
+});
+
+const NewsTab = dynamic(() => import("@/components/NewsTab"), {
+  ssr: false,
+});
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<"settings" | "news">("settings");
