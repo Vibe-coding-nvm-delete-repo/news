@@ -92,6 +92,10 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 3. Click "Fetch Models" to load available models
 4. Select a model (recommended: Perplexity models for online search)
 
+Notes:
+- Key format must be `sk-or-v1-<64 hex>`, for example: `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`.
+- Add your app's URL to "Allowed Origins" in your OpenRouter dashboard (e.g., `http://localhost:3000` during development, plus your production domain). If not configured, you may see 403 errors like "Origin not allowed".
+
 ### 5. Setup Keywords and Prompts
 
 1. Add keywords (comma-separated) in the Keywords section

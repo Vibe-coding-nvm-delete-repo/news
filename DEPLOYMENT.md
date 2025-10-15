@@ -124,7 +124,7 @@ vercel
 → Run the SQL schema in Supabase SQL Editor
 
 **"Invalid API key" in Settings:**
-→ Get an API key from https://openrouter.ai
+→ Ensure your key matches the format `sk-or-v1-<64 hex>` (e.g., `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`). Also, add your app's URL (e.g., `http://localhost:3000` during development and your production domain) to "Allowed Origins" in your OpenRouter dashboard.
 
 **Build fails:**
 → Make sure `.env.local` exists with correct values
