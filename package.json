@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "format:check": "echo 'No formatter configured yet - skipping'",
+    "type-check": "tsc --noEmit",
+    "test": "echo 'No tests configured yet - skipping' && exit 0",
+    "test:ci": "echo 'No tests configured yet - skipping' && exit 0"
   },
   "dependencies": {
     "next": "^15.0.0",
