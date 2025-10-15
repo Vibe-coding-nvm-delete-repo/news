@@ -23,3 +23,10 @@ export function parseJSON(text: string): any {
     }
   }
 }
+
+export function isValidOpenRouterApiKey(key: string): boolean {
+  if (!key) return false;
+  const normalized = key.trim();
+  // OpenRouter keys follow: sk-or-v1- + 64 hex chars
+  return /^sk-or-v1-[a-f0-9]{64}$/i.test(normalized);
+}

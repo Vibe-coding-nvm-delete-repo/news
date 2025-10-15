@@ -159,6 +159,7 @@ export default function NewsTab() {
           headers: {
             Authorization: `Bearer ${settings.apiKey}`,
             "Content-Type": "application/json",
+            "X-Title": "News Report Generator",
           },
           body: JSON.stringify({
             model: settings.selectedModel,
@@ -223,6 +224,7 @@ export default function NewsTab() {
         headers: {
           Authorization: `Bearer ${settings.apiKey}`,
           "Content-Type": "application/json",
+          "X-Title": "News Report Generator",
         },
         body: JSON.stringify({
           model: settings.selectedModel,
