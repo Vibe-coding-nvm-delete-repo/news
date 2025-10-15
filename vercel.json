@@ -1,4 +1,6 @@
 {
-  "buildCommand": "npm run build",
-  "framework": "nextjs"
+  "env": {
+    "NEXT_PUBLIC_SUPABASE_URL": "https://xpyledlyzhozqwngxfdx.supabase.co",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhweWxlZGx5emhvenF3bmd4ZmR4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1MDM0MTQsImV4cCI6MjA3NjA3OTQxNH0.w_mcy6TQOLYNx2U8_hHYkZHj9XSeNrVVTTFgGEHgTrI"
+  }
 }
