@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useStore } from "@/lib/store";
-import { supabase } from "@/lib/supabase";
+import { supabase, getSupabaseConfig } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { 
   Loader2, 
@@ -61,6 +61,10 @@ export default function NewsTab() {
 
   const loadLatestReport = async () => {
     try {
+      const { url, anonKey } = getSupabaseConfig();
+      if (!url || !anonKey) {
+        return;
+      }
       const { data: latestReport } = await supabase
         .from("reports")
         .select("*")
