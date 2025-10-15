@@ -7,9 +7,9 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
   },
-  // Image optimization
+  // Disable image optimization for static export
   images: {
-    formats: ['image/avif', 'image/webp'],
+    unoptimized: true,
   },
 };
 
