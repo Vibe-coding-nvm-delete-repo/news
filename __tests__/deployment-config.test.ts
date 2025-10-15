@@ -16,4 +16,11 @@ describe('Deployment configuration', () => {
     expect(nextConfig).toBeTruthy();
     expect(nextConfig.output).toBe('export');
   });
+
+  test('next.config.js has unoptimized images for static export', () => {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const nextConfig = require('../next.config.js');
+    expect(nextConfig.images).toBeTruthy();
+    expect(nextConfig.images.unoptimized).toBe(true);
+  });
 });
