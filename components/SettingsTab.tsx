@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -197,25 +197,19 @@ export default function SettingsTab() {
         </p>
         
         <div className="space-y-2">
-          <div className="flex gap-2">
+          <div className="relative">
             <Input
               type="password"
               placeholder="sk-or-v1-..."
               value={apiKeyInput}
               onChange={(e) => setApiKeyInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && validateAndSaveApiKey()}
-              className="flex-1"
+              className="flex-1 pr-10"
             />
-            <Button
-              onClick={validateAndSaveApiKey}
-              disabled={isValidating || !apiKeyInput.trim()}
-            >
-              {isValidating ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                "Validate"
-              )}
-            </Button>
+            {isValidating && (
+              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+              </div>
+            )}
           </div>
           
           {validationStatus !== "idle" && (
