@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Loader2, Check, X, Search, Plus, Trash2 } from "lucide-react";
-import { formatCost } from "@/lib/utils";
+import { formatCost, isValidOpenRouterApiKey } from "@/lib/utils";
 
 export default function SettingsTab() {
   const {
@@ -73,35 +73,67 @@ export default function SettingsTab() {
   };
 
   const validateAndSaveApiKey = async () => {
-    if (!apiKeyInput.trim()) return;
+    const trimmedKey = apiKeyInput.trim();
+    if (!trimmedKey) return;
 
     setIsValidating(true);
     setValidationStatus("idle");
 
     try {
       // Test API key by fetching models
+      if (!isValidOpenRouterApiKey(trimmedKey)) {
+        setValidationStatus("error");
+        setValidationMessage(
+          "✗ Invalid API key format. It should look like sk-or-v1-<64 hex>"
+        );
+        return;
+      }
+
       const response = await fetch("https://openrouter.ai/api/v1/models", {
         headers: {
-          Authorization: `Bearer ${apiKeyInput}`,
+          Authorization: `Bearer ${trimmedKey}`,
+          "X-Title": "News Report Generator",
         },
       });
 
       if (!response.ok) {
-        throw new Error("Invalid API key");
+        let apiErrorMessage = "Validation failed";
+        try {
+          const err = await response.json();
+          if (err?.error?.message) apiErrorMessage = err.error.message;
+        } catch {
+          try {
+            const text = await response.text();
+            if (text) apiErrorMessage = text;
+          } catch {}
+        }
+
+        if (response.status === 401 || /invalid api key/i.test(apiErrorMessage)) {
+          throw new Error("✗ Invalid API key. Please check and try again.");
+        }
+
+        if (response.status === 403 || /referer|origin/i.test(apiErrorMessage)) {
+          throw new Error(
+            "✗ Origin not allowed. Add your site (e.g., http://localhost:3000) to Allowed Origins in your OpenRouter dashboard."
+          );
+        }
+
+        throw new Error(`✗ ${apiErrorMessage}`);
       }
 
       // Save to Supabase
       await supabase
         .from("settings")
-        .update({ api_key: apiKeyInput, updated_at: new Date().toISOString() })
+        .update({ api_key: trimmedKey, updated_at: new Date().toISOString() })
         .eq("id", 1);
 
-      setApiKey(apiKeyInput);
+      setApiKey(trimmedKey);
       setValidationStatus("success");
       setValidationMessage("✓ API key validated and saved successfully!");
     } catch (error) {
       setValidationStatus("error");
-      setValidationMessage("✗ Invalid API key. Please check and try again.");
+      const message = error instanceof Error ? error.message : "✗ Unexpected error validating key.";
+      setValidationMessage(message);
     } finally {
       setIsValidating(false);
     }
@@ -118,8 +150,18 @@ export default function SettingsTab() {
       const response = await fetch("https://openrouter.ai/api/v1/models", {
         headers: {
           Authorization: `Bearer ${settings.apiKey}`,
+          "X-Title": "News Report Generator",
         },
       });
+
+      if (!response.ok) {
+        let apiErrorMessage = "Failed to fetch models";
+        try {
+          const err = await response.json();
+          if (err?.error?.message) apiErrorMessage = err.error.message;
+        } catch {}
+        throw new Error(apiErrorMessage);
+      }
 
       const data = await response.json();
       
@@ -142,7 +184,8 @@ export default function SettingsTab() {
       setModels(parsedModels);
     } catch (error) {
       console.error("Error fetching models:", error);
-      alert("Failed to fetch models. Please check your API key.");
+      const message = error instanceof Error ? error.message : "Failed to fetch models.";
+      alert(message);
     } finally {
       setIsLoadingModels(false);
     }
@@ -257,6 +300,9 @@ export default function SettingsTab() {
               )}
             </Button>
           </div>
+          <p className="text-xs text-slate-500">
+            Format: <code>sk-or-v1-</code> followed by 64 hex characters.
+          </p>
           
           {validationStatus !== "idle" && (
             <p
