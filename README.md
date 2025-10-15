@@ -1,55 +1,49 @@
-# News
+# News App
 
-A modern Next.js application built with TypeScript, optimized for speed and maintainability.
-
-## Features
-
-✅ Next.js 14 with App Router  
-✅ TypeScript (strict mode)  
-✅ ESLint + Prettier  
-✅ Jest + React Testing Library  
-✅ Husky + lint-staged (pre-commit hooks)  
-✅ GitHub Actions CI/CD  
-✅ Automated code quality checks  
+A modern news application built with Next.js, TypeScript, and Tailwind CSS.
 
 ## Getting Started
 
-```bash
-# Install dependencies
-npm install
+First, install the dependencies:
 
-# Start development server
+```bash
+npm install
+```
+
+Then, run the development server:
+
+```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-## Documentation
-
-- [Development Guide](./DEVELOPMENT.md) - Complete development workflow and tooling
-- [Contributing Guidelines](./CONTRIBUTING.md) - How to contribute to this project
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 ## Tech Stack
 
-- **Framework**: Next.js 14
-- **Language**: TypeScript
-- **Styling**: (Add your styling solution)
-- **Testing**: Jest + React Testing Library
-- **Linting**: ESLint + Prettier
-- **CI/CD**: GitHub Actions
+- **Next.js 15** - React framework with App Router
+- **TypeScript** - Type-safe JavaScript
+- **Tailwind CSS** - Utility-first CSS framework
+- **ESLint** - Code linting
 
-## Scripts
+## Project Structure
 
-```bash
-npm run dev          # Development server
-npm run build        # Production build
-npm run lint         # Run linter
-npm run test         # Run tests
-npm run validate     # Run all checks
+```
+src/
+  app/
+    layout.tsx    # Root layout
+    page.tsx      # Home page
+    globals.css   # Global styles
 ```
 
-See [DEVELOPMENT.md](./DEVELOPMENT.md) for full list of available scripts.
+## Available Scripts
 
-## License
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npm run lint` - Run ESLint
 
-MIT
+## Learn More
+
+- [Next.js Documentation](https://nextjs.org/docs)
+- [TypeScript Documentation](https://www.typescriptlang.org/docs/)
+- [Tailwind CSS Documentation](https://tailwindcss.com/docs)
