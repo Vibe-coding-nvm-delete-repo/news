@@ -64,6 +64,11 @@ export default function NewsTab() {
     avgRating: number;
     ratingDistribution: { [key: number]: number };
   } | null>(null);
+  const [dateFilterStats, setDateFilterStats] = useState<{
+    totalStories: number;
+    filteredStories: number;
+    rejectedCount: number;
+  } | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   // Calculate estimated cost whenever keywords or model changes
@@ -165,6 +170,8 @@ export default function NewsTab() {
 
     let totalCost = 0;
     const allCards: Card[] = [];
+    let totalStoriesReceived = 0;
+    let totalStoriesRejected = 0;
 
     // Ensure model has :online suffix for web search capability
     const onlineModel = settings.selectedModel.includes(':online')
@@ -188,6 +195,11 @@ export default function NewsTab() {
           );
         });
 
+        // Calculate 24-hour cutoff date dynamically
+        const cutoffDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        const cutoffDateString = cutoffDate.toISOString().split('T')[0]; // YYYY-MM-DD format
+        const todayDateString = new Date().toISOString().split('T')[0];
+
         // Race between fetch and timeout
         const fetchPromise = fetch(
           'https://openrouter.ai/api/v1/chat/completions',
@@ -207,7 +219,7 @@ export default function NewsTab() {
               messages: [
                 {
                   role: 'user',
-                  content: `${settings.searchInstructions}\n\n"${keyword.text}"`,
+                  content: `${settings.searchInstructions}\n\n"${keyword.text}"\n\nIMPORTANT: Today is ${todayDateString}. Only include articles published on or after ${cutoffDateString}.`,
                 },
               ],
             }),
@@ -256,23 +268,70 @@ export default function NewsTab() {
           `[${keyword.text}] Successfully parsed ${parsedResult.stories.length} stories`
         );
 
-        // Add keyword and reportId to each story, convert to Card
-        const cardsFromStories: Card[] = parsedResult.stories.map(
-          (story: any) => ({
-            id: `${reportId}-${keyword.text}-${Date.now()}-${Math.random().toString(36).substring(2)}`,
-            reportId: reportId,
-            keyword: keyword.text,
-            category: story.category || 'Uncategorized',
-            title: story.title,
-            rating: story.rating,
-            summary: story.summary,
-            source: story.source,
-            url: story.url,
-            date: story.date,
-            generatedAt: new Date().toISOString(),
-            status: 'active' as const,
-          })
+        // Filter stories to ONLY include those from the last 24 hours
+        const now = new Date();
+        const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+        const validStories = parsedResult.stories.filter((story: any) => {
+          // Reject stories without dates
+          if (!story.date) {
+            console.warn(
+              `[${keyword.text}] ❌ Rejected (no date): "${story.title?.substring(0, 50)}..."`
+            );
+            return false;
+          }
+
+          // Parse and validate date
+          const storyDate = new Date(story.date);
+          if (isNaN(storyDate.getTime())) {
+            console.warn(
+              `[${keyword.text}] ❌ Rejected (invalid date "${story.date}"): "${story.title?.substring(0, 50)}..."`
+            );
+            return false;
+          }
+
+          // Reject stories older than 24 hours
+          if (storyDate < twentyFourHoursAgo) {
+            console.warn(
+              `[${keyword.text}] ❌ Rejected (too old - ${story.date}): "${story.title?.substring(0, 50)}..."`
+            );
+            return false;
+          }
+
+          // Reject stories with future dates (likely errors)
+          if (storyDate > now) {
+            console.warn(
+              `[${keyword.text}] ❌ Rejected (future date - ${story.date}): "${story.title?.substring(0, 50)}..."`
+            );
+            return false;
+          }
+
+          console.log(
+            `[${keyword.text}] ✅ Accepted (${story.date}): "${story.title?.substring(0, 50)}..."`
+          );
+          return true;
+        });
+
+        const rejectedCount = parsedResult.stories.length - validStories.length;
+        console.log(
+          `[${keyword.text}] Filtered: ${validStories.length}/${parsedResult.stories.length} stories passed 24-hour validation${rejectedCount > 0 ? ` (${rejectedCount} rejected)` : ''}`
         );
+
+        // Add keyword and reportId to each story, convert to Card
+        const cardsFromStories: Card[] = validStories.map((story: any) => ({
+          id: `${reportId}-${keyword.text}-${Date.now()}-${Math.random().toString(36).substring(2)}`,
+          reportId: reportId,
+          keyword: keyword.text,
+          category: story.category || 'Uncategorized',
+          title: story.title,
+          rating: story.rating,
+          summary: story.summary,
+          source: story.source,
+          url: story.url,
+          date: story.date,
+          generatedAt: new Date().toISOString(),
+          status: 'active' as const,
+        }));
 
         // Track cost
         let cost = 0;
@@ -311,7 +370,13 @@ export default function NewsTab() {
           addCardsToActive(cardsFromStories);
         }
 
-        return { success: true, cards: cardsFromStories, cost };
+        return {
+          success: true,
+          cards: cardsFromStories,
+          cost,
+          totalStories: parsedResult.stories.length,
+          rejectedStories: parsedResult.stories.length - validStories.length,
+        };
       } catch (error: any) {
         // Check if the error is due to abort
         if (error.name === 'AbortError') {
@@ -366,14 +431,26 @@ export default function NewsTab() {
       if (result && result.cost) {
         totalCost += result.cost;
       }
+      if (result) {
+        totalStoriesReceived += result.totalStories || 0;
+        totalStoriesRejected += result.rejectedStories || 0;
+      }
     });
 
     console.log(
       `Generated ${allCards.length} cards with total cost $${totalCost.toFixed(4)}`
     );
+    console.log(
+      `📊 Date filtering stats: ${totalStoriesReceived} stories received, ${totalStoriesRejected} rejected (${((totalStoriesRejected / Math.max(totalStoriesReceived, 1)) * 100).toFixed(1)}% filtered out)`
+    );
 
-    // Update total cost
+    // Update total cost and filter stats
     setActualCost(totalCost);
+    setDateFilterStats({
+      totalStories: totalStoriesReceived,
+      filteredStories: allCards.length,
+      rejectedCount: totalStoriesRejected,
+    });
 
     // Show completion animation
     setShowCompletionAnimation(true);
@@ -521,6 +598,38 @@ export default function NewsTab() {
               </div>
             </div>
           </div>
+
+          {/* Date Filter Warning Banner */}
+          {dateFilterStats && dateFilterStats.rejectedCount > 0 && (
+            <div className="bg-gradient-to-r from-yellow-50 to-orange-50 p-4 rounded-lg border-2 border-yellow-400">
+              <div className="flex items-start gap-3">
+                <div className="bg-yellow-500 text-white rounded-full p-2 mt-0.5">
+                  <Clock className="h-5 w-5" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-bold text-yellow-900 mb-1">
+                    📅 Date Filter Active
+                  </p>
+                  <p className="text-sm text-yellow-800">
+                    <span className="font-semibold">
+                      {dateFilterStats.rejectedCount}
+                    </span>{' '}
+                    out of{' '}
+                    <span className="font-semibold">
+                      {dateFilterStats.totalStories}
+                    </span>{' '}
+                    stories were filtered out because they were older than 24
+                    hours.
+                    <br />
+                    <span className="text-xs text-yellow-700 mt-1 inline-block">
+                      ✅ Only showing news from the last 24 hours (
+                      {dateFilterStats.filteredStories} recent stories)
+                    </span>
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Success Banner */}
           {showSuccessBanner && lastReportMetadata && (

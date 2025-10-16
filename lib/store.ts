@@ -175,33 +175,31 @@ export const useStore = create<StoreState>()(
         apiKey: null,
         selectedModel: null,
         keywords: [],
-        searchInstructions: `You are a news research assistant. Search the web for the latest news and developments about the given keyword/topic. Focus on events from the past 7 days.
+        searchInstructions: `Search the web for news published in the LAST 24 HOURS about the keyword below. ONLY include stories from the past day.
 
-RETURN YOUR RESPONSE AS A JSON OBJECT with this exact schema:
+Return a JSON object with this schema:
 {
   "stories": [
     {
-      "title": "Clear, concise headline",
-      "category": "Auto-categorize this story (e.g., Technology, Politics, Business, Health, etc.)",
-      "rating": 1-10 (numeric value only - rate based on significance, novelty, and relevance),
-      "summary": "2-3 sentence summary of the story",
-      "source": "Source name or null if not available",
-      "url": "Full article URL or null if not available",
-      "date": "YYYY-MM-DD format or null if not available"
+      "title": "Headline",
+      "category": "Technology|Politics|Business|Health|Sports|Entertainment|Science|Other",
+      "rating": 7,
+      "summary": "2-3 sentence summary",
+      "source": "Source name or null",
+      "url": "Article URL or null",
+      "date": "YYYY-MM-DD (REQUIRED - must be within last 24 hours)"
     }
   ]
 }
 
-REQUIREMENTS:
-1. Return ONLY the JSON object starting with { and ending with }
-2. Include ALL news stories you find for this keyword
-3. Each story must have all fields (use null for missing data)
-4. Category should be auto-determined based on the content
-5. Rating should reflect significance, novelty, and relevance (1-10)
-6. Ensure all JSON is properly formatted and valid
-7. Do NOT include explanatory text, code blocks, or apologies - ONLY the JSON object
+CRITICAL RULES:
+1. Return ONLY valid JSON - no text before or after
+2. ONLY include news from the last 24 hours
+3. Date field is REQUIRED for every story
+4. If no recent news exists, return: {"stories": []}
+5. Do NOT include old articles, archives, or background information
 
-Keyword to search:`,
+Keyword:`,
         onlineEnabled: true,
       },
       models: [],
