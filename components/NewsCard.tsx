@@ -1,7 +1,14 @@
 'use client';
 
 import { Card as CardType } from '@/lib/store';
-import { Star, ExternalLink, Calendar, Tag, Hash, CheckCircle } from 'lucide-react';
+import {
+  Star,
+  ExternalLink,
+  Calendar,
+  Tag,
+  Hash,
+  CheckCircle,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface NewsCardProps {
@@ -10,16 +17,20 @@ interface NewsCardProps {
   onMarkAsRead?: (cardId: string) => void;
 }
 
-export default function NewsCard({ card, showReadButton = false, onMarkAsRead }: NewsCardProps) {
+export default function NewsCard({
+  card,
+  showReadButton = false,
+  onMarkAsRead,
+}: NewsCardProps) {
   return (
-    <div
-      className="border rounded-lg p-5 bg-white hover:shadow-lg transition-all duration-300 hover:scale-[1.01]"
-    >
+    <div className="border rounded-lg p-5 bg-white hover:shadow-lg transition-all duration-300 hover:scale-[1.01]">
       <div className="flex items-start justify-between gap-4 mb-3">
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1 bg-yellow-100 px-2 py-1 rounded">
             <Star className="h-4 w-4 text-yellow-600 fill-yellow-600" />
-            <span className="font-bold text-yellow-900">{card.rating.toFixed(1)}</span>
+            <span className="font-bold text-yellow-900">
+              {card.rating.toFixed(1)}
+            </span>
           </div>
           <div className="flex items-center gap-1 bg-blue-100 px-2 py-1 rounded text-xs">
             <Tag className="h-3 w-3 text-blue-600" />
@@ -42,7 +53,9 @@ export default function NewsCard({ card, showReadButton = false, onMarkAsRead }:
         )}
       </div>
 
-      <h4 className="text-lg font-semibold text-slate-900 mb-2">{card.title}</h4>
+      <h4 className="text-lg font-semibold text-slate-900 mb-2">
+        {card.title}
+      </h4>
 
       <p className="text-slate-700 mb-3 leading-relaxed">{card.summary}</p>
 

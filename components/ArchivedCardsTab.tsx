@@ -13,10 +13,10 @@ export default function ArchivedCardsTab() {
   // Filter cards by date
   const filteredCards = archivedCards.filter(card => {
     if (!card.archivedAt) return false;
-    
+
     const archivedDate = new Date(card.archivedAt);
     const now = new Date();
-    
+
     switch (dateFilter) {
       case 'today':
         return archivedDate.toDateString() === now.toDateString();
@@ -24,7 +24,9 @@ export default function ArchivedCardsTab() {
         const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
         return archivedDate >= sevenDaysAgo;
       case 'last30days':
-        const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        const thirtyDaysAgo = new Date(
+          now.getTime() - 30 * 24 * 60 * 60 * 1000
+        );
         return archivedDate >= thirtyDaysAgo;
       case 'all':
       default:
@@ -43,7 +45,9 @@ export default function ArchivedCardsTab() {
     return (
       <div className="text-center py-16">
         <Archive className="h-16 w-16 text-slate-300 mx-auto mb-4" />
-        <h3 className="text-xl font-semibold text-slate-700 mb-2">No Archived Cards</h3>
+        <h3 className="text-xl font-semibold text-slate-700 mb-2">
+          No Archived Cards
+        </h3>
         <p className="text-slate-500">
           Cards marked as &quot;Read&quot; will appear here.
         </p>
@@ -65,7 +69,9 @@ export default function ArchivedCardsTab() {
 
       {sortedCards.length === 0 ? (
         <div className="text-center py-12 bg-slate-50 rounded-lg border-2 border-dashed border-slate-200">
-          <p className="text-slate-600">No archived cards match the selected filter.</p>
+          <p className="text-slate-600">
+            No archived cards match the selected filter.
+          </p>
         </div>
       ) : (
         <div className="space-y-3">

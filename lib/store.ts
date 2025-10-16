@@ -72,7 +72,9 @@ interface StoreState {
   addCardsToActive: (cards: Card[]) => void;
   markCardAsRead: (cardId: string) => void;
   addReportHistory: (report: ReportHistory) => void;
-  setActiveNewsTab: (tab: 'generate' | 'active' | 'archived' | 'history') => void;
+  setActiveNewsTab: (
+    tab: 'generate' | 'active' | 'archived' | 'history'
+  ) => void;
 }
 
 export const useStore = create<StoreState>()(
@@ -171,13 +173,13 @@ Keyword to search:`,
         set(state => {
           const card = state.activeCards.find(c => c.id === cardId);
           if (!card) return state;
-          
+
           const archivedCard: Card = {
             ...card,
             status: 'archived',
             archivedAt: new Date().toISOString(),
           };
-          
+
           return {
             activeCards: state.activeCards.filter(c => c.id !== cardId),
             archivedCards: [...state.archivedCards, archivedCard],
@@ -187,8 +189,7 @@ Keyword to search:`,
         set(state => ({
           reportHistory: [report, ...state.reportHistory],
         })),
-      setActiveNewsTab: tab =>
-        set({ activeNewsTab: tab }),
+      setActiveNewsTab: tab => set({ activeNewsTab: tab }),
     }),
     {
       name: 'news-report-generator-storage',

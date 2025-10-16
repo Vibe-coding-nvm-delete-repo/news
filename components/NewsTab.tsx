@@ -32,10 +32,10 @@ interface Stage1Result {
 }
 
 export default function NewsTab() {
-  const { 
-    settings, 
-    models, 
-    activeNewsTab, 
+  const {
+    settings,
+    models,
+    activeNewsTab,
     setActiveNewsTab,
     addCardsToActive,
     addReportHistory,
@@ -208,20 +208,22 @@ export default function NewsTab() {
         }
 
         // Add keyword and reportId to each story, convert to Card
-        const cardsFromStories: Card[] = parsedResult.stories.map((story: any) => ({
-          id: `${reportId}-${keyword.text}-${Date.now()}-${Math.random().toString(36).substring(2)}`,
-          reportId: reportId,
-          keyword: keyword.text,
-          category: story.category || 'Uncategorized',
-          title: story.title,
-          rating: story.rating,
-          summary: story.summary,
-          source: story.source,
-          url: story.url,
-          date: story.date,
-          generatedAt: new Date().toISOString(),
-          status: 'active' as const,
-        }));
+        const cardsFromStories: Card[] = parsedResult.stories.map(
+          (story: any) => ({
+            id: `${reportId}-${keyword.text}-${Date.now()}-${Math.random().toString(36).substring(2)}`,
+            reportId: reportId,
+            keyword: keyword.text,
+            category: story.category || 'Uncategorized',
+            title: story.title,
+            rating: story.rating,
+            summary: story.summary,
+            source: story.source,
+            url: story.url,
+            date: story.date,
+            generatedAt: new Date().toISOString(),
+            status: 'active' as const,
+          })
+        );
 
         // Track cost
         let cost = 0;
@@ -301,7 +303,7 @@ export default function NewsTab() {
     // Save cards to active cards
     if (allCards.length > 0) {
       addCardsToActive(allCards);
-      
+
       // Create history entry
       addReportHistory({
         id: reportId,
@@ -434,7 +436,8 @@ export default function NewsTab() {
                       Report Generated Successfully!
                     </p>
                     <p className="text-sm text-green-700">
-                      {lastReportCardCount} cards created • Cost: ${lastReportCost.toFixed(4)}
+                      {lastReportCardCount} cards created • Cost: $
+                      {lastReportCost.toFixed(4)}
                     </p>
                   </div>
                 </div>
@@ -450,215 +453,224 @@ export default function NewsTab() {
             </div>
           )}
 
-      {/* Generate Report Section */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-200">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-2xl font-semibold text-slate-900">
-              Generate News Report
-            </h2>
-            <p className="text-sm text-slate-600 mt-1">
-              {settings.keywords.filter(k => k.enabled).length} keywords enabled
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              onClick={generateReport}
-              disabled={
-                isGenerating ||
-                settings.keywords.filter(k => k.enabled).length === 0 ||
-                !settings.apiKey ||
-                !settings.selectedModel
-              }
-              size="lg"
-            >
-              {isGenerating ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Generating...
-                </>
-              ) : (
-                'Generate Report'
-              )}
-            </Button>
-            {isGenerating && (
-              <Button onClick={stopAndReset} variant="destructive" size="lg">
-                <XCircle className="h-4 w-4 mr-2" />
-                Stop & Reset
-              </Button>
-            )}
-          </div>
-        </div>
-
-        {/* Cost Estimation */}
-        <div className="flex gap-6 text-sm">
-          <div className="flex items-center gap-2">
-            <span className="text-slate-600">Estimated Cost:</span>
-            <span className="font-mono font-semibold text-slate-900">
-              ${estimatedCost.toFixed(4)}
-            </span>
-          </div>
-          {actualCost > 0 && (
-            <div className="flex items-center gap-2">
-              <span className="text-slate-600">Actual Cost:</span>
-              <span className="font-mono font-semibold text-green-600">
-                ${actualCost.toFixed(4)}
-              </span>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Stage 1: Individual Keyword Results */}
-      {stage1Results.length > 0 && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-xl font-semibold text-slate-900">
-              Parallel Keyword Searches (Online Mode)
-            </h3>
-
-            {currentStage === 1 && (
-              <div className="flex items-center gap-4">
-                <div className="text-sm text-slate-600">
-                  {
-                    stage1Results.filter(
-                      r => r.status === 'complete' || r.status === 'error'
-                    ).length
-                  }{' '}
-                  / {stage1Results.length} complete
-                </div>
-                <div className="text-sm font-mono text-slate-600">
-                  {(stage1ElapsedTime / 1000).toFixed(1)}s
-                </div>
+          {/* Generate Report Section */}
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-200">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-2xl font-semibold text-slate-900">
+                  Generate News Report
+                </h2>
+                <p className="text-sm text-slate-600 mt-1">
+                  {settings.keywords.filter(k => k.enabled).length} keywords
+                  enabled
+                </p>
               </div>
-            )}
-
-            {showCompletionAnimation && (
-              <div className="flex items-center gap-2 text-green-600 animate-pulse">
-                <CheckCircle2 className="h-6 w-6" />
-                <span className="font-semibold">All keywords complete!</span>
-                <Sparkles className="h-5 w-5" />
-              </div>
-            )}
-          </div>
-
-          {/* Progress Bar */}
-          {currentStage === 1 && (
-            <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-500 ease-out flex items-center justify-end px-2"
-                style={{ width: `${stage1Progress}%` }}
-              >
-                {stage1Progress > 10 && (
-                  <span className="text-xs font-bold text-white">
-                    {Math.round(stage1Progress)}%
-                  </span>
+              <div className="flex gap-2">
+                <Button
+                  onClick={generateReport}
+                  disabled={
+                    isGenerating ||
+                    settings.keywords.filter(k => k.enabled).length === 0 ||
+                    !settings.apiKey ||
+                    !settings.selectedModel
+                  }
+                  size="lg"
+                >
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Generating...
+                    </>
+                  ) : (
+                    'Generate Report'
+                  )}
+                </Button>
+                {isGenerating && (
+                  <Button
+                    onClick={stopAndReset}
+                    variant="destructive"
+                    size="lg"
+                  >
+                    <XCircle className="h-4 w-4 mr-2" />
+                    Stop & Reset
+                  </Button>
                 )}
               </div>
             </div>
-          )}
 
-          <div className="space-y-2">
-            {stage1Results.map(result => {
-              const isComplete = result.status === 'complete';
-              const isError = result.status === 'error';
-              const isLoading = result.status === 'loading';
+            {/* Cost Estimation */}
+            <div className="flex gap-6 text-sm">
+              <div className="flex items-center gap-2">
+                <span className="text-slate-600">Estimated Cost:</span>
+                <span className="font-mono font-semibold text-slate-900">
+                  ${estimatedCost.toFixed(4)}
+                </span>
+              </div>
+              {actualCost > 0 && (
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-600">Actual Cost:</span>
+                  <span className="font-mono font-semibold text-green-600">
+                    ${actualCost.toFixed(4)}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
 
-              return (
-                <div
-                  key={result.keyword}
-                  className={`border rounded-lg overflow-hidden transition-all duration-300 ${
-                    isComplete
-                      ? 'bg-green-50 border-green-200'
-                      : isError
-                        ? 'bg-red-50 border-red-200'
-                        : isLoading
-                          ? 'bg-blue-50 border-blue-200 shadow-sm'
-                          : 'bg-white'
-                  }`}
-                >
-                  <button
-                    onClick={() => toggleExpanded(result.keyword)}
-                    className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50/50 transition-colors"
+          {/* Stage 1: Individual Keyword Results */}
+          {stage1Results.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-semibold text-slate-900">
+                  Parallel Keyword Searches (Online Mode)
+                </h3>
+
+                {currentStage === 1 && (
+                  <div className="flex items-center gap-4">
+                    <div className="text-sm text-slate-600">
+                      {
+                        stage1Results.filter(
+                          r => r.status === 'complete' || r.status === 'error'
+                        ).length
+                      }{' '}
+                      / {stage1Results.length} complete
+                    </div>
+                    <div className="text-sm font-mono text-slate-600">
+                      {(stage1ElapsedTime / 1000).toFixed(1)}s
+                    </div>
+                  </div>
+                )}
+
+                {showCompletionAnimation && (
+                  <div className="flex items-center gap-2 text-green-600 animate-pulse">
+                    <CheckCircle2 className="h-6 w-6" />
+                    <span className="font-semibold">
+                      All keywords complete!
+                    </span>
+                    <Sparkles className="h-5 w-5" />
+                  </div>
+                )}
+              </div>
+
+              {/* Progress Bar */}
+              {currentStage === 1 && (
+                <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-500 ease-out flex items-center justify-end px-2"
+                    style={{ width: `${stage1Progress}%` }}
                   >
-                    <div className="flex items-center gap-3">
-                      {result.status === 'pending' && (
-                        <Clock className="h-5 w-5 text-slate-400" />
-                      )}
-                      {result.status === 'loading' && (
-                        <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
-                      )}
-                      {result.status === 'complete' && (
-                        <div className="relative">
-                          <Check className="h-5 w-5 text-green-600" />
-                          <div className="absolute inset-0 animate-ping opacity-75">
-                            <Check className="h-5 w-5 text-green-400" />
-                          </div>
+                    {stage1Progress > 10 && (
+                      <span className="text-xs font-bold text-white">
+                        {Math.round(stage1Progress)}%
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                {stage1Results.map(result => {
+                  const isComplete = result.status === 'complete';
+                  const isError = result.status === 'error';
+                  const isLoading = result.status === 'loading';
+
+                  return (
+                    <div
+                      key={result.keyword}
+                      className={`border rounded-lg overflow-hidden transition-all duration-300 ${
+                        isComplete
+                          ? 'bg-green-50 border-green-200'
+                          : isError
+                            ? 'bg-red-50 border-red-200'
+                            : isLoading
+                              ? 'bg-blue-50 border-blue-200 shadow-sm'
+                              : 'bg-white'
+                      }`}
+                    >
+                      <button
+                        onClick={() => toggleExpanded(result.keyword)}
+                        className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          {result.status === 'pending' && (
+                            <Clock className="h-5 w-5 text-slate-400" />
+                          )}
+                          {result.status === 'loading' && (
+                            <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+                          )}
+                          {result.status === 'complete' && (
+                            <div className="relative">
+                              <Check className="h-5 w-5 text-green-600" />
+                              <div className="absolute inset-0 animate-ping opacity-75">
+                                <Check className="h-5 w-5 text-green-400" />
+                              </div>
+                            </div>
+                          )}
+                          {result.status === 'error' && (
+                            <X className="h-5 w-5 text-red-600" />
+                          )}
+
+                          <span className="font-medium text-slate-900">
+                            {result.keyword}
+                          </span>
+
+                          <span
+                            className={`text-sm capitalize px-2 py-1 rounded-full ${
+                              isComplete
+                                ? 'bg-green-100 text-green-700 font-medium'
+                                : isError
+                                  ? 'bg-red-100 text-red-700 font-medium'
+                                  : isLoading
+                                    ? 'bg-blue-100 text-blue-700 font-medium animate-pulse'
+                                    : 'bg-slate-100 text-slate-500'
+                            }`}
+                          >
+                            {result.status}
+                          </span>
+                        </div>
+
+                        {result.status === 'complete' &&
+                          (expandedResults.has(result.keyword) ? (
+                            <ChevronDown className="h-5 w-5 text-slate-400" />
+                          ) : (
+                            <ChevronRight className="h-5 w-5 text-slate-400" />
+                          ))}
+                      </button>
+
+                      {expandedResults.has(result.keyword) && result.result && (
+                        <div className="px-4 py-3 border-t bg-white">
+                          <p className="text-sm text-slate-700 whitespace-pre-wrap">
+                            {result.result}
+                          </p>
                         </div>
                       )}
-                      {result.status === 'error' && (
-                        <X className="h-5 w-5 text-red-600" />
+
+                      {result.error && (
+                        <div className="px-4 py-3 border-t bg-red-100">
+                          <p className="text-sm text-red-600">
+                            Error: {result.error}
+                          </p>
+                        </div>
                       )}
-
-                      <span className="font-medium text-slate-900">
-                        {result.keyword}
-                      </span>
-
-                      <span
-                        className={`text-sm capitalize px-2 py-1 rounded-full ${
-                          isComplete
-                            ? 'bg-green-100 text-green-700 font-medium'
-                            : isError
-                              ? 'bg-red-100 text-red-700 font-medium'
-                              : isLoading
-                                ? 'bg-blue-100 text-blue-700 font-medium animate-pulse'
-                                : 'bg-slate-100 text-slate-500'
-                        }`}
-                      >
-                        {result.status}
-                      </span>
                     </div>
-
-                    {result.status === 'complete' &&
-                      (expandedResults.has(result.keyword) ? (
-                        <ChevronDown className="h-5 w-5 text-slate-400" />
-                      ) : (
-                        <ChevronRight className="h-5 w-5 text-slate-400" />
-                      ))}
-                  </button>
-
-                  {expandedResults.has(result.keyword) && result.result && (
-                    <div className="px-4 py-3 border-t bg-white">
-                      <p className="text-sm text-slate-700 whitespace-pre-wrap">
-                        {result.result}
-                      </p>
-                    </div>
-                  )}
-
-                  {result.error && (
-                    <div className="px-4 py-3 border-t bg-red-100">
-                      <p className="text-sm text-red-600">
-                        Error: {result.error}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-          {/* Empty State */}
-          {!isGenerating && !showSuccessBanner && stage1Results.length === 0 && (
-            <div className="text-center py-12 text-slate-500">
-              <p className="text-lg">Ready to generate a report.</p>
-              <p className="text-sm mt-2">
-                Configure your settings and click &quot;Generate Report&quot; to get
-                started.
-              </p>
+                  );
+                })}
+              </div>
             </div>
           )}
+
+          {/* Empty State */}
+          {!isGenerating &&
+            !showSuccessBanner &&
+            stage1Results.length === 0 && (
+              <div className="text-center py-12 text-slate-500">
+                <p className="text-lg">Ready to generate a report.</p>
+                <p className="text-sm mt-2">
+                  Configure your settings and click &quot;Generate Report&quot;
+                  to get started.
+                </p>
+              </div>
+            )}
         </div>
       )}
     </div>

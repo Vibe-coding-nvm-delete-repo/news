@@ -10,16 +10,22 @@ interface ReportGroupProps {
   cost?: number;
 }
 
-export default function ReportGroup({ reportId, generatedAt, keywords, cardCount, cost }: ReportGroupProps) {
+export default function ReportGroup({
+  reportId,
+  generatedAt,
+  keywords,
+  cardCount,
+  cost,
+}: ReportGroupProps) {
   const date = new Date(generatedAt);
-  const formattedDate = date.toLocaleDateString('en-US', { 
-    month: 'short', 
-    day: 'numeric', 
-    year: 'numeric' 
+  const formattedDate = date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
   });
-  const formattedTime = date.toLocaleTimeString('en-US', { 
-    hour: '2-digit', 
-    minute: '2-digit' 
+  const formattedTime = date.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
   });
 
   return (
@@ -29,7 +35,9 @@ export default function ReportGroup({ reportId, generatedAt, keywords, cardCount
           <div className="flex items-center gap-2">
             <Clock className="h-5 w-5 text-indigo-600" />
             <div>
-              <p className="text-sm font-semibold text-indigo-900">{formattedDate}</p>
+              <p className="text-sm font-semibold text-indigo-900">
+                {formattedDate}
+              </p>
               <p className="text-xs text-indigo-600">{formattedTime}</p>
             </div>
           </div>
