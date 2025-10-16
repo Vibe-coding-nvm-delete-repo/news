@@ -182,10 +182,10 @@ export default function NewsTab() {
       ? settings.selectedModel
       : `${settings.selectedModel}:online`;
 
-    // Stage 1: Search for each keyword WITH WORKER POOL CONCURRENCY
-    // Worker pool pattern: maintains exactly N concurrent searches for optimal throughput
-    // No head-of-line blocking - new searches start immediately when slots free up
-    const CONCURRENT_LIMIT = 15; // Optimal: 15-20 concurrent searches (increased from 10)
+    // Stage 1: Search for each keyword WITH CONTROLLED CONCURRENCY
+    // OpenRouter's :online models require web searches which are slow and rate-limited
+    // Lower concurrency (2-3) prevents API throttling and improves consistency
+    const CONCURRENT_LIMIT = 3; // Optimal for :online models to prevent rate limiting
 
     /**
      * Worker pool helper: processes items with controlled concurrency
