@@ -49,7 +49,11 @@ export default function Home() {
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex gap-2 mb-6 border-b border-slate-200 overflow-x-auto">
+        <div
+          className="flex gap-2 mb-6 border-b border-slate-200 overflow-x-auto"
+          role="tablist"
+          aria-label="Primary sections"
+        >
           <button
             onClick={() => setActiveTab('settings')}
             className={`px-6 py-3 font-medium transition-colors whitespace-nowrap ${
@@ -57,6 +61,9 @@ export default function Home() {
                 ? 'text-blue-600 border-b-2 border-blue-600'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
+            role="tab"
+            aria-selected={activeTab === 'settings'}
+            aria-label="Settings"
           >
             Settings
           </button>
@@ -67,6 +74,9 @@ export default function Home() {
                 ? 'text-blue-600 border-b-2 border-blue-600'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
+            role="tab"
+            aria-selected={activeTab === 'news'}
+            aria-label="News"
           >
             News
           </button>
@@ -77,6 +87,9 @@ export default function Home() {
                 ? 'text-blue-600 border-b-2 border-blue-600'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
+            role="tab"
+            aria-selected={activeTab === 'policy'}
+            aria-label="Agent Policy"
           >
             🤖 Agent Policy
           </button>
