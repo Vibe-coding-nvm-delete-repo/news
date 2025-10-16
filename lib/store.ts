@@ -224,26 +224,42 @@ export const useStore = create<StoreState>()(
         apiKey: null,
         selectedModel: null,
         keywords: [],
-        searchInstructions: `Search for recent news about this keyword.
+        searchInstructions: `YOU ARE A PROFESSIONAL NEWS RESEARCHER. Your job is to SEARCH THE WEB THOROUGHLY for recent breaking news.
 
-Return ONLY this exact JSON format (no extra text or fields):
+SEARCH INSTRUCTIONS:
+1. SEARCH multiple reputable news sources for the keyword provided below
+2. Find AT LEAST 5-10 recent news stories (more is better)
+3. Prioritize stories from the LAST 48 HOURS when possible
+4. Include the EXACT publication date in YYYY-MM-DD format
+5. Include the actual article URL (not the homepage)
+
+CRITICAL REQUIREMENTS FOR EACH STORY:
+- "title": Full headline exactly as it appears in the article
+- "category": Must be one of: Technology, Politics, Business, Science, World, Sports, Entertainment, Health
+- "rating": Rate the news significance from 1-10 (1=trivial mention, 5=notable news, 8=major story, 10=breaking global event)
+- "summary": Write 2-3 sentences explaining the key facts and why it matters
+- "source": The publication name (e.g., "Reuters", "TechCrunch", "BBC News")
+- "url": The complete article URL starting with https://
+- "date": Publication date in YYYY-MM-DD format (REQUIRED - do not guess, find the actual date)
+
+Return ONLY valid JSON in this EXACT format (no markdown, no extra text):
 {
   "stories": [
     {
-      "title": "Headline",
+      "title": "Full article headline",
       "category": "Technology",
       "rating": 7,
-      "summary": "Brief summary",
-      "source": "Source name",
-      "url": "https://...",
+      "summary": "Detailed 2-3 sentence summary of the key facts and implications.",
+      "source": "Publication Name",
+      "url": "https://actual-article-url.com/article",
       "date": "2025-10-16"
     }
   ]
 }
 
-If no news found, return: {"stories": []}
+ONLY return {"stories": []} if you absolutely cannot find ANY relevant news after thorough searching.
 
-Keyword:`,
+NOW SEARCH FOR THIS KEYWORD:`,
         onlineEnabled: true,
         modelParameters: DEFAULT_MODEL_PARAMETERS,
       },
