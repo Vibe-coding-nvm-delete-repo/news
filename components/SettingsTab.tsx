@@ -484,18 +484,19 @@ export default function SettingsTab() {
                   type="number"
                   min="100"
                   max="10000"
-                  value={settings.modelParameters?.max_tokens ?? 2000}
+                  value={settings.modelParameters?.max_tokens ?? 8000}
                   onChange={e =>
                     setModelParameters({
-                      max_tokens: parseInt(e.target.value) || 2000,
+                      max_tokens: parseInt(e.target.value) || 8000,
                     })
                   }
                   className="w-24 text-right"
                 />
               </div>
               <p className="text-xs text-slate-500">
-                Maximum response length. Controls cost and prevents overly long
-                responses. Recommended: 1500-2500.
+                Maximum response length. Controls cost and prevents JSON
+                truncation. Recommended: 6000-8000 for 5-10 stories. Too low
+                causes incomplete responses.
               </p>
             </div>
 
@@ -625,7 +626,7 @@ export default function SettingsTab() {
               onClick={() =>
                 setModelParameters({
                   temperature: 0.5,
-                  max_tokens: 2000,
+                  max_tokens: 8000,
                   response_format: 'json_object',
                   top_p: 0.9,
                   frequency_penalty: 0.5,
