@@ -9,8 +9,8 @@ The client-side workflow orchestrated in `components/NewsTab.tsx` performs a det
 1. Validate configuration (API key, model, keyword state).
 2. Compose the OpenRouter payload by merging instructions, keyword text, and normalized model parameters.
 3. POST to `https://openrouter.ai/api/v1/chat/completions`.
-4. Decode and sanity-check the OpenRouter JSON response.
-5. Parse the AI-provided JSON into a `stories` array.
+4. Decode and sanity-check the OpenRouter response payload.
+5. Convert the plain-text stories into structured JSON using the user-provided conversion instructions.
 6. Transform each story into a `Card` entity and compute usage costs.
 7. Persist cards and metrics into the Zustand store.
 
@@ -24,9 +24,10 @@ The UI now renders each step's status, duration, and diagnostic notes so we can 
 | 2    | Compose Prompt Payload           | Before network call                 | Builds `{ model, messages, ...normalizedParameters }` body | Malformed parameters (should not happen after normalization)          |
 | 3    | POST OpenRouter Chat Completions | Fetch with abort + 20s timeout      | `Response.ok === true`                                     | HTTP error, timeout, abort, or network issue                          |
 | 4    | Read OpenRouter Response         | JSON decode or SSE aggregation      | Usage metadata + `choices[0].message.content`              | Streaming never completed, JSON parse error, OpenRouter `error` field |
-| 5    | Parse Stories JSON               | `parseJSON(result)`                 | Validated `stories[]` array                                | JSON syntax error or missing `stories` key                            |
-| 6    | Materialize Cards                | Map stories → `Card` objects        | Cards with ids, metadata, cost calculations                | Skipped if Step 5 fails                                               |
-| 7    | Persist & Update State           | Add cards to store, update progress | Cards appended, counters updated                           | Skipped if upstream failure                                           |
+| 5    | Convert Plain Text to JSON       | `convertTextToStories(result)`      | Stories + rejection counts from conversion                 | Regex errors, zero detected stories, invalid conversion instructions  |
+| 6    | Parse Stories JSON               | `parseJSON(convertedJson)`          | Validated `stories[]` array                                | JSON syntax error or missing `stories` key                            |
+| 7    | Materialize Cards                | Map stories → `Card` objects        | Cards with ids, metadata, cost calculations                | Skipped if Step 6 fails                                               |
+| 8    | Persist & Update State           | Add cards to store, update progress | Cards appended, counters updated                           | Skipped if upstream failure                                           |
 
 ### Payload Composition (Step 2)
 
@@ -46,12 +47,12 @@ Body: {
 }
 ```
 
-### Response Handling (Steps 4–5)
+### Response Handling (Steps 4–6)
 
 - We inspect the `Content-Type`; `application/json` payloads are parsed directly, while `text/event-stream` bodies are consumed incrementally until a terminal `[DONE]` marker with a complete `choices` payload arrives.
 - Regardless of transport, the decoded response must not contain an `error` property.
-- `choices[0].message.content` is expected to be JSON (object or array). We use `parseJSON` to sanitize plain text, embedded JSON, or arrays.
-- If parsing fails or the stories array is missing, later stages are marked as skipped/error.
+- `choices[0].message.content` is plain text. We run it through `convertTextToStories`, which applies the configurable regex instructions, returns structured stories, and tracks rejected fragments.
+- The conversion outcome is stringified, then parsed with `parseJSON` to reuse downstream validators. If parsing fails or the stories array is missing, later stages are marked as skipped/error.
 
 ### Card Materialization (Steps 6–7)
 
