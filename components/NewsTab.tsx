@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useStore, Card } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import {
@@ -80,6 +80,8 @@ export default function NewsTab() {
     avgRating: number;
     ratingDistribution: { [key: number]: number };
   } | null>(null);
+  const [currentGenerationCardCount, setCurrentGenerationCardCount] =
+    useState(0);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   // Calculate estimated cost whenever keywords or model changes
@@ -143,6 +145,7 @@ export default function NewsTab() {
     setStage1StartTime(null);
     setStage1ElapsedTime(0);
     setShowCompletionAnimation(false);
+    setCurrentGenerationCardCount(0);
   };
 
   const generateReport = async () => {
@@ -170,6 +173,7 @@ export default function NewsTab() {
     setShowNoCardsWarning(false);
     setShowCompletionAnimation(false);
     setShowSuccessBanner(false);
+    setCurrentGenerationCardCount(0);
 
     // Generate unique reportId for this generation
     const reportId = Date.now().toString();
@@ -501,6 +505,8 @@ export default function NewsTab() {
         // Immediately add completed cards to the active list (don't wait for all to finish)
         if (cardsFromStories.length > 0) {
           addCardsToActive(cardsFromStories);
+          // Update the current generation card count for real-time feedback
+          setCurrentGenerationCardCount(prev => prev + cardsFromStories.length);
         }
 
         return {
@@ -533,7 +539,13 @@ export default function NewsTab() {
           return updated;
         });
 
-        return { success: false, cards: [], cost: 0 };
+        return {
+          success: false,
+          cards: [],
+          cost: 0,
+          totalStories: 0,
+          rejectedStories: 0,
+        };
       }
     };
 
@@ -565,6 +577,12 @@ export default function NewsTab() {
       }
     });
 
+    // Ensure we have the final count from allCards, not just currentGenerationCardCount
+    const finalCardCount = allCards.length;
+    log(
+      `Final aggregation: ${finalCardCount} cards, ${totalCost.toFixed(4)} cost`
+    );
+
     log(
       `Generated ${allCards.length} cards with total cost $${totalCost.toFixed(4)}`
     );
@@ -576,9 +594,9 @@ export default function NewsTab() {
     setTimeout(() => setShowCompletionAnimation(false), 2000);
 
     // Always show summary banner and create history entry, regardless of card count
-    // Calculate report metadata
+    // Calculate report metadata using final card count
     let metadata = null;
-    if (allCards.length > 0) {
+    if (finalCardCount > 0) {
       const categories = Array.from(
         new Set(allCards.map(card => card.category))
       );
@@ -608,7 +626,7 @@ export default function NewsTab() {
       id: reportId,
       generatedAt: new Date().toISOString(),
       keywords: enabledKeywords.map(k => k.text),
-      totalCards: allCards.length,
+      totalCards: finalCardCount,
       modelUsed: settings.selectedModel || 'unknown',
       costSpent: totalCost,
       categories: metadata?.categories || [],
@@ -616,10 +634,14 @@ export default function NewsTab() {
       ratingDistribution: metadata?.ratingDistribution || {},
     });
 
-    // Always show success banner (will display appropriate message based on card count)
+    // Update final state and show success banner
+    // Ensure we have the final card count from the aggregated results
     setLastReportCost(totalCost);
-    setLastReportCardCount(allCards.length);
+    setLastReportCardCount(finalCardCount);
     setLastReportMetadata(metadata);
+    setCurrentGenerationCardCount(finalCardCount);
+
+    // Show success banner immediately - state should be consistent now
     setShowSuccessBanner(true);
 
     // Show no cards warning with a small delay to prevent confusion
@@ -634,7 +656,7 @@ export default function NewsTab() {
     abortControllerRef.current = null;
   };
 
-  const toggleExpanded = (keyword: string) => {
+  const toggleExpanded = useCallback((keyword: string) => {
     setExpandedResults(prev => {
       const newSet = new Set(prev);
       if (newSet.has(keyword)) {
@@ -644,7 +666,7 @@ export default function NewsTab() {
       }
       return newSet;
     });
-  };
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -1015,12 +1037,9 @@ export default function NewsTab() {
                     <div className="text-sm font-mono text-slate-600">
                       {(stage1ElapsedTime / 1000).toFixed(1)}s
                     </div>
-                    {isGenerating && (
-                      <div className="flex items-center gap-2 text-blue-600">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span className="text-sm font-medium">
-                          Generating news stories...
-                        </span>
+                    {currentGenerationCardCount > 0 && (
+                      <div className="text-sm font-semibold text-green-600">
+                        {currentGenerationCardCount} cards generated
                       </div>
                     )}
                   </div>
@@ -1039,17 +1058,27 @@ export default function NewsTab() {
 
               {/* Progress Bar */}
               {currentStage === 1 && (
-                <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-500 ease-out flex items-center justify-end px-2"
-                    style={{ width: `${stage1Progress}%` }}
-                  >
-                    {stage1Progress > 10 && (
-                      <span className="text-xs font-bold text-white">
-                        {Math.round(stage1Progress)}%
-                      </span>
-                    )}
+                <div className="space-y-2">
+                  <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-500 ease-out flex items-center justify-end px-2"
+                      style={{ width: `${stage1Progress}%` }}
+                    >
+                      {stage1Progress > 10 && (
+                        <span className="text-xs font-bold text-white">
+                          {Math.round(stage1Progress)}%
+                        </span>
+                      )}
+                    </div>
                   </div>
+                  {currentGenerationCardCount > 0 && (
+                    <div className="flex items-center gap-2 text-sm text-green-600">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                      <span className="font-medium">
+                        {currentGenerationCardCount} news cards generated so far
+                      </span>
+                    </div>
+                  )}
                 </div>
               )}
 

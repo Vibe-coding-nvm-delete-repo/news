@@ -7,9 +7,11 @@ This document lists **every parameter** that can be added to improve model resul
 ---
 
 ## 🎯 SECTION 1: CORE QUALITY PARAMETERS
-*These have the biggest impact on results*
+
+_These have the biggest impact on results_
 
 ### 1. Temperature (0.0 - 2.0)
+
 - **Type:** Slider
 - **Default:** 0.7 (model default) → Recommend 0.5 for news
 - **Purpose:** Controls randomness/creativity
@@ -21,6 +23,7 @@ This document lists **every parameter** that can be added to improve model resul
   - 1.6-2.0: Very creative, unpredictable
 
 ### 2. Max Tokens
+
 - **Type:** Number input
 - **Default:** Model-dependent → Recommend 2000
 - **Purpose:** Limits response length
@@ -35,8 +38,9 @@ This document lists **every parameter** that can be added to improve model resul
   - Deep research: 3000-5000
 
 ### 3. Response Format
+
 - **Type:** Dropdown
-- **Options:** 
+- **Options:**
   - `auto` (no constraint)
   - `json_object` (enforces valid JSON)
   - `text` (plain text)
@@ -46,6 +50,7 @@ This document lists **every parameter** that can be added to improve model resul
 - **Why:** Your app expects JSON but doesn't enforce it!
 
 ### 4. Top P (Nucleus Sampling) (0.0 - 1.0)
+
 - **Type:** Slider
 - **Default:** 0.95 (model default) → Recommend 0.9
 - **Purpose:** Alternative to temperature
@@ -57,6 +62,7 @@ This document lists **every parameter** that can be added to improve model resul
 - **Note:** Use either temperature OR top_p, not both at extremes
 
 ### 5. Frequency Penalty (0.0 - 2.0)
+
 - **Type:** Slider
 - **Default:** 0.0 → Recommend 0.5
 - **Purpose:** Reduces word/phrase repetition
@@ -67,6 +73,7 @@ This document lists **every parameter** that can be added to improve model resul
   - 1.0-2.0: Strong (may hurt fluency)
 
 ### 6. Presence Penalty (0.0 - 2.0)
+
 - **Type:** Slider
 - **Default:** 0.0 → Recommend 0.3
 - **Purpose:** Encourages new topics
@@ -79,11 +86,13 @@ This document lists **every parameter** that can be added to improve model resul
 ---
 
 ## 🧠 SECTION 2: REASONING MODEL PARAMETERS
-*Only for O1, O3, DeepSeek R1, Claude Extended Thinking, etc.*
+
+_Only for O1, O3, DeepSeek R1, Claude Extended Thinking, etc._
 
 ### 7. Reasoning Level
+
 - **Type:** Dropdown
-- **Options:** 
+- **Options:**
   - `low` (fast, basic)
   - `medium` (balanced)
   - `high` (deep, thorough, expensive)
@@ -97,6 +106,7 @@ This document lists **every parameter** that can be added to improve model resul
   - Qwen reasoning variants
 
 ### 8. Include Reasoning Output
+
 - **Type:** Toggle (on/off)
 - **Default:** false → Recommend true for quality control
 - **Purpose:** Shows model's thinking process
@@ -112,20 +122,22 @@ This document lists **every parameter** that can be added to improve model resul
 ## 🎨 SECTION 3: OUTPUT CONTROL PARAMETERS
 
 ### 9. Stop Sequences
+
 - **Type:** Multi-input text field (array of strings)
 - **Default:** None
 - **Purpose:** Stop generation at specific text
 - **Impact:** 🔥 MEDIUM
 - **Examples:**
-  ```
+  ````
   ["END", "\n\n---", "###", "```"]
-  ```
+  ````
 - **Use Cases:**
   - Prevent model from adding explanations after JSON
   - Stop at specific markers
   - Control output boundaries
 
 ### 10. Structured Outputs
+
 - **Type:** Toggle
 - **Default:** false → Recommend true
 - **Purpose:** Enforces JSON schema compliance
@@ -138,6 +150,7 @@ This document lists **every parameter** that can be added to improve model resul
 ## 🔬 SECTION 4: ADVANCED SAMPLING PARAMETERS
 
 ### 11. Top K
+
 - **Type:** Number input
 - **Default:** Model-dependent (often 40)
 - **Purpose:** Limits sampling to top K tokens
@@ -148,6 +161,7 @@ This document lists **every parameter** that can be added to improve model resul
   - 50-100: More diverse
 
 ### 12. Min P (Minimum Probability)
+
 - **Type:** Slider (0.0 - 1.0)
 - **Default:** 0.0
 - **Purpose:** Filters out low-probability tokens
@@ -157,6 +171,7 @@ This document lists **every parameter** that can be added to improve model resul
   - More stable than top_p for some models
 
 ### 13. Repetition Penalty (1.0 - 2.0)
+
 - **Type:** Slider
 - **Default:** 1.0 → Recommend 1.1
 - **Purpose:** Similar to frequency penalty
@@ -167,6 +182,7 @@ This document lists **every parameter** that can be added to improve model resul
   - 1.4-2.0: Strong (may hurt quality)
 
 ### 14. Top A (Top-A Sampling)
+
 - **Type:** Slider (0.0 - 1.0)
 - **Default:** 0.0 (disabled)
 - **Purpose:** Adaptive threshold sampling
@@ -178,6 +194,7 @@ This document lists **every parameter** that can be added to improve model resul
 ## 🔍 SECTION 5: DEBUGGING & ANALYSIS PARAMETERS
 
 ### 15. Seed (Reproducibility)
+
 - **Type:** Number input
 - **Default:** None (random)
 - **Purpose:** Makes results reproducible
@@ -189,6 +206,7 @@ This document lists **every parameter** that can be added to improve model resul
   - Demonstrations
 
 ### 16. Logprobs (Log Probabilities)
+
 - **Type:** Toggle
 - **Default:** false
 - **Purpose:** Returns token probabilities
@@ -199,6 +217,7 @@ This document lists **every parameter** that can be added to improve model resul
   - Quality assessment
 
 ### 17. Top Logprobs (1-20)
+
 - **Type:** Number input
 - **Default:** None
 - **Purpose:** Number of top token probabilities to return
@@ -207,6 +226,7 @@ This document lists **every parameter** that can be added to improve model resul
 - **Values:** 1-20 (5 is common)
 
 ### 18. Logit Bias
+
 - **Type:** JSON object input (advanced)
 - **Default:** None
 - **Purpose:** Bias specific tokens
@@ -214,8 +234,8 @@ This document lists **every parameter** that can be added to improve model resul
 - **Example:**
   ```json
   {
-    "1234": -100,  // Ban token
-    "5678": 50     // Encourage token
+    "1234": -100, // Ban token
+    "5678": 50 // Encourage token
   }
   ```
 - **Use Cases:**
@@ -228,6 +248,7 @@ This document lists **every parameter** that can be added to improve model resul
 ## 🌐 SECTION 6: OPENROUTER-SPECIFIC OPTIONS
 
 ### 19. Provider Preferences
+
 - **Type:** Dropdown + toggle
 - **Options:**
   - Provider order: ["Anthropic", "OpenAI", "Google", etc.]
@@ -241,6 +262,7 @@ This document lists **every parameter** that can be added to improve model resul
   - Cost optimization
 
 ### 20. Transforms
+
 - **Type:** Dropdown (multi-select)
 - **Options:**
   - `middle-out` (context optimization)
@@ -250,6 +272,7 @@ This document lists **every parameter** that can be added to improve model resul
 - **Note:** OpenRouter feature
 
 ### 21. Models Override (A/B Testing)
+
 - **Type:** Multi-select dropdown
 - **Default:** Single model
 - **Purpose:** Send same request to multiple models
@@ -261,6 +284,7 @@ This document lists **every parameter** that can be added to improve model resul
 ## 💰 SECTION 7: COST CONTROL OPTIONS
 
 ### 22. Web Search Toggle
+
 - **Type:** Toggle
 - **Default:** true (always on with :online)
 - **Purpose:** Control web search usage
@@ -269,6 +293,7 @@ This document lists **every parameter** that can be added to improve model resul
 - **Current Status:** Always enabled, no UI control
 
 ### 23. Max Tokens per Keyword
+
 - **Type:** Number input
 - **Default:** Unlimited
 - **Purpose:** Budget control per keyword
@@ -276,6 +301,7 @@ This document lists **every parameter** that can be added to improve model resul
 - **Recommended:** Same as max_tokens
 
 ### 24. Internal Reasoning Cost Display
+
 - **Type:** Display only (info)
 - **Purpose:** Show reasoning token costs
 - **Impact:** 🔥 MEDIUM (transparency)
@@ -286,6 +312,7 @@ This document lists **every parameter** that can be added to improve model resul
 ## 🎨 SECTION 8: TOOL & FUNCTION CALLING
 
 ### 25. Tools
+
 - **Type:** Array of tool definitions
 - **Default:** None
 - **Purpose:** Enable function calling
@@ -296,6 +323,7 @@ This document lists **every parameter** that can be added to improve model resul
   - Multi-step workflows
 
 ### 26. Tool Choice
+
 - **Type:** Dropdown
 - **Options:**
   - `auto` (model decides)
@@ -311,6 +339,7 @@ This document lists **every parameter** that can be added to improve model resul
 ## 🏆 RECOMMENDED PRESET CONFIGURATIONS
 
 ### Preset 1: "Accurate News" (Recommended Default)
+
 ```json
 {
   "temperature": 0.5,
@@ -323,6 +352,7 @@ This document lists **every parameter** that can be added to improve model resul
 ```
 
 ### Preset 2: "Budget-Friendly"
+
 ```json
 {
   "temperature": 0.3,
@@ -334,6 +364,7 @@ This document lists **every parameter** that can be added to improve model resul
 ```
 
 ### Preset 3: "Deep Research" (for reasoning models)
+
 ```json
 {
   "reasoning": "high",
@@ -345,6 +376,7 @@ This document lists **every parameter** that can be added to improve model resul
 ```
 
 ### Preset 4: "Fast & Concise"
+
 ```json
 {
   "temperature": 0.3,
@@ -355,6 +387,7 @@ This document lists **every parameter** that can be added to improve model resul
 ```
 
 ### Preset 5: "Creative Summaries"
+
 ```json
 {
   "temperature": 0.8,
@@ -457,6 +490,7 @@ This document lists **every parameter** that can be added to improve model resul
 ## 🚦 IMPLEMENTATION PRIORITY
 
 ### 🔥 PHASE 1: CRITICAL (Week 1)
+
 1. ✅ temperature
 2. ✅ max_tokens
 3. ✅ response_format (json_object)
@@ -465,6 +499,7 @@ This document lists **every parameter** that can be added to improve model resul
 **Why:** Biggest quality + cost impact
 
 ### 🔥 PHASE 2: HIGH PRIORITY (Week 2)
+
 5. ✅ frequency_penalty
 6. ✅ presence_penalty
 7. ✅ reasoning + include_reasoning (for reasoning models)
@@ -473,6 +508,7 @@ This document lists **every parameter** that can be added to improve model resul
 **Why:** Improves consistency and diversity
 
 ### 🔥 PHASE 3: MEDIUM PRIORITY (Week 3)
+
 9. ✅ stop sequences
 10. ✅ seed
 11. ✅ structured_outputs
@@ -481,6 +517,7 @@ This document lists **every parameter** that can be added to improve model resul
 **Why:** Better control and debugging
 
 ### 🔥 PHASE 4: ADVANCED (Week 4+)
+
 13. ✅ top_k, min_p, repetition_penalty
 14. ✅ provider preferences
 15. ✅ logprobs
@@ -493,6 +530,7 @@ This document lists **every parameter** that can be added to improve model resul
 ## 📈 EXPECTED QUALITY IMPROVEMENTS
 
 ### Current State (No Parameters):
+
 - JSON parse success: ~85%
 - Response relevance: ~75%
 - Repetition issues: ~30% of responses
@@ -500,6 +538,7 @@ This document lists **every parameter** that can be added to improve model resul
 - Average response time: 15-60s
 
 ### With Phase 1 Parameters:
+
 - JSON parse success: ~98% ✅ (+13%)
 - Response relevance: ~90% ✅ (+15%)
 - Repetition issues: ~15% ✅ (-15%)
@@ -507,6 +546,7 @@ This document lists **every parameter** that can be added to improve model resul
 - Average response time: 10-40s ✅ (faster, more consistent)
 
 ### With All Parameters:
+
 - JSON parse success: ~99.5% ✅
 - Response relevance: ~95% ✅
 - Repetition issues: ~5% ✅
@@ -520,23 +560,27 @@ This document lists **every parameter** that can be added to improve model resul
 ## 🎓 PARAMETER INTERACTION GUIDE
 
 ### Temperature vs Top P
+
 - **Don't use both at extremes**
 - If temp = 0.2, use top_p = 0.9-1.0
 - If temp = 1.5, use top_p = 0.5-0.7
 - **Recommended:** temp = 0.5, top_p = 0.9
 
 ### Frequency vs Presence Penalty
+
 - **Use both for best results**
 - Frequency: Reduces word repetition
 - Presence: Encourages topic diversity
 - **Recommended:** freq = 0.5, presence = 0.3
 
 ### Max Tokens vs Reasoning Level
+
 - High reasoning = more tokens needed
 - reasoning: high → max_tokens: 3000+
 - reasoning: low → max_tokens: 1500+
 
 ### Stop Sequences vs Max Tokens
+
 - Stop sequences = quality control
 - Max tokens = cost control
 - Use both for best results
@@ -546,26 +590,31 @@ This document lists **every parameter** that can be added to improve model resul
 ## 📝 PARAMETER VALIDATION RULES
 
 ### Temperature
+
 - Min: 0.0
 - Max: 2.0
 - Recommend: 0.3-0.8 for factual content
 
 ### Max Tokens
+
 - Min: 1
 - Max: Model-dependent (check context_length)
 - Recommend: 1000-3000 for news
 
 ### Penalties (frequency, presence, repetition)
+
 - Min: -2.0 (some models)
 - Max: 2.0
 - Recommend: 0.0-1.0 (positive values)
 
 ### Top P
+
 - Min: 0.0
 - Max: 1.0
 - Recommend: 0.85-0.95
 
 ### Top K
+
 - Min: 1
 - Max: Model vocabulary size
 - Recommend: 20-50

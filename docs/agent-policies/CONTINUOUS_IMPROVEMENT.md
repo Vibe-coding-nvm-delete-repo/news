@@ -11,13 +11,16 @@
 ### The Continuous Improvement Mandate
 
 **Core Principle:**
+
 > During planning and implementation, the agent MUST actively look for opportunities to reduce unnecessary technical debt, improve testing (coverage/speed/clarity), or optimize development flow.
 
 **Scope Boundary:**
+
 - **In-scope:** Improvements directly related to current work
 - **Out-of-scope:** Improvements requiring separate issue
 
 **Action Required:**
+
 - **Can handle safely under Mode 0.5** → Implement immediately
 - **Outside current issue scope or Mode 0.5** → Draft new issue proposal
 
@@ -28,6 +31,7 @@
 ### 1. Code Quality Improvements
 
 **Examples:**
+
 - Dead code removal
 - Duplicated logic extraction
 - Type safety enhancement
@@ -35,6 +39,7 @@
 - Comment/documentation gaps
 
 **Threshold for Immediate Action (Mode 0.5):**
+
 ```typescript
 // ✅ Can do immediately in Mode 0.5:
 // Remove 3 unused imports (8 lines, 1 file)
@@ -51,6 +56,7 @@
 ### 2. Testing Improvements
 
 **Examples:**
+
 - Missing edge case tests
 - Slow test optimization
 - Flaky test fixes
@@ -58,6 +64,7 @@
 - Coverage gaps
 
 **Threshold for Immediate Action (Mode 0.5):**
+
 ```typescript
 // ✅ Can do immediately:
 // Add missing null check test (12 lines, 1 file)
@@ -75,6 +82,7 @@ it('should handle null user gracefully', () => {
 ### 3. Performance Optimizations
 
 **Examples:**
+
 - Inefficient algorithms (O(n²) → O(n))
 - Missing memoization
 - Unnecessary re-renders
@@ -82,13 +90,11 @@ it('should handle null user gracefully', () => {
 - Database query optimization
 
 **Threshold for Immediate Action:**
+
 ```typescript
 // ✅ Can do immediately if noticed during work:
 // Add useMemo to expensive computation (5 lines)
-const filtered = useMemo(
-  () => items.filter(item => item.active),
-  [items]
-);
+const filtered = useMemo(() => items.filter(item => item.active), [items]);
 
 // ❌ Requires separate issue:
 // Refactor entire component tree for React.memo
@@ -100,6 +106,7 @@ const filtered = useMemo(
 ### 4. Developer Experience (DX)
 
 **Examples:**
+
 - Confusing error messages
 - Missing logging/debugging hooks
 - Unclear variable names
@@ -107,6 +114,7 @@ const filtered = useMemo(
 - Poor API ergonomics
 
 **Threshold for Immediate Action:**
+
 ```typescript
 // ✅ Can do immediately:
 // Improve error message clarity (3 lines)
@@ -123,6 +131,7 @@ const filtered = useMemo(
 ### 5. Security Enhancements
 
 **Examples:**
+
 - Input validation gaps
 - XSS vulnerability fixes
 - SQL injection prevention
@@ -130,6 +139,7 @@ const filtered = useMemo(
 - Dependency vulnerabilities
 
 **Special Rule:**
+
 ```
 🚨 SECURITY ISSUES REQUIRE IMMEDIATE MODE 4 FREEZE
 → Do NOT fix yourself
@@ -189,8 +199,12 @@ const users = await db.query(`SELECT * FROM users WHERE id = '${userId}'`);
 
 // ✅ GOOD: Notice improvement
 // Current code (nearby, not part of Issue #123):
-const formatDate = (d) => { /* unused function */ }
-const formatTime = (t) => { /* unused function */ }
+const formatDate = d => {
+  /* unused function */
+};
+const formatTime = t => {
+  /* unused function */
+};
 
 // Action: Create Mode 0.5 cleanup or propose new issue
 ```
@@ -205,15 +219,18 @@ const formatTime = (t) => { /* unused function */ }
 ## Technical Debt Review Checklist
 
 **Code I touched:**
+
 - [ ] No new technical debt introduced
 - [ ] Existing debt reduced (if safely possible)
 - [ ] No obvious smells left behind
 
 **Related Code (nearby):**
+
 - [ ] Identified improvement opportunities
 - [ ] Classified as: Immediate fix OR New issue proposal
 
 **Systemic Issues:**
+
 - [ ] Noted any architectural roadblocks
 - [ ] Flagged for PQA issue creation (if major)
 ```
@@ -280,6 +297,7 @@ reduce to ~50 requests/minute, improving server load and user experience.
 **Estimated Effort:** 1 hour
 
 **Evidence:**
+
 - Current code: src/components/UserSearch.tsx:42-58
 - Network tab shows 8 requests for "john" (j, jo, joh, john, ...)
 - Backend logs show 500 req/min avg during business hours
@@ -307,6 +325,7 @@ expired session). These scenarios cause 40% of production auth issues per logs.
 **Estimated Effort:** 3 hours
 
 **Evidence:**
+
 - Coverage report: src/auth/login.ts shows untested branches
 - Production logs (last 30d): 127 auth errors, 52 from untested paths
 - Sentry: https://sentry.io/issues/AUTH-ERROR-GROUP-123
@@ -335,6 +354,7 @@ implementation of session refresh logic. Requires context-based state or Zustand
 **Estimated Effort:** 16-24 hours (2-3 days)
 
 **Evidence:**
+
 - Current code: src/auth/state.ts (global mutable object)
 - Consumers: 8 components directly mutate state
 - Production bug: Issue #118 (race condition during logout)
@@ -406,6 +426,7 @@ Verification
 ### Option 1: Immediate Fix (Mode 0.5)
 
 **When:**
+
 - ≤50 lines, ≤2 files
 - No logic changes
 - app/src/tests files only
@@ -414,6 +435,7 @@ Verification
 **Process:**
 
 1. **Announce Mode Switch:**
+
    ```markdown
    ## Mode 0.5 Declaration
 
@@ -427,6 +449,7 @@ Verification
 2. **Make Changes**
 
 3. **Commit Separately:**
+
    ```bash
    git add src/utils/date.ts
    git commit -m "refactor: remove unused date utilities
@@ -447,7 +470,8 @@ Verification
 ### Option 2: New Issue Proposal (Larger Improvement)
 
 **When:**
-- >50 lines or >2 files
+
+- > 50 lines or >2 files
 - Logic changes required
 - Architecture changes
 - Dependency additions
@@ -458,6 +482,7 @@ Verification
 1. **Draft Proposal** (use template above)
 
 2. **Add to PR Body:**
+
    ```markdown
    ## 💡 New Issue Proposals
 
@@ -478,6 +503,7 @@ Verification
 ### Option 3: Major Systemic Flaw (PQA Issue)
 
 **When:**
+
 - Deep architectural problem
 - Blocking feature work severely
 - Causes production bugs
@@ -486,6 +512,7 @@ Verification
 **Process:**
 
 1. **Create Detailed PQA Proposal:**
+
    ```markdown
    ### Proposal: Refactor Auth Module State Management (PQA)
 
@@ -499,6 +526,7 @@ Verification
    multi-tab support.
 
    **Impact:**
+
    - Blocks: Issues #234, #245, #256 (session features)
    - Causes: ~15 prod bugs/month (race conditions)
    - Workarounds: 3 issues implemented with polling instead of events
@@ -514,12 +542,14 @@ Verification
    **Files Affected:** 8 files in src/auth/
 
    **Evidence:**
+
    - Current Issue #123 blocked by this
    - Production bugs: #118, #167, #201 (all race conditions)
    - Sentry error group: AUTH-RACE-CONDITION (127 occurrences/month)
    ```
 
 2. **Link in Current PR:**
+
    ```markdown
    ## ⚠️ Architectural Roadblock Identified
 
@@ -542,11 +572,13 @@ Verification
 ### Track Proposals
 
 **Quarterly Goals:**
+
 - ≥10 new issue proposals per quarter
 - ≥50% proposals converted to issues
 - ≥30% issues resolved within quarter
 
 **Dashboard:**
+
 ```markdown
 ## Continuous Improvement Tracker (Q4 2025)
 
@@ -555,12 +587,14 @@ Verification
 **Issues Resolved:** 7 (64% of created)
 
 **By Category:**
+
 - Performance: 6 proposals, 4 resolved
 - Testing: 5 proposals, 2 resolved
 - Code Quality: 4 proposals, 1 resolved
 - DX: 3 proposals, 0 resolved
 
 **Impact:**
+
 - Bundle size reduced: 15KB
 - Test coverage increased: +3%
 - Prod bugs reduced: -22% (auth race conditions fixed)
@@ -571,6 +605,7 @@ Verification
 ### Success Stories
 
 **Example:**
+
 ```markdown
 ## Continuous Improvement Success: Auth Module Refactor
 
@@ -580,12 +615,14 @@ Verification
 **Deployed:** 2025-10-14
 
 **Results (30 days post-deploy):**
+
 - Auth race condition bugs: 127/month → 3/month (-98%)
 - Session refresh feature unblocked (shipped 2025-10-20)
 - Multi-tab logout fixed
 - Developer satisfaction: +15% (survey)
 
 **Cost Savings:**
+
 - Debugging time saved: ~40 hours/month
 - Customer support tickets: -30 tickets/month
 - Estimated value: $8,000/month

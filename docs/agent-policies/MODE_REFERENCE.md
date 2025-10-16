@@ -7,6 +7,7 @@
 ## 🔢 Mode 0 — Normal (Default)
 
 ### When to Use
+
 - Standard bug fix or feature implementation
 - Tied to an existing issue number
 - Changes limited to application code
@@ -14,12 +15,14 @@
 ### File Access Rules
 
 **✅ ALLOW (Modify)**
+
 - `app/**` - Application code
 - `src/**` - Source code
 - `tests/**` - Test files
 - `docs/**` - Documentation
 
 **🚫 DENY (Read-Only)**
+
 - All root configs (`eslint.config.*`, `prettier*`, `tsconfig*.json`)
 - Dependencies (`package.json`, `package-lock.json`, `pnpm-lock.yaml`, `yarn.lock`)
 - CI/CD (`.github/**`)
@@ -30,14 +33,17 @@
 **EXCEPTION:** You may modify root configs/dependencies IF you believe unequivocally and conclusively they MUST be changed to fix a core issue. Never hold back from making necessary changes!
 
 ### Constraints
+
 - **Diff Budget:** ≤300 lines, ≤4 files
 - **Runtime Dependencies:** No additions/removals
 - **Non-Text Assets:** Not permitted (requires Mode 3)
 
 ### Action Required
+
 ✅ **Proceed immediately** - No approval needed
 
 ### Example Scenarios
+
 - Fix validation bug in login form
 - Add new API endpoint
 - Update component styling
@@ -48,6 +54,7 @@
 ## 🔧 Mode 0.5 — Self-Initiated Refactor
 
 ### When to Use
+
 - Small, beneficial technical debt reduction
 - Dead code removal
 - Small type cleanup
@@ -56,32 +63,38 @@
 ### File Access Rules
 
 **✅ ALLOW (Modify)**
+
 - `app/**`
 - `src/**`
 - `tests/**`
 
 **🚫 DENY**
+
 - `docs/**` (no documentation changes)
 - All root configs
 - All dependencies
 
 ### Constraints
+
 - **Diff Budget:** ≤50 lines, ≤2 files (STRICT)
 - **Logic Changes:** Not permitted
 - **Dependencies:** No additions/removals
 - **Commit Prefix:** Must use `refactor:`
 
 ### Action Required
+
 1. Announce switch to Mode 0.5
 2. Proceed immediately
 3. State cleanup benefit in PR body
 
 ### Example Scenarios
+
 - Remove unused import statements (3 files, 12 lines)
 - Delete commented-out code block (1 file, 25 lines)
 - Simplify type definition (1 file, 8 lines)
 
 ### Non-Examples (Do NOT use Mode 0.5 for)
+
 - Extracting a new shared function (logic change)
 - Renaming variables across multiple files (>2 files)
 - Updating documentation (not allowed in 0.5)
@@ -91,7 +104,9 @@
 ## 🛠️ Mode 1 — LTRM (Local Tooling Repair Mode)
 
 ### When to Use
+
 **ONLY when** baseline test/typecheck fails due to local configuration issues:
+
 - Jest configuration broken
 - TypeScript config errors
 - Test setup file issues
@@ -99,6 +114,7 @@
 ### File Access Rules
 
 **✅ TEMPORARILY ALLOW (In Addition to Mode 0)**
+
 - `jest.config.*`
 - `tsconfig*.json`
 - `tests/setup*.ts`
@@ -107,26 +123,31 @@
 - Lockfile modification (`package-lock.json`, `pnpm-lock.yaml`, `yarn.lock`) if devDep added
 
 **🚫 STILL DENY**
+
 - Runtime dependencies
 - Other root configs
 - CI/CD files
 - Production dependencies
 
 ### Constraints
+
 - **Diff Budget:** ≤120 lines, ≤2 files
 - **RCA Required:** 3-5 line root cause analysis in commit
 
 ### Action Required
+
 1. Announce switch to Mode 1
 2. Proceed immediately
 3. Include RCA in commit message
 
 ### Example Scenarios
+
 - Jest can't parse TypeScript → Add `ts-jest` devDependency
 - tsconfig.json missing `paths` causing import failures
 - Test setup file missing global mocks
 
 ### Verification Steps
+
 ```bash
 # Before claiming LTRM need:
 npm ci
@@ -143,33 +164,40 @@ npm test          # Must now pass ✅
 ## 🔄 Mode 2 — CI_REPAIR_MODE
 
 ### When to Use
+
 **ONLY when** workflows under `.github/**` are broken at baseline
 
 ### File Access Rules
 
 **✅ ALLOW (Modify)**
+
 - `.github/**` - Workflow files, action configs
 
 **🚫 DENY**
+
 - Everything else (even Mode 0 allowlist is restricted)
 
 ### Constraints
+
 - **Follow CI-Repair Protocol:**
   - Use canary approach (test in isolated workflow first)
   - Keep diffs tiny and surgical
   - Pin action versions explicitly
 
 ### Action Required
+
 1. Declare Mode 2
 2. Follow CI-Repair Protocol
 3. Document baseline failure evidence
 
 ### Example Scenarios
+
 - GitHub Actions workflow syntax error
 - Deprecated action version
 - Missing workflow permission
 
 ### Protocol
+
 1. Reproduce failure locally via `act` or workflow logs
 2. Fix in canary workflow first
 3. Apply to main workflows after validation
@@ -180,7 +208,9 @@ npm test          # Must now pass ✅
 ## 🚨 Mode 3 — Scoped Override
 
 ### When to Use
+
 Solution **necessarily** requires modifying:
+
 - Runtime dependencies
 - Root configuration files (outside LTRM scope)
 - Infrastructure files
@@ -190,21 +220,25 @@ Solution **necessarily** requires modifying:
 ### File Access Rules
 
 **✅ ALLOW**
+
 - **ONLY** paths explicitly listed in the approved override request
 - No other files may be modified
 
 ### Constraints
+
 - **Approval Required:** MUST receive `APPROVED_OVERRIDE` token
 - **File List:** Save approved paths to `PROPOSED_FILES.txt`
 - **Pre-Commit Guard:** Verify staged files ⊆ `PROPOSED_FILES.txt`
 
 ### Action Required
+
 1. **STOP** all work immediately
 2. Submit Override Request using template (see [TEMPLATES.md](./TEMPLATES.md#mode-3-override-request))
 3. Wait for `APPROVED_OVERRIDE: Mode 3 (Option X)` response
 4. Proceed ONLY with approved paths
 
 ### Request Must Include
+
 - Issue number
 - Why override is needed (≤5 lines)
 - Options considered (≥3)
@@ -220,12 +254,14 @@ Solution **necessarily** requires modifying:
 - Evidence pack (repro commands, logs, links)
 
 ### Example Scenarios
+
 - Adding `express` runtime dependency for new API
 - Modifying `next.config.ts` to add image optimization
 - Adding brand logo image (non-text asset)
 - Updating `eslint.config.js` for new rule
 
 ### Timeout Policy
+
 - If no response within **72 hours** → Auto-switch to Mode 4 (Emergency Freeze)
 
 ---
@@ -233,6 +269,7 @@ Solution **necessarily** requires modifying:
 ## 🧊 Mode 4 — Emergency Freeze
 
 ### When to Use
+
 - Risk is high
 - Impact is unknown
 - Ambiguity remains
@@ -243,10 +280,12 @@ Solution **necessarily** requires modifying:
 ### File Access Rules
 
 **🚫 DENY ALL MODIFICATIONS**
+
 - No file modifications allowed
 - Read-only mode
 
 ### Action Required
+
 1. **STOP** all work immediately
 2. Report current status
 3. Request immediate human direction
@@ -257,6 +296,7 @@ Solution **necessarily** requires modifying:
    - Risk assessment
 
 ### Example Scenarios
+
 - Merge conflict resolution unclear
 - Test failures with unknown root cause
 - Conflicting requirements discovered
@@ -264,7 +304,9 @@ Solution **necessarily** requires modifying:
 - Architecture decision needed
 
 ### Exit Mode 4
+
 Human must provide explicit direction:
+
 - `PROCEED_WITH_MODE_X` - Switch to specified mode
 - `ABANDON_WORK` - Close issue as won't-fix
 - `REASSIGN` - Hand off to human developer
@@ -273,16 +315,16 @@ Human must provide explicit direction:
 
 ## 📊 Mode Comparison Matrix
 
-| Aspect | Mode 0 | Mode 0.5 | Mode 1 | Mode 2 | Mode 3 | Mode 4 |
-|--------|--------|----------|--------|--------|--------|--------|
-| **Approval** | No | No | No | No | **YES** | **YES** |
-| **Diff Budget** | 300L/4F | 50L/2F | 120L/2F | Minimal | Per approval | N/A |
-| **Runtime Deps** | No | No | No | No | With approval | No |
-| **Root Configs** | No* | No | Limited | No | With approval | No |
-| **Issue Required** | Yes | No | Yes | Yes | Yes | Yes |
-| **Auto-Trigger** | Manual | Manual | Manual | Manual | Manual | Auto (timeout) |
+| Aspect             | Mode 0  | Mode 0.5 | Mode 1  | Mode 2  | Mode 3        | Mode 4         |
+| ------------------ | ------- | -------- | ------- | ------- | ------------- | -------------- |
+| **Approval**       | No      | No       | No      | No      | **YES**       | **YES**        |
+| **Diff Budget**    | 300L/4F | 50L/2F   | 120L/2F | Minimal | Per approval  | N/A            |
+| **Runtime Deps**   | No      | No       | No      | No      | With approval | No             |
+| **Root Configs**   | No\*    | No       | Limited | No      | With approval | No             |
+| **Issue Required** | Yes     | No       | Yes     | Yes     | Yes           | Yes            |
+| **Auto-Trigger**   | Manual  | Manual   | Manual  | Manual  | Manual        | Auto (timeout) |
 
-*Exception: May modify if conclusively necessary to fix core issue
+\*Exception: May modify if conclusively necessary to fix core issue
 
 ---
 
@@ -308,7 +350,7 @@ Human must provide explicit direction:
            │     │ Local tooling?      │
            └────▶│ → Mode 1            │
                  └─────────────────────┘
-                 
+
      YES ──┐
            │
            ▼

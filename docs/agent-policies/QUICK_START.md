@@ -17,14 +17,14 @@ Our autonomous agents follow **strict governance** through **6 execution modes**
 
 ## 🔢 The 6 Modes (Memorize These)
 
-| Mode | Name | When to Use | Files Allowed | Approval Required |
-|------|------|-------------|---------------|-------------------|
-| **0** | Normal | Standard bugs/features | `app/**`, `src/**`, `tests/**`, `docs/**` | ❌ No |
-| **0.5** | Self-Initiated Refactor | Small cleanup (≤50 lines, ≤2 files) | `app/**`, `src/**`, `tests/**` | ❌ No |
-| **1** | LTRM | Local tooling broken | Add: `jest.config.*`, `tsconfig*.json`, `package.json` (dev only) | ❌ No |
-| **2** | CI_REPAIR_MODE | CI workflows broken | `.github/**` only | ❌ No |
-| **3** | Scoped Override | Need to touch runtime deps, root configs | Explicitly approved files only | ✅ **YES** |
-| **4** | Emergency Freeze | High risk, stalled work | **No modifications allowed** | ✅ **YES** |
+| Mode    | Name                    | When to Use                              | Files Allowed                                                     | Approval Required |
+| ------- | ----------------------- | ---------------------------------------- | ----------------------------------------------------------------- | ----------------- |
+| **0**   | Normal                  | Standard bugs/features                   | `app/**`, `src/**`, `tests/**`, `docs/**`                         | ❌ No             |
+| **0.5** | Self-Initiated Refactor | Small cleanup (≤50 lines, ≤2 files)      | `app/**`, `src/**`, `tests/**`                                    | ❌ No             |
+| **1**   | LTRM                    | Local tooling broken                     | Add: `jest.config.*`, `tsconfig*.json`, `package.json` (dev only) | ❌ No             |
+| **2**   | CI_REPAIR_MODE          | CI workflows broken                      | `.github/**` only                                                 | ❌ No             |
+| **3**   | Scoped Override         | Need to touch runtime deps, root configs | Explicitly approved files only                                    | ✅ **YES**        |
+| **4**   | Emergency Freeze        | High risk, stalled work                  | **No modifications allowed**                                      | ✅ **YES**        |
 
 ---
 
@@ -58,6 +58,7 @@ START: I need to fix Issue #123
 ## 📋 The Standard Workflow (6 Steps)
 
 ### 1️⃣ **Setup**
+
 ```bash
 git fetch origin
 git switch -c ai/123-fix-login-bug-202510151430 main
@@ -68,17 +69,20 @@ npm test -- --runInBand || true
 ```
 
 ### 2️⃣ **Plan**
+
 - List exact files to modify
 - State assumptions (≤3)
 - Define in-scope vs out-of-scope (≤3 each)
 - **Declare Mode** (0, 0.5, 1, 2, or request Mode 3)
 
 ### 3️⃣ **Implement**
+
 - Make minimal changes
 - Add/adjust ≥1 unit test
 - Stay within diff budget: **≤300 lines, ≤4 files**
 
 ### 4️⃣ **Commit**
+
 ```bash
 git add [files]
 git commit -m "fix: login validation (Fixes #123)
@@ -89,6 +93,7 @@ Tests: tests/auth.test.ts"
 ```
 
 ### 5️⃣ **Pre-PR Checks** (Run ALL)
+
 ```bash
 npm run lint -- --max-warnings=0  # Must pass ✅
 npx tsc --noEmit                   # Must pass ✅
@@ -97,6 +102,7 @@ npm run build                      # Must pass ✅
 ```
 
 ### 6️⃣ **Open PR** (Title: `/ai fix: login validation (Fixes #123)`)
+
 - Include Mode used and reason
 - Add verification steps
 - **Do NOT merge** - Request human review
@@ -106,6 +112,7 @@ npm run build                      # Must pass ✅
 ## 🚨 When to Request Override (Mode 3)
 
 **Examples of Mode 3 triggers:**
+
 - Adding/removing runtime dependencies (`npm install express`)
 - Modifying root configs (`eslint.config.js`, `tsconfig.json` outside LTRM)
 - Changing CI beyond `.github/**` scope
@@ -118,6 +125,7 @@ npm run build                      # Must pass ✅
 ## ✅ Acceptance Criteria (Must Pass All)
 
 Every PR must satisfy:
+
 - ✅ `npm run lint -- --max-warnings=0`
 - ✅ `npx tsc --noEmit`
 - ✅ `npm test -- --runInBand` (≥1 new/adjusted test)

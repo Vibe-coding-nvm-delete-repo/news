@@ -7,6 +7,7 @@
 ## 🎯 Quick Problem Index
 
 **Jump to your scenario:**
+
 - [Mode Selection Issues](#mode-selection-issues)
 - [Diff Budget Exceeded](#diff-budget-exceeded)
 - [File Access Denied](#file-access-denied)
@@ -26,7 +27,9 @@
 **Scenario:** You have Issue #123 and need to modify both `src/app/login.tsx` (allowed) and `tsconfig.json` (denied).
 
 **Solution:**
+
 1. Check if baseline tools are broken first:
+
    ```bash
    npm ci
    npx tsc --noEmit  # Does this fail BEFORE your changes?
@@ -42,6 +45,7 @@
    - Submit override request template
 
 **Key Decision:**
+
 - Baseline broken + tooling issue = Mode 1
 - Baseline working + need restricted file = Mode 3
 
@@ -55,11 +59,13 @@
 ❌ **NO** - Mode 0.5 has strict limits: ≤50 lines, ≤2 files
 
 **Options:**
+
 1. **Reduce scope:** Pick only the 2 most impactful files (≤50 lines)
 2. **Create issue:** Propose full cleanup as separate Mode 0 issue
 3. **Split work:** Do 2-file cleanup now (Mode 0.5), rest later
 
 **Mode 0.5 Checklist:**
+
 - [ ] ≤50 lines?
 - [ ] ≤2 files?
 - [ ] No logic changes?
@@ -77,7 +83,9 @@ If all ✅ → Mode 0.5. If any ❌ → Mode 0 with issue or Mode 3.
 **Scenario:** Issue #456 requires changes to 6 files, ~450 lines.
 
 **Solution Path A: Break Down the Task**
+
 1. Analyze if the work can be split into independent sub-tasks:
+
    ```
    Issue #456: Add user dashboard
    → Sub-issue #456a: Add dashboard route (150L, 2F)
@@ -90,12 +98,14 @@ If all ✅ → Mode 0.5. If any ❌ → Mode 0 with issue or Mode 3.
 
 **Solution Path B: Request Mode 3 Override**
 If work cannot be split (tightly coupled):
+
 1. Submit Mode 3 Override request
 2. Justify why it's a single unit of work
 3. Estimate: ~450 lines, 6 files
 4. Wait for approval
 
 **Best Practice:**
+
 - Prefer Path A (decomposition) over Path B (override)
 - Smaller PRs = faster reviews, less risk
 
@@ -106,6 +116,7 @@ If work cannot be split (tightly coupled):
 **Scenario:** I added an image file (15KB binary) and 100 lines of code. What's my diff?
 
 **Solution:**
+
 ```
 Diff Budget Calculation:
 - Code/text changes: Count toward budget (100 lines)
@@ -128,14 +139,15 @@ Your situation:
 **Scenario:** Fixing Issue #789 requires adding a runtime dependency (`express`).
 
 **Solution:**
+
 ```
 1. Check mode:
    - Mode 0? → ❌ Runtime deps not allowed
    - Mode 1? → Only devDependencies allowed (⊆ ONE)
-   
+
 2. Required action:
    ⇒ Submit Mode 3 Override Request
-   
+
 3. Template sections to emphasize:
    - Dependency change: npm install express@^4.18.0
    - Security/License Check: MIT, 0 CVEs, actively maintained
@@ -144,6 +156,7 @@ Your situation:
 ```
 
 **DO NOT:**
+
 - Proceed without approval
 - Try to work around with Mode 0 alternatives (e.g., embedding HTTP logic)
 
@@ -154,6 +167,7 @@ Your situation:
 **Scenario:** Modifying `src/app/page.tsx` (allowed) but Husky pre-commit rejects it.
 
 **Solution:**
+
 ```bash
 # Check what's failing
 git commit -v  # See full error
@@ -167,6 +181,7 @@ git commit -v  # See full error
 ```
 
 **If pre-commit modifies files:**
+
 ```bash
 # Pre-commit auto-fixed files
 git status  # See modified files
@@ -189,6 +204,7 @@ git commit -m "your message"
 **Scenario:** `npm test` passes on your machine, fails in GitHub Actions.
 
 **Solution:**
+
 ```bash
 # 1. Check for environment-specific issues
 # Compare CI env vs local:
@@ -220,6 +236,7 @@ for i in {1..10}; do npm test -- <test-file>; done
 **Scenario:** `npm run lint` shows no errors but CI fails.
 
 **Solution:**
+
 ```bash
 # Check warnings vs errors
 npm run lint  # Might show "✓ 0 errors, 5 warnings"
@@ -236,6 +253,7 @@ npm run lint  # See list of warnings
 ```
 
 **Common warnings:**
+
 - Unused variables → Remove or prefix with `_`
 - Console.log → Remove debug code
 - Missing dependencies in useEffect → Add to deps array
@@ -249,6 +267,7 @@ npm run lint  # See list of warnings
 **Scenario:** Submitted override request 2 days ago, no approval yet.
 
 **Solution:**
+
 ```
 1. Check timer: 72 hours total before auto-freeze
 
@@ -270,6 +289,7 @@ npm run lint  # See list of warnings
 ```
 
 **DO NOT:**
+
 - Proceed without approval
 - Assume silence means approval
 - Resubmit same request repeatedly
@@ -283,6 +303,7 @@ npm run lint  # See list of warnings
 **Scenario:** Your branch `ai/123-fix-login` has conflicts with `main`.
 
 **Solution:**
+
 ```bash
 # 1. Fetch latest changes
 git fetch origin
@@ -314,6 +335,7 @@ git push --force-with-lease
 ```
 
 **If conflict is complex:**
+
 - Switch to Mode 4 (Emergency Freeze)
 - Request human assistance
 - Document conflicting changes
@@ -325,6 +347,7 @@ git push --force-with-lease
 **Scenario:** Merge conflict in lockfile.
 
 **Solution:**
+
 ```bash
 # EASY FIX: Regenerate lockfile
 
@@ -352,6 +375,7 @@ npm test
 **Scenario:** PR #45 opened 2025-10-01, today is 2025-10-11, no human interaction.
 
 **Solution:**
+
 ```
 1. Check PR status:
    - Pending requested changes? → Stale
@@ -360,16 +384,16 @@ npm test
 2. AUTO-SWITCH to Mode 4:
    - Mark PR as Stale
    - Stop all work on that branch
-   
+
 3. Request human re-triage:
    "🧊 PR Stale: Open for 10 days without interaction.
    Per Stale PR Policy, switching to Mode 4.
-   
+
    Options:
    A) Close as won't-fix
    B) Re-triage priority
    C) Reassign to human developer
-   
+
    Requesting direction."
 
 4. DO NOT:
@@ -387,6 +411,7 @@ npm test
 **Scenario:** Local tests pass, GitHub Actions fails.
 
 **Solution:**
+
 ```bash
 # 1. Review CI logs
 gh run view <run-id>  # Get detailed logs
@@ -423,6 +448,7 @@ act -j test  # Run 'test' job locally
 **Scenario:** Workflow is broken at baseline (Mode 2) but you need to add a new workflow.
 
 **Solution:**
+
 ```
 Scenario A: Baseline workflow IS broken
 → Use Mode 2 (CI_REPAIR_MODE)
@@ -446,6 +472,7 @@ Mode 2 is ONLY for repairs, not additions.
 **Scenario:** After adding dependency in Mode 1, npm install fails with peer dependency conflict.
 
 **Solution:**
+
 ```bash
 # 1. Read the error carefully
 npm install  # See which peers conflict
@@ -484,6 +511,7 @@ c) Choose different package:
 **Scenario:** `npm install package-name` succeeds but `import` fails.
 
 **Solution:**
+
 ```bash
 # 1. Verify package is installed
 npm ls package-name
@@ -550,6 +578,7 @@ Mode 4 = Safe default when uncertain
 4. **Compliance/legal concern** → Mode 4 + legal team
 
 **DO NOT:**
+
 - Try to fix security issues yourself
 - Proceed with risky changes "just to see what happens"
 - Hide problems or uncertainties

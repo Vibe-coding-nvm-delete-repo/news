@@ -50,21 +50,21 @@ This autonomous agent policy establishes a **strict governance framework** for A
 
 ### Approval-Free Modes (80% of work)
 
-| Mode | Name | Use Case | Approval | Typical Use |
-|------|------|----------|----------|-------------|
-| **0** | Normal | Standard bugs/features | ❌ No | 70% of work |
-| **0.5** | Refactor | Small cleanup (≤50L/2F) | ❌ No | 5% of work |
-| **1** | LTRM | Local tooling repair | ❌ No | 3% of work |
-| **2** | CI_REPAIR | CI workflows broken | ❌ No | 2% of work |
+| Mode    | Name      | Use Case                | Approval | Typical Use |
+| ------- | --------- | ----------------------- | -------- | ----------- |
+| **0**   | Normal    | Standard bugs/features  | ❌ No    | 70% of work |
+| **0.5** | Refactor  | Small cleanup (≤50L/2F) | ❌ No    | 5% of work  |
+| **1**   | LTRM      | Local tooling repair    | ❌ No    | 3% of work  |
+| **2**   | CI_REPAIR | CI workflows broken     | ❌ No    | 2% of work  |
 
 **Total: 80% of work proceeds immediately without human approval**
 
 ### Approval-Required Modes (20% of work)
 
-| Mode | Name | Use Case | Approval | Typical Use |
-|------|------|----------|----------|-------------|
-| **3** | Scoped Override | Runtime deps, root configs | ✅ **YES** | 15% of work |
-| **4** | Emergency Freeze | High risk, stalled work | ✅ **YES** | 5% of work |
+| Mode  | Name             | Use Case                   | Approval   | Typical Use |
+| ----- | ---------------- | -------------------------- | ---------- | ----------- |
+| **3** | Scoped Override  | Runtime deps, root configs | ✅ **YES** | 15% of work |
+| **4** | Emergency Freeze | High risk, stalled work    | ✅ **YES** | 5% of work  |
 
 ---
 
@@ -110,12 +110,14 @@ This autonomous agent policy establishes a **strict governance framework** for A
 **Default Deny:** All files are read-only unless explicitly allowed by current mode.
 
 **Mode 0 Allowlist (80% of changes):**
+
 - ✅ `app/**` - Application code
 - ✅ `src/**` - Source code
 - ✅ `tests/**` - Test files
 - ✅ `docs/**` - Documentation
 
 **Denylist (Requires Mode 3 approval):**
+
 - 🚫 Root configs (`eslint.config.*`, `tsconfig.json`)
 - 🚫 Dependencies (`package.json`, lockfiles)
 - 🚫 CI/CD (`.github/**`)
@@ -127,17 +129,18 @@ This autonomous agent policy establishes a **strict governance framework** for A
 
 **Prevents scope creep and ensures reviewability:**
 
-| Mode | Max Lines | Max Files | Rationale |
-|------|-----------|-----------|-----------|
-| 0 | 300 | 4 | Reviewable in <15 min |
-| 0.5 | 50 | 2 | Trivial refactor |
-| 1 | 120 | 2 | Focused tooling fix |
-| 2 | Minimal | 1-2 | Surgical CI repair |
-| 3 | Per approval | Per approval | Explicitly scoped |
+| Mode | Max Lines    | Max Files    | Rationale             |
+| ---- | ------------ | ------------ | --------------------- |
+| 0    | 300          | 4            | Reviewable in <15 min |
+| 0.5  | 50           | 2            | Trivial refactor      |
+| 1    | 120          | 2            | Focused tooling fix   |
+| 2    | Minimal      | 1-2          | Surgical CI repair    |
+| 3    | Per approval | Per approval | Explicitly scoped     |
 
 ### 3. Mandatory Quality Gates
 
 **Every PR must pass:**
+
 ```bash
 ✅ npm run lint -- --max-warnings=0   (Zero warnings enforced)
 ✅ npx tsc --noEmit                    (Zero type errors)
@@ -146,6 +149,7 @@ This autonomous agent policy establishes a **strict governance framework** for A
 ```
 
 **Additional Checks:**
+
 - ✅ Performance: No significant regressions
 - ✅ Security: No hardcoded secrets
 - ✅ i18n: No hardcoded user-facing strings
@@ -153,6 +157,7 @@ This autonomous agent policy establishes a **strict governance framework** for A
 ### 4. Non-Merge Rule
 
 **Critical Safety Net:**
+
 - Agents **NEVER** merge their own PRs
 - All PRs require explicit human review and approval
 - Prevents runaway automation
@@ -164,6 +169,7 @@ This autonomous agent policy establishes a **strict governance framework** for A
 ### 1. Self-Service for Routine Work
 
 **80% of issues auto-proceed** through Modes 0, 0.5, 1, 2 without approval:
+
 - Bug fixes in application code
 - New features (within scope)
 - Small refactors
@@ -173,6 +179,7 @@ This autonomous agent policy establishes a **strict governance framework** for A
 ### 2. Structured Escalation (Mode 3)
 
 When approval is needed, agents provide:
+
 - **Evidence pack** (logs, builds, failures)
 - **Options analysis** (minimum 3 alternatives)
 - **Security review** (CVEs, licenses, maintenance)
@@ -183,6 +190,7 @@ When approval is needed, agents provide:
 ### 3. Proactive Issue Detection
 
 **Continuous Improvement Mandate:**
+
 - Agents actively identify technical debt during work
 - Document findings as "New Issue Proposals" in PR
 - Human team prioritizes improvements
@@ -192,6 +200,7 @@ When approval is needed, agents provide:
 ### 4. Fast Feedback Loops
 
 **Verification happens before human review:**
+
 - Agent self-audits all acceptance criteria
 - "Fix or Flag" rule: Fix minor issues immediately
 - Major issues → Create PQA (Process/Quality/Architecture) issue
@@ -228,6 +237,7 @@ When approval is needed, agents provide:
 ### 1. Stale Work Detection
 
 **Auto-Escalation Rules:**
+
 - Mode 3 request timeout → 72 hours → Auto-freeze (Mode 4)
 - Stale PR → 10 days without interaction → Auto-freeze (Mode 4)
 
@@ -236,12 +246,14 @@ When approval is needed, agents provide:
 ### 2. Technical Debt Identification
 
 **During every issue, agents check for:**
+
 - Dead code opportunities
 - Testing gaps (coverage, speed, clarity)
 - Performance optimization potential
 - Development flow improvements
 
 **If improvement is outside scope:**
+
 - Document as "New Issue Proposal" in PR
 - Include: Scope, justification, complexity, priority
 - Human team triages and creates issues
@@ -249,6 +261,7 @@ When approval is needed, agents provide:
 ### 3. Process Feedback
 
 **Quarterly Reviews:**
+
 - Analyze metrics (velocity, quality, governance)
 - Identify policy gaps or friction points
 - Update documentation
@@ -261,12 +274,14 @@ When approval is needed, agents provide:
 ### Every Change is Traceable
 
 **PR Artifacts:**
+
 - Branch naming: `ai/<issue>-<description>-<timestamp>`
 - Commit message: Includes Mode, RCA (3-5 lines), tests
 - PR body: Mode justification, conformance checklist
 - Verification report: Complete audit results
 
 **Example Audit Query:**
+
 ```bash
 # Find all Mode 3 changes in last 30 days
 gh pr list --search "Mode 3" --json number,title,createdAt,mergedAt
@@ -278,6 +293,7 @@ gh pr list --search "author:agent path:package.json" --json number,title
 ### Regulatory Compliance
 
 **Built-in Controls:**
+
 - Security: No hardcoded secrets (enforced via verification)
 - Data Privacy: PII detection in logs (manual check + proposed automation)
 - Licensing: Dependency license review required for Mode 3
@@ -288,18 +304,21 @@ gh pr list --search "author:agent path:package.json" --json number,title
 ## 🎯 Success Criteria for Scaled Adoption
 
 ### Phase 1: Pilot (Month 1-2)
+
 - ✅ 10 issues completed via agent
 - ✅ All reviewers trained
 - ✅ Zero policy violations
 - ✅ Metrics baseline established
 
 ### Phase 2: Expansion (Month 3-6)
+
 - ✅ 50+ issues/month via agent
 - ✅ Mode 3 approval time <24 hours (avg)
 - ✅ Verification pass rate >90%
 - ✅ Team satisfaction survey >4/5
 
 ### Phase 3: Maturity (Month 7+)
+
 - ✅ 80%+ of routine issues via agent
 - ✅ Mode 3 approval time <12 hours (avg)
 - ✅ Verification pass rate >95%
@@ -312,16 +331,19 @@ gh pr list --search "author:agent path:package.json" --json number,title
 ### When to Escalate
 
 **To Engineering Lead:**
+
 - Mode 3 request pending >48 hours
 - Mode 4 freeze requiring architectural decision
 - Policy violation detected
 
 **To Security Team:**
+
 - Vulnerability discovered during implementation
 - Dependency security concern (CVE, suspicious package)
 - Data exposure risk identified
 
 **To Product/PM:**
+
 - Requirements ambiguity blocking progress
 - Feature scope creep detected
 - Priority conflict between issues
@@ -329,11 +351,13 @@ gh pr list --search "author:agent path:package.json" --json number,title
 ### Getting Help
 
 **Documentation:**
+
 1. [Troubleshooting Guide](./TROUBLESHOOTING.md) - Common issues
 2. [Examples](./EXAMPLES.md) - Real-world scenarios
 3. [Decision Trees](./DECISION_TREES.md) - Visual flowcharts
 
 **Human Support:**
+
 - Slack: #agent-operations (response time: <2 hours)
 - Email: agent-support@company.com
 - On-call: For P0/P1 production issues
@@ -342,22 +366,22 @@ gh pr list --search "author:agent path:package.json" --json number,title
 
 ## 📚 Complete Documentation Suite
 
-| Document | Audience | Purpose |
-|----------|----------|---------|
-| [Quick Start](./QUICK_START.md) | All | 5-min onboarding |
-| [Policy Overview](./POLICY_OVERVIEW.md) | Leadership | High-level summary |
-| [Mode Reference](./MODE_REFERENCE.md) | Agents, Devs | Complete mode specs |
-| [Workflow Guide](./WORKFLOW_GUIDE.md) | Agents | Step-by-step processes |
-| [Templates](./TEMPLATES.md) | Agents | Copy/paste formats |
-| [Verification Checklist](./VERIFICATION_CHECKLIST.md) | Agents | Final audit steps |
-| [Decision Trees](./DECISION_TREES.md) | All | Visual flowcharts |
-| [Troubleshooting](./TROUBLESHOOTING.md) | Agents, Devs | Problem solutions |
-| [Examples](./EXAMPLES.md) | All | Real-world scenarios |
-| [File Rules](./FILE_RULES.md) | Agents, Devs | File access reference |
-| [Acceptance Criteria](./ACCEPTANCE_CRITERIA.md) | Reviewers | Quality standards |
-| [Integration Guide](./INTEGRATION_GUIDE.md) | Ops, DevOps | Tool setup |
-| [Metrics & KPIs](./METRICS.md) | Leadership, PMs | Performance tracking |
-| [Continuous Improvement](./CONTINUOUS_IMPROVEMENT.md) | All | Process optimization |
+| Document                                              | Audience        | Purpose                |
+| ----------------------------------------------------- | --------------- | ---------------------- |
+| [Quick Start](./QUICK_START.md)                       | All             | 5-min onboarding       |
+| [Policy Overview](./POLICY_OVERVIEW.md)               | Leadership      | High-level summary     |
+| [Mode Reference](./MODE_REFERENCE.md)                 | Agents, Devs    | Complete mode specs    |
+| [Workflow Guide](./WORKFLOW_GUIDE.md)                 | Agents          | Step-by-step processes |
+| [Templates](./TEMPLATES.md)                           | Agents          | Copy/paste formats     |
+| [Verification Checklist](./VERIFICATION_CHECKLIST.md) | Agents          | Final audit steps      |
+| [Decision Trees](./DECISION_TREES.md)                 | All             | Visual flowcharts      |
+| [Troubleshooting](./TROUBLESHOOTING.md)               | Agents, Devs    | Problem solutions      |
+| [Examples](./EXAMPLES.md)                             | All             | Real-world scenarios   |
+| [File Rules](./FILE_RULES.md)                         | Agents, Devs    | File access reference  |
+| [Acceptance Criteria](./ACCEPTANCE_CRITERIA.md)       | Reviewers       | Quality standards      |
+| [Integration Guide](./INTEGRATION_GUIDE.md)           | Ops, DevOps     | Tool setup             |
+| [Metrics & KPIs](./METRICS.md)                        | Leadership, PMs | Performance tracking   |
+| [Continuous Improvement](./CONTINUOUS_IMPROVEMENT.md) | All             | Process optimization   |
 
 ---
 

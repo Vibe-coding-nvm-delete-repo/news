@@ -10,11 +10,13 @@
 ## Before Committing
 
 All commits automatically run:
+
 - ESLint (with auto-fix)
 - Prettier formatting
 - TypeScript type checking
 
 To manually validate your changes before committing:
+
 ```bash
 npm run validate
 ```
@@ -47,6 +49,7 @@ This runs all checks: type-check, lint, format, and tests.
 ## Commit Messages
 
 Use conventional commit format:
+
 - `feat: add new feature`
 - `fix: resolve bug`
 - `docs: update documentation`

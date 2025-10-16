@@ -7,6 +7,7 @@
 ## 🎯 Example Index
 
 **By Mode:**
+
 - [Mode 0 Examples](#mode-0-examples-normal)
 - [Mode 0.5 Examples](#mode-05-examples-refactor)
 - [Mode 1 Examples](#mode-1-examples-ltrm)
@@ -15,6 +16,7 @@
 - [Mode 4 Examples](#mode-4-examples-emergency-freeze)
 
 **By Scenario Type:**
+
 - [Bug Fixes](#bug-fix-scenarios)
 - [New Features](#feature-scenarios)
 - [Technical Debt](#technical-debt-scenarios)
@@ -29,15 +31,17 @@
 **Issue #123:** Users can bypass email validation with special characters
 
 **Scenario:**
+
 ```typescript
 // Current buggy code in src/auth/validator.ts
 export function validateEmail(email: string): boolean {
-  const regex = new RegExp(`^${email}@`);  // BUG: Not escaping input
+  const regex = new RegExp(`^${email}@`); // BUG: Not escaping input
   return regex.test(email);
 }
 ```
 
 **Solution Approach:**
+
 ```bash
 # 1. Branch
 git switch -c ai/123-fix-email-validation-202510151430 main
@@ -70,6 +74,7 @@ describe('validateEmail', () => {
 ```
 
 **Commit:**
+
 ```bash
 git commit -m "fix: email validation bypass (Fixes #123)
 
@@ -83,6 +88,7 @@ Tests: tests/auth/validator.test.ts"
 ```
 
 **Diff Stats:**
+
 - Lines: 45
 - Files: 2
 - Budget: ✅ 300L/4F
@@ -97,6 +103,7 @@ Tests: tests/auth/validator.test.ts"
 User wants to toggle between light/dark themes.
 
 **Files Modified (all Mode 0 allowed):**
+
 ```
 src/components/SettingsPanel.tsx    (add toggle UI)
 src/contexts/ThemeContext.tsx       (add theme state)
@@ -105,12 +112,14 @@ tests/components/SettingsPanel.test.tsx
 ```
 
 **Implementation Approach:**
+
 1. Add theme context with state
 2. Create toggle component
 3. Apply theme classes to root
 4. Add persistence to localStorage
 
 **Commit:**
+
 ```bash
 git commit -m "feat: add dark mode toggle (Fixes #234)
 
@@ -124,6 +133,7 @@ Tests: tests/components/SettingsPanel.test.tsx"
 ```
 
 **Diff Stats:**
+
 - Lines: 185
 - Files: 4
 - Budget: ✅ 300L/4F
@@ -137,11 +147,13 @@ Tests: tests/components/SettingsPanel.test.tsx"
 **Scenario:** No issue exists, but noticed unused utility functions during code review.
 
 **Files to Clean:**
+
 ```
 src/utils/date.ts  (remove 3 unused functions)
 ```
 
 **Implementation:**
+
 ```bash
 # Check usage
 rg "formatDateLong|formatDateShort|parseISODate" src/
@@ -153,6 +165,7 @@ rg "formatDateLong|formatDateShort|parseISODate" src/
 ```
 
 **Commit:**
+
 ```bash
 git commit -m "refactor: remove unused date utilities
 
@@ -164,6 +177,7 @@ Impact: src/utils/date.ts (47 lines removed)"
 ```
 
 **PR Note:**
+
 ```markdown
 ## Mode 0.5 Self-Initiated Refactor
 
@@ -173,6 +187,7 @@ Impact: src/utils/date.ts (47 lines removed)"
 ```
 
 **Diff Stats:**
+
 - Lines: 47
 - Files: 1
 - Budget: ✅ 50L/2F
@@ -184,6 +199,7 @@ Impact: src/utils/date.ts (47 lines removed)"
 **Scenario:** Want to improve type safety across authentication module.
 
 **Proposed Changes:**
+
 ```
 src/auth/types.ts           (add strict types)
 src/auth/login.ts           (use new types)
@@ -194,6 +210,7 @@ tests/auth/types.test.ts    (add tests)
 
 **Decision:**
 ❌ **Cannot use Mode 0.5** - Exceeds budget:
+
 - 5 files (limit: 2)
 - ~120 lines (limit: 50)
 
@@ -210,6 +227,7 @@ tests/auth/types.test.ts    (add tests)
 **Issue #345:** Test suite fails with syntax errors
 
 **Baseline Check:**
+
 ```bash
 npm ci
 npm test
@@ -222,6 +240,7 @@ npm test
 **Root Cause:** Jest not configured for TypeScript
 
 **Files Modified (Mode 1 temporarily allowed):**
+
 ```
 jest.config.js       (add ts-jest transformer)
 package.json         (add ts-jest devDependency)
@@ -229,10 +248,11 @@ package-lock.json    (auto-generated)
 ```
 
 **Implementation:**
+
 ```javascript
 // jest.config.js
 module.exports = {
-  preset: 'ts-jest',  // Added
+  preset: 'ts-jest', // Added
   testEnvironment: 'node',
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
@@ -244,12 +264,13 @@ module.exports = {
 // package.json (devDependencies only)
 {
   "devDependencies": {
-    "ts-jest": "^29.1.0"  // Added (ONE devDep allowed)
+    "ts-jest": "^29.1.0" // Added (ONE devDep allowed)
   }
 }
 ```
 
 **Commit:**
+
 ```bash
 git commit -m "fix: jest unable to parse TypeScript (Fixes #345)
 
@@ -263,11 +284,13 @@ Tests: Full test suite now passes (npm test)"
 ```
 
 **Verification:**
+
 ```bash
 npm test  # ✅ All tests pass
 ```
 
 **Diff Stats:**
+
 - Lines: 18 (excluding lockfile)
 - Files: 2 (jest.config.js, package.json)
 - Budget: ✅ 120L/2F
@@ -281,32 +304,35 @@ npm test  # ✅ All tests pass
 **Issue #456:** CI failing with "Node 16 is deprecated"
 
 **Baseline CI Check:**
+
 ```yaml
 # .github/workflows/test.yml (current, broken)
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3  # Deprecated
+      - uses: actions/checkout@v3 # Deprecated
       - uses: actions/setup-node@v3
         with:
-          node-version: 16  # Deprecated
+          node-version: 16 # Deprecated
 ```
 
 **Solution (Mode 2):**
+
 ```yaml
 # .github/workflows/test.yml (fixed)
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4.1.0  # Pinned version
-      - uses: actions/setup-node@v4.0.0  # Pinned version
+      - uses: actions/checkout@v4.1.0 # Pinned version
+      - uses: actions/setup-node@v4.0.0 # Pinned version
         with:
-          node-version: 20  # Updated to LTS
+          node-version: 20 # Updated to LTS
 ```
 
 **Commit:**
+
 ```bash
 git commit -m "fix: update deprecated GitHub Actions (Fixes #456)
 
@@ -318,6 +344,7 @@ Protocol: Tested in canary workflow first, pinned all action versions."
 ```
 
 **Diff Stats:**
+
 - Lines: 8
 - Files: 1
 - Budget: ✅ Minimal (CI repair)
@@ -331,11 +358,13 @@ Protocol: Tested in canary workflow first, pinned all action versions."
 **Issue #567:** Product gallery images too large, slow page load
 
 **Why Mode 3:**
+
 - Need to add `sharp` runtime dependency
 - Modify `next.config.ts` (root config)
 - Both are denied in Mode 0
 
 **Override Request:**
+
 ```markdown
 🚨 OVERRIDE REQUEST (Mode 3 — Scoped)
 
@@ -343,17 +372,20 @@ Issue: #567 — Optimize product gallery images
 Base ref: main
 
 Why override is needed (≤5 lines):
+
 - Product images currently 3.2MB raw PNGs, Lighthouse score 45/100
 - Need `sharp` for server-side image optimization (WebP conversion)
 - Must modify next.config.ts to configure image domains and formats
 - Cannot solve with Mode 0 (runtime dep + root config restrictions)
 
 Options considered:
-1) Add sharp + modify next.config.ts — Industry standard, fast. ~95 lines, 3 files. Low risk.
-2) Use Cloudinary (external) — No code but $99/mo + vendor lock-in. 
-3) Client-side compression — Poor UX (slow initial load), ~200 lines, complex.
+
+1. Add sharp + modify next.config.ts — Industry standard, fast. ~95 lines, 3 files. Low risk.
+2. Use Cloudinary (external) — No code but $99/mo + vendor lock-in.
+3. Client-side compression — Poor UX (slow initial load), ~200 lines, complex.
 
 Proposed plan (chosen option #1):
+
 - Paths touched (exact, must be saved to PROPOSED_FILES.txt):
   - next.config.ts
   - package.json
@@ -369,6 +401,7 @@ Proposed plan (chosen option #1):
 - Timebox: 4 hours
 
 Evidence pack:
+
 - Lighthouse audit: https://pagespeed.web.dev/report?url=...
 - Current ProductGallery.tsx:45-67 uses raw <img> tags
 - sharp docs: https://sharp.pixelplumbing.com/
@@ -379,6 +412,7 @@ Reply with: **APPROVE OVERRIDE: Mode 3 (Option 1)** and I'll proceed.
 ```
 
 **After Approval:**
+
 ```bash
 # Save approved files
 echo "next.config.ts
@@ -400,6 +434,7 @@ done
 ```
 
 **Commit:**
+
 ```bash
 git commit -m "feat: add product image optimization (Fixes #567)
 
@@ -414,6 +449,7 @@ Tests: tests/lib/imageOptimizer.test.ts"
 ```
 
 **Diff Stats:**
+
 - Lines: 95
 - Files: 3 (excluding lockfile)
 - Approved: ✅ Mode 3
@@ -425,10 +461,12 @@ Tests: tests/lib/imageOptimizer.test.ts"
 **Issue #678:** Add company logo and favicon
 
 **Why Mode 3:**
+
 - Non-text assets (logo.png, favicon.ico)
 - Policy requires Mode 3 for binaries
 
 **Override Request:**
+
 ```markdown
 🚨 OVERRIDE REQUEST (Mode 3 — Scoped)
 
@@ -436,16 +474,19 @@ Issue: #678 — Add brand assets (logo and favicon)
 Base ref: main
 
 Why override is needed (≤5 lines):
+
 - Need to add logo.png (5KB) and favicon.ico (2KB) binary files
 - Policy prohibits non-text assets in Modes 0/1/2
 - Assets are essential for brand identity in production launch
 
 Options considered:
-1) Add assets to public/ directory — Standard Next.js practice. 2 files, 7KB total. No code changes.
-2) Use external CDN — Requires Mode 3 anyway (config changes) + adds latency.
-3) Inline SVG — Logo is raster (client requirement), not vectorizable.
+
+1. Add assets to public/ directory — Standard Next.js practice. 2 files, 7KB total. No code changes.
+2. Use external CDN — Requires Mode 3 anyway (config changes) + adds latency.
+3. Inline SVG — Logo is raster (client requirement), not vectorizable.
 
 Proposed plan (chosen option #1):
+
 - Paths touched (exact, must be saved to PROPOSED_FILES.txt):
   - public/logo.png
   - public/favicon.ico
@@ -458,6 +499,7 @@ Proposed plan (chosen option #1):
 - Timebox: 30 minutes
 
 Evidence pack:
+
 - Assets provided by design team (internal)
 - File sizes: logo.png (5.2KB), favicon.ico (1.8KB)
 - Total repo size impact: +7KB (negligible)
@@ -478,16 +520,19 @@ Reply with: **APPROVE OVERRIDE: Mode 3 (Option 1)** and I'll proceed.
 Started implementing, realized two viable approaches with major trade-offs:
 
 **Approach A:** Role-based (RBAC)
+
 - Simpler, faster
 - Less flexible for future requirements
 
 **Approach B:** Attribute-based (ABAC)
+
 - More complex, slower initial development
 - Highly flexible, future-proof
 
 **Decision: Switch to Mode 4**
 
 **Report:**
+
 ```markdown
 🧊 EMERGENCY FREEZE (Mode 4)
 
@@ -495,26 +540,31 @@ Issue: #789 — Implement user permissions system
 Trigger: Architectural decision required
 
 **Current Status:**
+
 - Work completed: 30% (initial research and spike)
 - Blocked by: Choice between RBAC vs ABAC architectures
 - Risk level: High (wrong choice = major refactor later)
 
 **What's Been Tried:**
+
 1. Spike: RBAC prototype (2 hours) — Works, but inflexible
 2. Spike: ABAC prototype (3 hours) — Flexible, but complex
 3. Researched: Industry standards — Both used, context-dependent
 
 **Information Needed:**
+
 - What's the product roadmap for permissions? (Simple or complex rules?)
 - Performance requirements? (ABAC can be slower)
 - Team expertise? (ABAC has steeper learning curve)
 
 **Risk Assessment:**
+
 - If we choose RBAC: Fast now, costly refactor later if needs expand
 - If we choose ABAC: Slower now, over-engineered if needs stay simple
 - If we do nothing: Feature blocked, launch delayed
 
 **Recommended Next Steps:**
+
 1. Product owner clarifies: complexity of future permission rules
 2. Stakeholder decision: optimize for speed vs flexibility
 3. Once decided, return to Mode 0 with chosen approach
@@ -533,12 +583,14 @@ Human responds: "Choose RBAC, optimize for speed. We'll refactor if needed."
 **Issue #890:** Add analytics tracking
 
 **Timeline:**
+
 - Day 1 (Oct 1): Submit Mode 3 Override request
 - Day 2 (Oct 2): Ping reviewer
 - Day 3 (Oct 3): No response
 - Day 4 (Oct 4): Auto-switch to Mode 4 (72hr timeout)
 
 **Auto-Generated Report:**
+
 ```markdown
 🧊 EMERGENCY FREEZE (Mode 4) - AUTO-TRIGGERED
 
@@ -546,11 +598,13 @@ Issue: #890 — Add analytics tracking
 Trigger: Override request timeout (72 hours)
 
 **Current Status:**
+
 - Work completed: 0% (blocked at planning stage)
 - Blocked by: Mode 3 Override request awaiting approval since 2025-10-01
 - Risk level: Low (no changes made yet)
 
 **Override Request Summary:**
+
 - Requested: npm install @segment/analytics-next
 - Reason: Analytics required for product launch
 - Submitted: 2025-10-01 14:30
@@ -561,6 +615,7 @@ Trigger: Override request timeout (72 hours)
 Auto-switched to Mode 4 per 72-hour timeout rule.
 
 **Recommended Next Steps:**
+
 1. Re-ping approval stakeholders
 2. Escalate to engineering lead if still no response
 3. Consider: Is this issue still priority? (10 days since creation)
@@ -577,6 +632,7 @@ Auto-switched to Mode 4 per 72-hour timeout rule.
 **Issue #901:** Password reset emails not sending (P0)
 
 **Mode Selection:**
+
 ```bash
 # 1. Check baseline
 npm test  # ✅ Pass (not a tooling issue)
@@ -593,6 +649,7 @@ tests/services/email.test.ts  # ✅ Mode 0 allowed
 SMTP configuration was using wrong port (587 instead of 465 for SSL).
 
 **Fix:**
+
 ```typescript
 // src/services/email.ts
 const transporter = nodemailer.createTransport({
@@ -604,6 +661,7 @@ const transporter = nodemailer.createTransport({
 ```
 
 **Commit:**
+
 ```bash
 git commit -m "fix: password reset emails not sending (Fixes #901)
 
@@ -624,12 +682,14 @@ Tests: tests/services/email.test.ts (added SMTP connection test)"
 **Issue #1000:** Implement full shopping cart system
 
 **Initial Analysis:**
+
 - Estimated: 800 lines, 12 files
 - Budget: 300 lines, 4 files ❌ WAY OVER
 
 **Correct Approach: Decompose**
 
 **Sub-Issues Created:**
+
 ```
 #1000a: Shopping cart data model (150L, 3F) - Mode 0
   - src/models/Cart.ts
@@ -653,6 +713,7 @@ Tests: tests/services/email.test.ts (added SMTP connection test)"
 ```
 
 **Each sub-issue:**
+
 - Within Mode 0 budget ✅
 - Independent and testable ✅
 - Clear acceptance criteria ✅
@@ -666,6 +727,7 @@ Tests: tests/services/email.test.ts (added SMTP connection test)"
 **Current Task:** Fixing Issue #1100 (login bug)
 
 **During Implementation, Noticed:**
+
 - Auth module has no error logging
 - Would help debug future issues
 - Outside current issue scope
@@ -673,10 +735,12 @@ Tests: tests/services/email.test.ts (added SMTP connection test)"
 **Action: Document in PR**
 
 **PR Body Includes:**
+
 ```markdown
 ## 💡 New Issue Proposals (Technical Debt Identified)
 
 ### Proposal 1: Add Error Logging to Auth Module
+
 **Scope:** Add structured logging for all authentication failures and edge cases
 **Justification:** During debugging of #1100, lack of logs made root cause
 identification difficult. Structured logs would reduce MTTR for future auth issues.
@@ -700,7 +764,8 @@ auth/validator, plus logger config)
 **Scenario:** While fixing Issue #1200, discovered SQL injection vulnerability.
 
 **Immediate Action:**
-```markdown
+
+````markdown
 🧊 EMERGENCY FREEZE (Mode 4)
 
 Issue: #1200 — Add user search feature
@@ -714,25 +779,30 @@ existing src/api/users/search.ts:23
 // VULNERABLE CODE (DO NOT USE):
 const query = `SELECT * FROM users WHERE name = '${req.query.name}'`;
 ```
+````
 
 **Current Status:**
+
 - Work on #1200: PAUSED
 - Vulnerability: EXISTS IN PRODUCTION
 - Risk level: HIGH (data breach potential)
 
 **Immediate Actions Taken:**
+
 1. Stopped all work on #1200
 2. Documented vulnerable code location
 3. Switching to Mode 4
 4. Flagging for immediate security review
 
 **Recommended Next Steps:**
+
 1. URGENT: Patch production immediately (prepared fix available)
 2. Create P0 security issue
 3. Notify security team
 4. Resume #1200 after patch
 
 **Requesting:** IMMEDIATE security team response.
+
 ```
 
 **DO NOT:**
@@ -748,3 +818,4 @@ const query = `SELECT * FROM users WHERE name = '${req.query.name}'`;
 - [Quick Start](./QUICK_START.md) - Basic workflows
 - [Templates](./TEMPLATES.md) - Copy/paste formats
 - [Troubleshooting](./TROUBLESHOOTING.md) - Problem solutions
+```

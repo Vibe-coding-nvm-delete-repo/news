@@ -6,14 +6,14 @@
 
 ## 🔢 THE 6 MODES (Decision in 10 Seconds)
 
-| Mode | When? | Files? | Approval? |
-|:----:|-------|--------|-----------|
-| **0** | Normal bug/feature | app/**, src/**, tests/**, docs/** | ❌ No |
-| **0.5** | Small cleanup (no issue) | app/**, src/**, tests/** (≤50L/2F) | ❌ No |
-| **1** | Baseline tests broken | + jest.config, tsconfig, pkg.json (dev) | ❌ No |
-| **2** | CI broken | .github/** ONLY | ❌ No |
-| **3** | Need restricted files | Approved list only | ✅ **YES** |
-| **4** | High risk / uncertain | NO MODIFICATIONS | ✅ **YES** |
+|  Mode   | When?                    | Files?                                  | Approval?  |
+| :-----: | ------------------------ | --------------------------------------- | ---------- |
+|  **0**  | Normal bug/feature       | app/**, src/**, tests/**, docs/**       | ❌ No      |
+| **0.5** | Small cleanup (no issue) | app/**, src/**, tests/\*\* (≤50L/2F)    | ❌ No      |
+|  **1**  | Baseline tests broken    | + jest.config, tsconfig, pkg.json (dev) | ❌ No      |
+|  **2**  | CI broken                | .github/\*\* ONLY                       | ❌ No      |
+|  **3**  | Need restricted files    | Approved list only                      | ✅ **YES** |
+|  **4**  | High risk / uncertain    | NO MODIFICATIONS                        | ✅ **YES** |
 
 ---
 
@@ -34,13 +34,13 @@ Issue assigned → Run baseline checks → All pass?
 
 ## 📏 DIFF BUDGETS
 
-| Mode | Max Lines | Max Files |
-|:----:|:---------:|:---------:|
-| 0 | 300 | 4 |
-| 0.5 | 50 | 2 |
-| 1 | 120 | 2 |
-| 2 | Minimal | 1-2 |
-| 3 | Per approval | Per approval |
+| Mode |  Max Lines   |  Max Files   |
+| :--: | :----------: | :----------: |
+|  0   |     300      |      4       |
+| 0.5  |      50      |      2       |
+|  1   |     120      |      2       |
+|  2   |   Minimal    |     1-2      |
+|  3   | Per approval | Per approval |
 
 **Over by >50%?** → Decompose into sub-issues
 
@@ -56,6 +56,7 @@ npm run build                      # ✅ MUST PASS
 ```
 
 **Plus:**
+
 - ✅ ≥1 test added/modified
 - ✅ No console.log / debugger
 - ✅ No hardcoded secrets
@@ -72,14 +73,17 @@ Issue: #<NUM> — <TITLE>
 Base ref: <branch>
 
 Why override needed (≤5 lines):
+
 - <reason>
 
 Options considered:
-1) <Option A> — Pros/Cons, Est, Risk
-2) <Option B> — Pros/Cons, Est, Risk
-3) <Option C> — Impact
+
+1. <Option A> — Pros/Cons, Est, Risk
+2. <Option B> — Pros/Cons, Est, Risk
+3. <Option C> — Impact
 
 Proposed plan (Option X):
+
 - Paths: <files>
 - Diff: ~<X>L, <Y>F
 - Dependency: <change or N/A>
@@ -144,6 +148,7 @@ ai/<issue>-<kebab-description>-<YYYYMMDDHHmm>
 ## 🚦 WHEN TO ESCALATE
 
 **Mode 4 (Freeze) Triggers:**
+
 - 🔒 Security issue found
 - ❓ Architectural decision needed
 - 🤔 Unclear requirements
@@ -156,41 +161,45 @@ ai/<issue>-<kebab-description>-<YYYYMMDDHHmm>
 
 ## 🔍 FILE ACCESS CHEAT SHEET
 
-| Path | Mode 0 | Mode 1 | Mode 2 | Mode 3 |
-|------|:------:|:------:|:------:|:------:|
-| app/** | ✅ | ✅ | ❌ | Approved |
-| src/** | ✅ | ✅ | ❌ | Approved |
-| tests/** | ✅ | ✅ | ❌ | Approved |
-| docs/** | ✅ | ✅ | ❌ | Approved |
-| jest.config.* | ❌ | ✅ | ❌ | Approved |
-| tsconfig.json | ❌ | ✅ | ❌ | Approved |
-| package.json | ❌ | ✅* | ❌ | Approved |
-| .github/** | ❌ | ❌ | ✅ | Approved |
-| Root configs | ❌ | ❌ | ❌ | Approved |
-| Images/assets | ❌ | ❌ | ❌ | Approved |
+| Path           | Mode 0 | Mode 1 | Mode 2 |  Mode 3  |
+| -------------- | :----: | :----: | :----: | :------: |
+| app/\*\*       |   ✅   |   ✅   |   ❌   | Approved |
+| src/\*\*       |   ✅   |   ✅   |   ❌   | Approved |
+| tests/\*\*     |   ✅   |   ✅   |   ❌   | Approved |
+| docs/\*\*      |   ✅   |   ✅   |   ❌   | Approved |
+| jest.config.\* |   ❌   |   ✅   |   ❌   | Approved |
+| tsconfig.json  |   ❌   |   ✅   |   ❌   | Approved |
+| package.json   |   ❌   |  ✅\*  |   ❌   | Approved |
+| .github/\*\*   |   ❌   |   ❌   |   ✅   | Approved |
+| Root configs   |   ❌   |   ❌   |   ❌   | Approved |
+| Images/assets  |   ❌   |   ❌   |   ❌   | Approved |
 
-*Mode 1: devDependencies only, ONE addition
+\*Mode 1: devDependencies only, ONE addition
 
 ---
 
 ## 🎯 VERIFICATION QUICK CHECKLIST
 
 **Phase 1: Core Fix**
+
 - [ ] Original issue resolved (with evidence)
 - [ ] Test added/modified
 - [ ] Docs updated (if applicable)
 
 **Phase 2: Policy**
+
 - [ ] Files within mode allowlist
 - [ ] Diff within budget
 - [ ] All quality checks pass
 
 **Phase 3: Clean-Up**
+
 - [ ] No console.log / debugger
 - [ ] No commented code
 - [ ] No unused deps
 
 **Phase 4: PR Hygiene**
+
 - [ ] Branch name correct
 - [ ] Commit message complete
 - [ ] PR title has /ai prefix
@@ -222,24 +231,16 @@ ai/<issue>-<kebab-description>-<YYYYMMDDHHmm>
 ## 💡 PRODUCTIVITY TIPS
 
 **Before Starting:**
+
 1. Run baseline checks first
 2. Declare mode early
 3. List exact files to modify
 
-**During Work:**
-4. Stay within diff budget
-5. Look for improvement opportunities
-6. Add test immediately
+**During Work:** 4. Stay within diff budget 5. Look for improvement opportunities 6. Add test immediately
 
-**Before PR:**
-7. Run all quality checks
-8. Verify file allowlist compliance
-9. Complete verification checklist
+**Before PR:** 7. Run all quality checks 8. Verify file allowlist compliance 9. Complete verification checklist
 
-**After PR:**
-10. Request review promptly
-11. Never merge yourself
-12. Track metrics for continuous improvement
+**After PR:** 10. Request review promptly 11. Never merge yourself 12. Track metrics for continuous improvement
 
 ---
 
@@ -247,4 +248,4 @@ ai/<issue>-<kebab-description>-<YYYYMMDDHHmm>
 
 ---
 
-*Print this card and keep it handy for quick reference during autonomous agent operations.*
+_Print this card and keep it handy for quick reference during autonomous agent operations._

@@ -23,6 +23,7 @@
 ### ✅ AC-001: Linter (Zero Warnings)
 
 **Requirement:**
+
 ```bash
 npm run lint -- --max-warnings=0
 ```
@@ -34,6 +35,7 @@ npm run lint -- --max-warnings=0
 **Exceptions:** None (strict enforcement)
 
 **Fix Workflow:**
+
 ```bash
 # Auto-fix what's possible
 npm run lint -- --fix
@@ -50,6 +52,7 @@ npm run lint -- --fix
 ### ✅ AC-002: TypeScript (Zero Type Errors)
 
 **Requirement:**
+
 ```bash
 npx tsc --noEmit
 ```
@@ -61,20 +64,22 @@ npx tsc --noEmit
 **Exceptions:** None (strict enforcement)
 
 **Common Failures:**
+
 - Missing type annotations
 - Incorrect type usage
 - Unresolved imports
 
 **Fix Workflow:**
+
 ```typescript
 // ❌ Bad
-const data = fetchData();  // Implicit 'any'
+const data = fetchData(); // Implicit 'any'
 
 // ✅ Good
 const data: UserData = fetchData();
 
 // ❌ Bad
-const value = obj.unknownProp;  // Property doesn't exist
+const value = obj.unknownProp; // Property doesn't exist
 
 // ✅ Good
 const value = (obj as ExtendedType).knownProp;
@@ -87,6 +92,7 @@ const value = (obj as ExtendedType).knownProp;
 **Requirement:** Zero console.log, debugger statements in final commit
 
 **Check:**
+
 ```bash
 git diff main | grep -E '(console\.log|debugger)' && echo "❌ FAIL" || echo "✅ PASS"
 ```
@@ -96,6 +102,7 @@ git diff main | grep -E '(console\.log|debugger)' && echo "❌ FAIL" || echo "�
 **Rationale:** Debug code shouldn't reach production
 
 **Exceptions:**
+
 - Intentional logging (use `logger.info()` instead)
 - Error handling (use `logger.error()` with context)
 
@@ -106,6 +113,7 @@ git diff main | grep -E '(console\.log|debugger)' && echo "❌ FAIL" || echo "�
 **Requirement:** Zero commented-out code blocks in final diff
 
 **Check:**
+
 ```bash
 git diff main | grep -E '^\+.*\/\/' | grep -v '^\+.*\/\/ ' && echo "❌ FAIL" || echo "✅ PASS"
 ```
@@ -113,10 +121,12 @@ git diff main | grep -E '^\+.*\/\/' | grep -v '^\+.*\/\/ ' && echo "❌ FAIL" ||
 **Rationale:** Commented code creates clutter and confusion
 
 **Exceptions:**
+
 - Intentional comments explaining logic
 - TODO/FIXME with issue numbers
 
 **Fix Workflow:**
+
 ```typescript
 // ❌ Bad
 // const oldImplementation = () => { ... };  // Remove this
@@ -139,6 +149,7 @@ const currentImplementation = () => { ... };
 **Exceptions:** None (every code change requires test coverage)
 
 **Test Quality Criteria:**
+
 ```typescript
 describe('validateEmail', () => {
   // ✅ Good: Specific, descriptive test
@@ -163,6 +174,7 @@ describe('validateEmail', () => {
 ### ✅ AC-102: Full Test Suite Passes
 
 **Requirement:**
+
 ```bash
 npm test -- --runInBand
 ```
@@ -172,6 +184,7 @@ npm test -- --runInBand
 **Rationale:** Ensure no regressions in existing functionality
 
 **Failure Response:**
+
 - If test fails due to your change → Fix the code
 - If test was already broken → Document in Mode 1 (LTRM) or Mode 4 (Freeze)
 
@@ -182,6 +195,7 @@ npm test -- --runInBand
 **Requirement:** Overall test coverage should not decrease
 
 **Check (if coverage tool configured):**
+
 ```bash
 npm test -- --coverage
 # Compare coverage % to baseline
@@ -190,6 +204,7 @@ npm test -- --coverage
 **Rationale:** Prevent technical debt accumulation
 
 **Exceptions:**
+
 - Small decreases (<1%) acceptable for refactors
 - Large new files may temporarily decrease % (add tests soon)
 
@@ -200,6 +215,7 @@ npm test -- --coverage
 **Requirement:** Zero `.skip` or `xit` in committed code
 
 **Check:**
+
 ```bash
 git diff main | grep -E '(\.skip|xit)\(' && echo "❌ FAIL" || echo "✅ PASS"
 ```
@@ -207,6 +223,7 @@ git diff main | grep -E '(\.skip|xit)\(' && echo "❌ FAIL" || echo "✅ PASS"
 **Rationale:** Skipped tests hide problems
 
 **Exceptions:**
+
 - Temporarily skip with issue number: `it.skip('... (TODO #456)', ...)`
 - Must have plan to unskip
 
@@ -217,6 +234,7 @@ git diff main | grep -E '(\.skip|xit)\(' && echo "❌ FAIL" || echo "✅ PASS"
 ### ✅ AC-201: Production Build Succeeds
 
 **Requirement:**
+
 ```bash
 npm run build
 ```
@@ -226,6 +244,7 @@ npm run build
 **Rationale:** Ensure code can be deployed to production
 
 **Common Failures:**
+
 - Import errors (missing files)
 - Environment variable issues
 - Build config problems
@@ -241,6 +260,7 @@ npm run build
 **Rationale:** Warnings often indicate real problems
 
 **Exceptions:**
+
 - Known third-party library warnings (document)
 - Deprecation warnings with migration plan
 
@@ -251,6 +271,7 @@ npm run build
 **Requirement:** Bundle size increase ≤10% without justification
 
 **Check:**
+
 ```bash
 # Compare bundle sizes
 npm run build
@@ -260,6 +281,7 @@ ls -lh .next/**/*.js | awk '{print $5, $9}'
 **Rationale:** Prevent performance regressions
 
 **Exceptions:**
+
 - Large dependency addition (must be justified in Mode 3 request)
 - New feature with significant UI (document expected increase)
 
@@ -270,11 +292,13 @@ ls -lh .next/**/*.js | awk '{print $5, $9}'
 ### ✅ AC-301: No Significant Performance Regression
 
 **Requirement:** No changes introduce:
+
 - Increased memory usage (>20%)
 - Blocking UI threads
 - Significant latency increase (>100ms)
 
 **Check Methods:**
+
 - Lighthouse audit (before/after)
 - Manual testing with large datasets
 - Profile with browser DevTools
@@ -282,15 +306,18 @@ ls -lh .next/**/*.js | awk '{print $5, $9}'
 **Rationale:** Maintain user experience quality
 
 **Documentation Required:**
+
 ```markdown
 ## Performance Impact
 
 **Before:**
+
 - Page load: 1.2s
 - Memory usage: 45MB
 - Lighthouse score: 92/100
 
 **After:**
+
 - Page load: 1.25s (+4%)
 - Memory usage: 47MB (+4%)
 - Lighthouse score: 91/100 (-1)
@@ -305,10 +332,11 @@ ls -lh .next/**/*.js | awk '{print $5, $9}'
 **Requirement:** Time complexity should be appropriate for data size
 
 **Common Issues:**
+
 ```typescript
 // ❌ Bad: O(n²) when O(n) is possible
 items.forEach(item => {
-  const match = items.find(i => i.id === item.id);  // Nested loop!
+  const match = items.find(i => i.id === item.id); // Nested loop!
 });
 
 // ✅ Good: O(n) with Map
@@ -325,6 +353,7 @@ items.forEach(item => {
 **Requirement:** Use memoization/callbacks appropriately
 
 **Check:**
+
 ```typescript
 // ❌ Bad: Creates new function every render
 <Button onClick={() => handleClick(id)} />
@@ -349,6 +378,7 @@ const filtered = useMemo(() => items.filter(item => item.active), [items]);
 **Requirement:** Zero hardcoded passwords, API keys, tokens in source code
 
 **Check:**
+
 ```bash
 git diff main | grep -iE '(password|api[_-]?key|token|secret).*=.*["\'][a-zA-Z0-9]'
 ```
@@ -356,14 +386,15 @@ git diff main | grep -iE '(password|api[_-]?key|token|secret).*=.*["\'][a-zA-Z0-
 **Rationale:** Secrets in code = security breach
 
 **Correct Approach:**
+
 ```typescript
 // ❌ Bad
-const API_KEY = "sk-1234567890abcdef";
+const API_KEY = 'sk-1234567890abcdef';
 
 // ✅ Good
 const API_KEY = process.env.NEXT_PUBLIC_API_KEY;
 if (!API_KEY) {
-  throw new Error("NEXT_PUBLIC_API_KEY not configured");
+  throw new Error('NEXT_PUBLIC_API_KEY not configured');
 }
 ```
 
@@ -374,6 +405,7 @@ if (!API_KEY) {
 **Requirement:** All user input must be validated/sanitized before use
 
 **Check:**
+
 ```typescript
 // ❌ Bad: Direct use of user input in query
 const query = `SELECT * FROM users WHERE name = '${req.query.name}'`;
@@ -396,11 +428,13 @@ element.innerHTML = DOMPurify.sanitize(userInput);
 ### ✅ AC-403: Dependency Security
 
 **Requirement:** New dependencies must have:
+
 - 0 known CVEs (critical/high)
 - Active maintenance (last publish <6 months)
 - Permissive license (MIT, Apache, BSD)
 
 **Check:**
+
 ```bash
 npm audit --package=<package-name>
 npm view <package-name> license
@@ -416,6 +450,7 @@ npm view <package-name> time
 **Requirement:** Logs must not contain PII, passwords, tokens
 
 **Check:**
+
 ```typescript
 // ❌ Bad
 logger.info('User login:', { email, password });
@@ -439,12 +474,14 @@ console.error('Auth failed:', { reason: 'invalid_token' });
 **Requirement:** All user-facing text must use i18n system
 
 **Check:**
+
 ```bash
 # Find hardcoded strings in JSX/TSX
 git diff main -- '*.tsx' '*.jsx' | grep -E '>\s*[A-Z][a-z]+.*<'
 ```
 
 **Implementation:**
+
 ```typescript
 // ❌ Bad: Hardcoded string
 <button>Save Changes</button>
@@ -466,6 +503,7 @@ throw new Error(t('errors.invalid_email'));
 **Requirement:** If new i18n keys are used, they must be added to all locale files
 
 **Files to Update:**
+
 ```
 locales/en.json
 locales/es.json
@@ -474,6 +512,7 @@ locales/fr.json
 ```
 
 **Example:**
+
 ```json
 // locales/en.json
 {
@@ -499,6 +538,7 @@ locales/fr.json
 **Requirement:** Use semantic HTML elements appropriately
 
 **Examples:**
+
 ```tsx
 // ❌ Bad: Non-semantic
 <div onClick={handleClick}>Click me</div>
@@ -522,6 +562,7 @@ locales/fr.json
 **Requirement:** Interactive elements must have accessible labels
 
 **Examples:**
+
 ```tsx
 // ❌ Bad: Icon button without label
 <button><CloseIcon /></button>
@@ -544,6 +585,7 @@ locales/fr.json
 **Requirement:** All interactive elements accessible via keyboard
 
 **Check:**
+
 - Tab through interface
 - Ensure focus visible
 - Ensure Enter/Space activate buttons
@@ -558,6 +600,7 @@ locales/fr.json
 **Requirement:** Non-obvious code must have explanatory comments
 
 **Examples:**
+
 ```typescript
 // ✅ Good: Explains WHY
 // Use binary search because array is pre-sorted by timestamp
@@ -579,6 +622,7 @@ if (!user) return <LoginPrompt />;
 **Requirement:** Exported functions/components must have JSDoc
 
 **Example:**
+
 ```typescript
 /**
  * Validates an email address format
@@ -601,6 +645,7 @@ export function validateEmail(email: string): boolean {
 **Requirement:** If public API changes, update README.md
 
 **Triggers:**
+
 - New exported functions/classes
 - Changed function signatures
 - New environment variables
@@ -615,6 +660,7 @@ export function validateEmail(email: string): boolean {
 **Requirement:** All modified files must be within current mode's allowlist
 
 **Check:**
+
 ```bash
 git diff main --name-only > changed-files.txt
 # Compare against mode allowlist (see FILE_RULES.md)
@@ -626,15 +672,16 @@ git diff main --name-only > changed-files.txt
 
 **Requirement:** Changes must be within mode's diff budget
 
-| Mode | Max Lines | Max Files |
-|------|-----------|-----------|
-| 0 | 300 | 4 |
-| 0.5 | 50 | 2 |
-| 1 | 120 | 2 |
-| 2 | Minimal | 1-2 |
-| 3 | Per approval | Per approval |
+| Mode | Max Lines    | Max Files    |
+| ---- | ------------ | ------------ |
+| 0    | 300          | 4            |
+| 0.5  | 50           | 2            |
+| 1    | 120          | 2            |
+| 2    | Minimal      | 1-2          |
+| 3    | Per approval | Per approval |
 
 **Check:**
+
 ```bash
 git diff main --stat | tail -1
 # Example output: "4 files changed, 285 insertions(+), 12 deletions(-)"
@@ -648,6 +695,7 @@ git diff main --stat | tail -1
 **Requirement:** Commit must follow template
 
 **Required Elements:**
+
 - Type prefix (`fix:`, `feat:`, `refactor:`)
 - Short description
 - Issue reference (`Fixes #XXX`)
@@ -656,6 +704,7 @@ git diff main --stat | tail -1
 - `Tests:` section
 
 **Example:**
+
 ```
 fix: email validation bypass (Fixes #123)
 
@@ -675,6 +724,7 @@ Tests: tests/auth/validator.test.ts
 **Format:** `ai/<issue>-<description>-<timestamp>`
 
 **Examples:**
+
 - ✅ `ai/123-fix-login-bug-202510151430`
 - ✅ `ai/refactor-date-utils-202510151445` (Mode 0.5, no issue number)
 - ❌ `fix-login` (missing prefix, issue, timestamp)
@@ -688,6 +738,7 @@ Tests: tests/auth/validator.test.ts
 **Format:** `/ai <type>: <description> (Fixes #<issue>)`
 
 **Examples:**
+
 - ✅ `/ai fix: email validation bypass (Fixes #123)`
 - ✅ `/ai feat: add dark mode toggle (Fixes #234)`
 - ✅ `/ai refactor: remove unused utilities` (Mode 0.5, no issue)
@@ -700,41 +751,49 @@ Tests: tests/auth/validator.test.ts
 **Before opening PR, verify ALL:**
 
 ### Automated Checks
+
 - [ ] `npm run lint -- --max-warnings=0` ✅ PASS
 - [ ] `npx tsc --noEmit` ✅ PASS
 - [ ] `npm test -- --runInBand` ✅ PASS
 - [ ] `npm run build` ✅ PASS
 
 ### Code Quality
+
 - [ ] No `console.log` or `debugger` statements
 - [ ] No commented-out code
 - [ ] No TODOs without issue numbers
 
 ### Testing
+
 - [ ] ≥1 unit test added/modified
 - [ ] Test coverage maintained/improved
 - [ ] No skipped tests (`.skip`, `xit`)
 
 ### Performance
+
 - [ ] No significant performance regression
 - [ ] Efficient algorithms used
 - [ ] React optimizations applied (if applicable)
 
 ### Security
+
 - [ ] No hardcoded secrets
 - [ ] Input validation/sanitization present
 - [ ] No sensitive data in logs
 
 ### i18n
+
 - [ ] No hardcoded user-facing strings
 - [ ] i18n keys added to all locale files
 
 ### Documentation
+
 - [ ] Complex logic has comments
 - [ ] Public APIs have JSDoc
 - [ ] README updated (if applicable)
 
 ### Policy
+
 - [ ] All files within mode allowlist
 - [ ] Diff within mode budget
 - [ ] Commit message follows template

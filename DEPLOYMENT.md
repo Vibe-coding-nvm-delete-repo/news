@@ -3,6 +3,7 @@
 ## ✅ Supabase Setup Complete!
 
 Your Supabase database is connected:
+
 - **URL**: https://xpyledlyzhozqwngxfdx.supabase.co
 - **Status**: ✅ Connected
 
@@ -13,17 +14,21 @@ Your Supabase database is connected:
 **IMPORTANT:** You need to create the database tables before using the app.
 
 ### 1. Go to Supabase SQL Editor
+
 👉 https://supabase.com/dashboard/project/xpyledlyzhozqwngxfdx/sql/new
 
 ### 2. Copy the SQL Schema
+
 Open the file `supabase-schema.sql` in this project and copy ALL contents.
 
 ### 3. Run the SQL
+
 - Paste the SQL into the Supabase SQL Editor
 - Click **"Run"** button
 - You should see: "Success. No rows returned"
 
 This creates 4 tables:
+
 - ✅ `settings` (stores API key, model, prompts)
 - ✅ `keywords` (stores user keywords)
 - ✅ `reports` (stores generated reports)
@@ -42,6 +47,7 @@ npm run dev
 Then open: http://localhost:3000
 
 **First Steps:**
+
 1. Go to Settings tab
 2. Enter your OpenRouter API key
 3. Click "Validate"
@@ -81,13 +87,17 @@ If you see the error "No Output Directory named 'public' found", ensure the proj
 ### Option 2: Vercel CLI
 
 \`\`\`bash
+
 # Install Vercel CLI
+
 npm i -g vercel
 
 # Deploy
+
 vercel
 
 # Follow prompts and add environment variables when asked
+
 \`\`\`
 
 ---
@@ -95,12 +105,14 @@ vercel
 ## 🔐 Security Notes
 
 **For Production:**
+
 - The `service_role` secret should be kept private (don't commit to git)
 - Consider implementing Row Level Security (RLS) policies in Supabase
 - Add user authentication if needed
 - The current setup allows anyone to read/write to your database
 
 **Current Setup:**
+
 - All users share the same data (keywords, settings, reports)
 - API key is stored in database and visible to all users
 - This is fine for personal use or trusted team environments
