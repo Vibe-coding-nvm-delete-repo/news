@@ -74,6 +74,7 @@ export default function NewsTab() {
   const [showSuccessBanner, setShowSuccessBanner] = useState(false);
   const [lastReportCost, setLastReportCost] = useState(0);
   const [lastReportCardCount, setLastReportCardCount] = useState(0);
+  const [showNoCardsWarning, setShowNoCardsWarning] = useState(false);
   const [lastReportMetadata, setLastReportMetadata] = useState<{
     categories: string[];
     avgRating: number;
@@ -139,6 +140,7 @@ export default function NewsTab() {
     setExpandedResults(new Set());
     setActualCost(0);
     setShowSuccessBanner(false);
+    setShowNoCardsWarning(false);
     setStage1Progress(0);
     setStage1StartTime(null);
     setStage1ElapsedTime(0);
@@ -168,6 +170,7 @@ export default function NewsTab() {
     setStage1Progress(0);
     setStage1StartTime(Date.now());
     setStage1ElapsedTime(0);
+    setShowNoCardsWarning(false);
     setShowCompletionAnimation(false);
     setShowSuccessBanner(false);
     setCurrentGenerationCardCount(0);
@@ -641,6 +644,13 @@ export default function NewsTab() {
     // Show success banner immediately - state should be consistent now
     setShowSuccessBanner(true);
 
+    // Show no cards warning with a small delay to prevent confusion
+    if (allCards.length === 0) {
+      setTimeout(() => {
+        setShowNoCardsWarning(true);
+      }, 1000);
+    }
+
     setIsGenerating(false);
     setCurrentStage(null);
     abortControllerRef.current = null;
@@ -786,7 +796,7 @@ export default function NewsTab() {
                       >
                         {lastReportCardCount > 0
                           ? 'Report Generated Successfully!'
-                          : 'Report Generation Complete'}
+                          : 'Generation Complete - No Stories Found'}
                       </p>
                       <p
                         className={`text-sm mt-1 ${
@@ -895,29 +905,32 @@ export default function NewsTab() {
                   </>
                 )}
 
-                {/* No Cards Generated Warning */}
-                {lastReportCardCount === 0 && (
-                  <div className="bg-yellow-100 border-2 border-yellow-500 rounded-lg p-4">
-                    <p className="text-yellow-900 font-bold text-lg mb-2">
-                      ⚠️ No Cards Generated
-                    </p>
-                    <p className="text-yellow-800 text-sm mb-3">
-                      All keyword searches completed, but no valid news stories
-                      were found. This could be because:
-                    </p>
-                    <ul className="text-yellow-800 text-sm space-y-1 ml-6 list-disc">
-                      <li>All keywords failed or encountered errors</li>
-                      <li>No recent stories matched your keywords</li>
-                      <li>
-                        The AI model couldn&apos;t find relevant news articles
-                      </li>
-                    </ul>
-                    <p className="text-yellow-800 text-sm mt-3 font-medium">
-                      Try adjusting your keywords or checking the individual
-                      keyword results above for more details.
-                    </p>
-                  </div>
-                )}
+                {/* No Cards Generated Warning - Only show when generation is complete and no cards were generated */}
+                {!isGenerating &&
+                  showNoCardsWarning &&
+                  lastReportCardCount === 0 &&
+                  stage1Results.length > 0 && (
+                    <div className="bg-yellow-100 border-2 border-yellow-500 rounded-lg p-4">
+                      <p className="text-yellow-900 font-bold text-lg mb-2">
+                        ⚠️ No Cards Generated
+                      </p>
+                      <p className="text-yellow-800 text-sm mb-3">
+                        All keyword searches completed, but no valid news
+                        stories were found. This could be because:
+                      </p>
+                      <ul className="text-yellow-800 text-sm space-y-1 ml-6 list-disc">
+                        <li>All keywords failed or encountered errors</li>
+                        <li>No recent stories matched your keywords</li>
+                        <li>
+                          The AI model couldn&apos;t find relevant news articles
+                        </li>
+                      </ul>
+                      <p className="text-yellow-800 text-sm mt-3 font-medium">
+                        Try adjusting your keywords or checking the individual
+                        keyword results above for more details.
+                      </p>
+                    </div>
+                  )}
               </div>
             </div>
           )}
@@ -1269,10 +1282,11 @@ export default function NewsTab() {
                                     <CheckCircle2 className="h-4 w-4 text-yellow-600" />
                                     Parsed Stories ({result.storiesFound || 0})
                                   </h4>
-                                  {result.storiesFound === 0 ? (
+                                  {result.storiesFound === 0 &&
+                                  result.status === 'complete' ? (
                                     <div className="bg-red-100 border border-red-300 rounded p-3">
                                       <p className="text-sm font-bold text-red-800 mb-1">
-                                        ⚠️ Empty Stories Array Returned
+                                        ⚠️ No Stories Found
                                       </p>
                                       <p className="text-xs text-red-700">
                                         The AI model returned{' '}
@@ -1280,7 +1294,8 @@ export default function NewsTab() {
                                           {JSON.stringify({ stories: [] })}
                                         </code>{' '}
                                         despite having online search enabled.
-                                        This should be investigated.
+                                        This may indicate no recent news was
+                                        found for this keyword.
                                       </p>
                                     </div>
                                   ) : (
