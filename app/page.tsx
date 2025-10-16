@@ -1,18 +1,33 @@
-"use client";
+/**
+ * Main application page component.
+ *
+ * This is the root page of the News Report Generator application.
+ * It provides a tabbed interface to switch between Settings and News views.
+ *
+ * Components are dynamically loaded to prevent SSR hydration issues with Zustand persist.
+ *
+ * @component
+ */
+'use client';
 
-import { useState } from "react";
+import { useState } from 'react';
 import dynamic from 'next/dynamic';
 
-const SettingsTab = dynamic(() => import("@/components/SettingsTab"), {
+// Dynamically import tabs to prevent SSR hydration issues with Zustand persist
+const SettingsTab = dynamic(() => import('@/components/SettingsTab'), {
   ssr: false,
 });
 
-const NewsTab = dynamic(() => import("@/components/NewsTab"), {
+const NewsTab = dynamic(() => import('@/components/NewsTab'), {
   ssr: false,
 });
 
+/**
+ * Home page component with tabbed navigation.
+ * Manages tab state and renders the appropriate child component.
+ */
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<"settings" | "news">("settings");
+  const [activeTab, setActiveTab] = useState<'settings' | 'news'>('settings');
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
@@ -29,21 +44,21 @@ export default function Home() {
         {/* Tab Navigation */}
         <div className="flex gap-2 mb-6 border-b border-slate-200">
           <button
-            onClick={() => setActiveTab("settings")}
+            onClick={() => setActiveTab('settings')}
             className={`px-6 py-3 font-medium transition-colors ${
-              activeTab === "settings"
-                ? "text-blue-600 border-b-2 border-blue-600"
-                : "text-slate-600 hover:text-slate-900"
+              activeTab === 'settings'
+                ? 'text-blue-600 border-b-2 border-blue-600'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             Settings
           </button>
           <button
-            onClick={() => setActiveTab("news")}
+            onClick={() => setActiveTab('news')}
             className={`px-6 py-3 font-medium transition-colors ${
-              activeTab === "news"
-                ? "text-blue-600 border-b-2 border-blue-600"
-                : "text-slate-600 hover:text-slate-900"
+              activeTab === 'news'
+                ? 'text-blue-600 border-b-2 border-blue-600'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             News
@@ -52,8 +67,8 @@ export default function Home() {
 
         {/* Tab Content */}
         <div className="bg-white rounded-lg shadow-lg p-6">
-          {activeTab === "settings" && <SettingsTab />}
-          {activeTab === "news" && <NewsTab />}
+          {activeTab === 'settings' && <SettingsTab />}
+          {activeTab === 'news' && <NewsTab />}
         </div>
       </div>
     </main>
