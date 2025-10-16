@@ -41,6 +41,12 @@ interface Stage1Result {
 }
 
 export default function NewsTab() {
+  const log = (...args: any[]) => {
+    if (process.env.NODE_ENV !== 'production') console.log(...args);
+  };
+  const logError = (...args: any[]) => {
+    if (process.env.NODE_ENV !== 'production') console.error(...args);
+  };
   const {
     settings,
     models,
@@ -237,7 +243,7 @@ export default function NewsTab() {
 
           // Exponential backoff: 1s, 2s, 4s (capped at 5s)
           const backoff = Math.min(1000 * Math.pow(2, attempt), 5000);
-          console.log(
+          log(
             `[${keyword.text}] ⚠️ Retry ${attempt + 1}/${maxRetries} after ${backoff}ms (${error.message})...`
           );
           await new Promise(resolve => setTimeout(resolve, backoff));
@@ -251,7 +257,7 @@ export default function NewsTab() {
       const keywordStartTime = Date.now();
 
       try {
-        console.log(`[${keyword.text}] Starting search...`);
+        log(`[${keyword.text}] Starting search...`);
 
         // Track start time in state
         setStage1Results(prev =>
@@ -321,7 +327,7 @@ export default function NewsTab() {
           }),
         };
 
-        console.log(
+        log(
           `[${keyword.text}] 📤 Request body:`,
           JSON.stringify(requestBody, null, 2)
         );
@@ -350,30 +356,27 @@ export default function NewsTab() {
           timeoutPromise,
         ])) as Response;
 
-        console.log(
+        log(
           `[${keyword.text}] Response received in ${((Date.now() - keywordStartTime) / 1000).toFixed(1)}s`
         );
 
         const data = await response.json();
 
         if (data.error) {
-          console.error(`[${keyword.text}] API Error:`, data.error);
+          logError(`[${keyword.text}] API Error:`, data.error);
           throw new Error(data.error.message || 'API Error');
         }
 
         if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-          console.error(`[${keyword.text}] Invalid API response:`, data);
+          logError(`[${keyword.text}] Invalid API response:`, data);
           throw new Error('Invalid API response format');
         }
 
         const result = data.choices[0].message.content;
-        console.log(`[${keyword.text}] ✅ Received response`);
-        console.log(`[${keyword.text}] 📏 Length: ${result.length} chars`);
-        console.log(
-          `[${keyword.text}] 🔍 First 200 chars:`,
-          result.substring(0, 200)
-        );
-        console.log(
+        log(`[${keyword.text}] ✅ Received response`);
+        log(`[${keyword.text}] 📏 Length: ${result.length} chars`);
+        log(`[${keyword.text}] 🔍 First 200 chars:`, result.substring(0, 200));
+        log(
           `[${keyword.text}] 🔍 Last 200 chars:`,
           result.substring(Math.max(0, result.length - 200))
         );
@@ -382,7 +385,7 @@ export default function NewsTab() {
         let parsedResult: any;
         try {
           parsedResult = parseJSON(result);
-          console.log(`[${keyword.text}] ✅ JSON parsed successfully`);
+          log(`[${keyword.text}] ✅ JSON parsed successfully`);
 
           // Validate stories array exists
           if (
@@ -390,18 +393,18 @@ export default function NewsTab() {
             !parsedResult.stories ||
             !Array.isArray(parsedResult.stories)
           ) {
-            console.error(
+            logError(
               `[${keyword.text}] Invalid JSON format. Response:`,
               result.substring(0, 500)
             );
             throw new Error("Invalid JSON format: missing 'stories' array");
           }
         } catch (parseError: any) {
-          console.error(
+          logError(
             `[${keyword.text}] ❌ JSON PARSE ERROR:`,
             parseError.message
           );
-          console.error(`[${keyword.text}] 📄 FULL RESPONSE:`, result);
+          logError(`[${keyword.text}] 📄 FULL RESPONSE:`, result);
           // Return empty result instead of throwing - don't break the entire generation
           return {
             success: false,
@@ -414,7 +417,7 @@ export default function NewsTab() {
         }
 
         // At this point, parsedResult is guaranteed to be valid with a stories array
-        console.log(
+        log(
           `[${keyword.text}] Successfully parsed ${parsedResult.stories.length} stories`
         );
 
@@ -502,11 +505,10 @@ export default function NewsTab() {
       } catch (error: any) {
         // Check if the error is due to abort
         if (error.name === 'AbortError') {
-          console.log(`[${keyword.text}] Search aborted by user`);
+          log(`[${keyword.text}] Search aborted by user`);
           return { success: false, cards: [], cost: 0 };
         }
-
-        console.error(`[${keyword.text}] Error:`, error.message);
+        logError(`[${keyword.text}] Error:`, error.message);
 
         // Update status to error
         setStage1Results(prev => {
@@ -529,7 +531,7 @@ export default function NewsTab() {
 
     // Process searches with worker pool for optimal throughput
     // No head-of-line blocking - new searches start immediately when slots free up
-    console.log(
+    log(
       `Starting searches with worker pool (${CONCURRENT_LIMIT} concurrent workers)...`
     );
 
@@ -539,7 +541,7 @@ export default function NewsTab() {
       searchWithRetry
     );
 
-    console.log('All searches completed!');
+    log('All searches completed!');
 
     // Aggregate results (cards were already added incrementally)
     results.forEach(result => {
@@ -555,7 +557,7 @@ export default function NewsTab() {
       }
     });
 
-    console.log(
+    log(
       `Generated ${allCards.length} cards with total cost $${totalCost.toFixed(4)}`
     );
     // Update total cost
