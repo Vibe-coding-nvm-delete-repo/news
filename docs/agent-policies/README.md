@@ -1,7 +1,9 @@
 # Autonomous Agent Documentation Hub
 
-**Last Updated:** 2025-10-15  
+**Last Updated:** 2025-10-16  
 **Version:** 1.0
+
+> 🌐 **NEW:** Interactive Policy Viewer now available! Access via the **🤖 Agent Policy** tab in the application for a responsive, searchable, mobile-optimized view of all policies. [Learn more](../POLICY_VIEWER_GUIDE.md)
 
 ## 📚 Documentation Index
 
@@ -53,15 +55,19 @@ This documentation suite enables:
 ## 📝 Quick Links by Role
 
 ### For Developers
+
 - [Quick Start](./QUICK_START.md) → [Workflow Guide](./WORKFLOW_GUIDE.md) → [Templates](./TEMPLATES.md)
 
 ### For Reviewers
+
 - [Verification Checklist](./VERIFICATION_CHECKLIST.md) → [Acceptance Criteria](./ACCEPTANCE_CRITERIA.md)
 
 ### For Project Managers
+
 - [Policy Overview](./POLICY_OVERVIEW.md) → [Metrics & KPIs](./METRICS.md)
 
 ### For Autonomous Agents
+
 - [Mode Reference](./MODE_REFERENCE.md) → [Workflow Guide](./WORKFLOW_GUIDE.md) → [Verification Checklist](./VERIFICATION_CHECKLIST.md)
 
 ---
@@ -69,6 +75,7 @@ This documentation suite enables:
 ## 🔄 Maintenance
 
 These documents are living artifacts. Update them when:
+
 - A new mode or exception is introduced
 - Process improvements are identified
 - Common issues emerge requiring guidance
