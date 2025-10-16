@@ -649,7 +649,8 @@ export default function NewsTab() {
             }`}
           >
             <FileText className="h-4 w-4" />
-            Active Cards {activeCards.length > 0 && `(${activeCards.length})`}
+            Active Cards{' '}
+            {activeCards.length > 0 ? `(${activeCards.length})` : ''}
           </button>
           <button
             onClick={() => setActiveNewsTab('archived')}

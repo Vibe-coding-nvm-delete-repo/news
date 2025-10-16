@@ -207,6 +207,59 @@ function MyComponent() {
 }
 ```
 
+### Conditional Rendering
+
+**CRITICAL: Avoid React Error #31 - "Objects are not valid as a React child"**
+
+React cannot render booleans, objects, or undefined values directly. This commonly happens with logical AND (`&&`) operators in JSX.
+
+```typescript
+// ❌ DANGEROUS: Boolean && value pattern
+// When length is 0, React tries to render `false` which can cause errors
+<div>Active Cards {activeCards.length > 0 && `(${activeCards.length})`}</div>
+
+// ❌ DANGEROUS: Comparison operators before &&
+<div>{count > 0 && <Badge>{count}</Badge>}</div>
+<div>{isValid === true && <Icon />}</div>
+
+// ✅ SAFE: Use ternary operator with explicit empty string
+<div>Active Cards {activeCards.length > 0 ? `(${activeCards.length})` : ''}</div>
+
+// ✅ SAFE: Use ternary operator with null
+<div>{count > 0 ? <Badge>{count}</Badge> : null}</div>
+
+// ✅ SAFE: Wrap in parentheses to create proper JSX expression
+<div>
+  {activeCards.length > 0 && (
+    <span>({activeCards.length})</span>
+  )}
+</div>
+
+// ✅ SAFE: Convert to truthy/falsy value first
+<div>{!!count && <Badge>{count}</Badge>}</div>
+<div>{Boolean(isValid) && <Icon />}</div>
+```
+
+**Why This Happens:**
+
+- `array.length > 0` returns a boolean (`true` or `false`)
+- When used with `&&`, if the left side is `false`, React tries to render `false`
+- In some React versions/configs, rendering booleans causes Error #31
+
+**Best Practices:**
+
+1. ✅ **Always use ternary operators** for conditional rendering: `condition ? <Component /> : null`
+2. ✅ **Use explicit empty string** for optional text: `condition ? 'text' : ''`
+3. ✅ **Wrap complex JSX** in parentheses when using `&&`: `condition && (<div>...</div>)`
+4. ❌ **Never use comparisons directly** before `&&`: Avoid `length > 0 &&`, `count === 0 &&`, etc.
+
+**Detection:**
+
+```bash
+# Search for potential issues in your codebase
+grep -rn "\.length > 0 &&\|\.length < [0-9] &&\|=== true &&\|=== false &&" --include="*.tsx" --include="*.jsx"
+```
+
 ### Component Exports
 
 ```typescript
