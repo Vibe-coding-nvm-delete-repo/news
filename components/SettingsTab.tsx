@@ -268,10 +268,9 @@ export default function SettingsTab() {
               <Switch
                 checked={settings.onlineEnabled}
                 onCheckedChange={setOnlineEnabled}
-                disabled={true}
               />
               <span className="text-sm font-medium text-green-700">
-                Online (OpenRouter)
+                Enable Web Search
               </span>
             </div>
             <Button

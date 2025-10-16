@@ -153,19 +153,6 @@ export default function NewsTab() {
       );
 
       try {
-        // Build request body
-        // For online search: Use models like Perplexity Sonar that have built-in online capabilities
-        // The model will automatically search the web based on the prompt
-        const requestBody: any = {
-          model: settings.selectedModel,
-          messages: [
-            {
-              role: 'user',
-              content: `${settings.searchInstructions}\n\nKeyword: ${keyword.text}`,
-            },
-          ],
-        };
-
         const response = await fetch(
           'https://openrouter.ai/api/v1/chat/completions',
           {
@@ -187,7 +174,9 @@ export default function NewsTab() {
                   content: `${settings.searchInstructions}\n\nKeyword: ${keyword.text}`,
                 },
               ],
-              tools: settings.onlineEnabled ? [{ type: 'web_search' }] : undefined,
+              ...(settings.onlineEnabled && {
+                tools: [{ type: 'web_search' }],
+              }),
             }),
           }
         );
@@ -265,17 +254,6 @@ export default function NewsTab() {
         .map(r => `Keyword: ${r.keyword}\n\n${r.result}`)
         .join('\n\n---\n\n');
 
-      // Stage 2: Format and aggregate results (no online search needed)
-      const stage2RequestBody: any = {
-        model: settings.selectedModel,
-        messages: [
-          {
-            role: 'user',
-            content: `${settings.formatPrompt}\n\nAll search results:\n\n${aggregatedResults}`,
-          },
-        ],
-      };
-
       const response = await fetch(
         'https://openrouter.ai/api/v1/chat/completions',
         {
@@ -297,7 +275,6 @@ export default function NewsTab() {
                 content: `${settings.formatPrompt}\n\nAll search results:\n\n${aggregatedResults}`,
               },
             ],
-            tools: settings.onlineEnabled ? [{ type: 'web_search' }] : undefined,
           }),
         }
       );
