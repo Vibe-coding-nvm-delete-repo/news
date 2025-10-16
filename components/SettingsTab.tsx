@@ -173,7 +173,6 @@ export default function SettingsTab() {
 
       setModels(parsedModels);
     } catch (error) {
-      console.error('Error fetching models:', error);
       const message =
         error instanceof Error ? error.message : 'Failed to fetch models.';
       alert(message);
