@@ -45,56 +45,108 @@ export function formatCost(cost: number): string {
  * Handles various response formats including clean JSON, markdown-wrapped, and text-embedded JSON.
  *
  * Strategy sequence:
- * 1. Direct JSON.parse (for clean responses)
- * 2. Strip markdown code blocks (```json ... ```)
- * 3. Extract JSON object from surrounding text (finds {...})
+ * 1. Check for empty/invalid input
+ * 2. Direct JSON.parse (for clean responses)
+ * 3. Strip markdown code blocks (```json ... ```)
+ * 4. Extract JSON object from surrounding text (finds {...})
+ * 5. Try to fix common JSON issues (trailing commas, single quotes, etc.)
  *
  * @param text - The text response potentially containing JSON
  * @returns Parsed JSON object
- * @throws {Error} If JSON cannot be extracted or parsed (includes response preview)
- *
- * @example
- * ```ts
- * // Handles clean JSON
- * parseJSON('{"stories": []}')
- *
- * // Handles markdown-wrapped
- * parseJSON('```json\n{"stories": []}\n```')
- *
- * // Handles text-embedded
- * parseJSON('Here is the data: {"stories": []} as requested')
- * ```
+ * @throws {Error} If JSON cannot be extracted or parsed (includes full response for debugging)
  */
 export function parseJSON(text: string): any {
-  try {
-    // Strategy 1: Direct parse (handles clean JSON responses)
-    return JSON.parse(text);
-  } catch {
-    try {
-      // Strategy 2: Strip markdown code blocks (handles ```json ... ``` wrapped responses)
-      const stripped = text
-        .replace(/```(?:json)?\s*/g, '')
-        .replace(/```\s*/g, '')
-        .trim();
-      return JSON.parse(stripped);
-    } catch {
-      try {
-        // Strategy 3: Extract JSON object from surrounding text (handles explanatory text before/after)
-        // This finds the first { and last }, capturing the entire JSON object
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          return JSON.parse(jsonMatch[0]);
-        }
-        throw new Error('No JSON object found in response');
-      } catch (extractError) {
-        // Provide more helpful error message with response preview
-        const preview = text.substring(0, 200);
-        throw new Error(
-          `Failed to parse JSON response. Response preview: "${preview}..."`
-        );
-      }
-    }
+  // Log the raw response for debugging
+  console.log('🔍 RAW RESPONSE:', text.substring(0, 500));
+  console.log('📏 RESPONSE LENGTH:', text.length);
+
+  // Check for empty or invalid input
+  if (!text || typeof text !== 'string') {
+    console.error('❌ INVALID INPUT:', text);
+    throw new Error(
+      `Invalid input to parseJSON: ${typeof text} - "${text}"`
+    );
   }
+
+  const trimmed = text.trim();
+  if (trimmed.length === 0) {
+    console.error('❌ EMPTY RESPONSE');
+    throw new Error('Empty response from AI model');
+  }
+
+  // Strategy 1: Direct parse (handles clean JSON responses)
+  try {
+    const parsed = JSON.parse(trimmed);
+    console.log('✅ PARSED SUCCESSFULLY (Strategy 1: Direct)');
+    return parsed;
+  } catch (e1) {
+    console.log('❌ Strategy 1 failed:', (e1 as Error).message);
+  }
+
+  // Strategy 2: Strip markdown code blocks
+  try {
+    const stripped = trimmed
+      .replace(/```(?:json)?\s*/g, '')
+      .replace(/```\s*/g, '')
+      .trim();
+    const parsed = JSON.parse(stripped);
+    console.log('✅ PARSED SUCCESSFULLY (Strategy 2: Strip markdown)');
+    return parsed;
+  } catch (e2) {
+    console.log('❌ Strategy 2 failed:', (e2 as Error).message);
+  }
+
+  // Strategy 3: Extract JSON object from surrounding text
+  try {
+    const jsonMatch = trimmed.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      console.log('✅ PARSED SUCCESSFULLY (Strategy 3: Extract object)');
+      return parsed;
+    }
+  } catch (e3) {
+    console.log('❌ Strategy 3 failed:', (e3 as Error).message);
+  }
+
+  // Strategy 4: Try to find and extract array instead of object
+  try {
+    const arrayMatch = trimmed.match(/\[[\s\S]*\]/);
+    if (arrayMatch) {
+      const parsed = JSON.parse(arrayMatch[0]);
+      console.log('✅ PARSED SUCCESSFULLY (Strategy 4: Extract array)');
+      // Wrap in stories if it's a bare array
+      if (Array.isArray(parsed)) {
+        return { stories: parsed };
+      }
+      return parsed;
+    }
+  } catch (e4) {
+    console.log('❌ Strategy 4 failed:', (e4 as Error).message);
+  }
+
+  // Strategy 5: Try to fix common JSON issues
+  try {
+    let fixed = trimmed;
+    // Remove trailing commas
+    fixed = fixed.replace(/,(\s*[}\]])/g, '$1');
+    // Try to convert single quotes to double quotes (risky but might work)
+    fixed = fixed.replace(/'/g, '"');
+    const parsed = JSON.parse(fixed);
+    console.log('✅ PARSED SUCCESSFULLY (Strategy 5: Fixed common issues)');
+    return parsed;
+  } catch (e5) {
+    console.log('❌ Strategy 5 failed:', (e5 as Error).message);
+  }
+
+  // All strategies failed - provide detailed error
+  console.error('❌ ALL PARSING STRATEGIES FAILED');
+  console.error('Full response:', text);
+  throw new Error(
+    `Failed to parse JSON response after trying all strategies.\n\n` +
+    `Response length: ${text.length} characters\n` +
+    `First 500 chars: "${text.substring(0, 500)}"\n\n` +
+    `FULL RESPONSE:\n${text}`
+  );
 }
 
 /**
