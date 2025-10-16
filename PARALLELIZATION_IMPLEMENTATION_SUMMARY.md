@@ -10,7 +10,8 @@ Successfully implemented **advanced parallelization with worker pool pattern** a
 
 **Previous (v1):** Sequential batch processing - keywords processed in batches of 10, causing head-of-line blocking  
 **Previous (v2):** Simple Promise.all() - all keywords launched at once, but no concurrency control  
-**Current (v3):** **Worker Pool with controlled concurrency** - optimal throughput with rate limiting
+**Previous (v3):** Worker Pool with 15 concurrent workers - caused API throttling with OpenRouter :online models  
+**Current (v4):** **Worker Pool with controlled low concurrency (3)** - optimal for rate-limited APIs
 
 #### Key Improvements:
 
@@ -19,9 +20,11 @@ Successfully implemented **advanced parallelization with worker pool pattern** a
    - Worker pool: New searches start immediately when a worker becomes free
    - Result: **60-80% faster for 20+ keywords**
 
-2. **Optimal Concurrency Control**
-   - Maintains exactly 15 concurrent workers (increased from 10 in batches)
-   - Prevents overwhelming the API or browser connection limits
+2. **Optimized Concurrency for OpenRouter :online Models**
+   - **Reduced from 15 to 3 concurrent workers** to prevent API throttling
+   - OpenRouter's :online models require web searches (5-30s each) which are rate-limited
+   - Higher concurrency (10-15) caused "thundering herd" problem and 34+ second delays
+   - Lower concurrency (3) ensures consistent 5-20 second response times
    - Self-regulating: automatically adjusts as searches complete
 
 3. **Retry Logic with Exponential Backoff**
