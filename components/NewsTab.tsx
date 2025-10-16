@@ -164,13 +164,13 @@ export default function NewsTab() {
             },
             body: JSON.stringify({
               model: settings.selectedModel,
-              online: settings.onlineEnabled,
               messages: [
                 {
                   role: 'user',
                   content: `${settings.searchInstructions}\n\nKeyword: ${keyword.text}`,
                 },
               ],
+              tools: settings.onlineEnabled ? [{ type: 'web_search' }] : undefined,
             }),
           }
         );
@@ -259,13 +259,13 @@ export default function NewsTab() {
           },
           body: JSON.stringify({
             model: settings.selectedModel,
-            online: settings.onlineEnabled,
             messages: [
               {
                 role: 'user',
                 content: `${settings.formatPrompt}\n\nAll search results:\n\n${aggregatedResults}`,
               },
             ],
+            tools: settings.onlineEnabled ? [{ type: 'web_search' }] : undefined,
           }),
         }
       );
