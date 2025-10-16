@@ -173,18 +173,19 @@ export default function NewsTab() {
 
     // Stage 1: Search for each keyword WITH CONTROLLED CONCURRENCY
     // Run searches with a concurrency limit to avoid overwhelming the API
-    const CONCURRENT_LIMIT = 3; // Process 3 searches at a time for better performance
+    // Increased limit for faster processing - most APIs can handle 10+ concurrent requests
+    const CONCURRENT_LIMIT = 10; // Process up to 10 searches at a time for optimal performance
 
     const searchKeyword = async (keyword: any, index: number) => {
       try {
         console.log(`[${keyword.text}] Starting search...`);
         const startTime = Date.now();
 
-        // Create a timeout promise (60 seconds - reduced from 120 for faster failures)
+        // Create a timeout promise (30 seconds for faster failure detection)
         const timeoutPromise = new Promise((_, reject) => {
           setTimeout(
-            () => reject(new Error('Search timeout after 60 seconds')),
-            60000
+            () => reject(new Error('Search timeout after 30 seconds')),
+            30000
           );
         });
 
@@ -635,10 +636,10 @@ export default function NewsTab() {
                 <Clock className="h-5 w-5 text-blue-600" />
                 <div>
                   <p className="text-sm font-semibold text-blue-800">
-                    Optimized searches: 3 concurrent searches at a time
+                    Optimized searches: Up to 10 concurrent searches at a time
                   </p>
                   <p className="text-xs text-blue-700 mt-1">
-                    Results appear as they complete (10-60 seconds each). Check
+                    Results appear as they complete (5-30 seconds each). Check
                     browser console (F12) for progress logs.
                   </p>
                 </div>
