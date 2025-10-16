@@ -250,7 +250,6 @@ export default function NewsTab() {
           setStage1Progress((completedCount / enabledKeywords.length) * 100);
           return updated;
         });
-        return { success: false, error: error.message, cost: 0 };
       }
     });
 
