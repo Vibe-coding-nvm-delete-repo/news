@@ -183,7 +183,7 @@ export default function NewsTab() {
 
         const result = data.choices[0].message.content;
 
-        // Track cost
+        // Track cost and update in real-time
         if (data.usage) {
           const selectedModel = models.find(
             m => m.id === settings.selectedModel
@@ -196,6 +196,7 @@ export default function NewsTab() {
               (data.usage.completion_tokens / 1000000) *
               selectedModel.pricing.completion;
             totalCost += promptCost + completionCost;
+            setActualCost(totalCost);
           }
         }
 
@@ -284,12 +285,13 @@ export default function NewsTab() {
           const completionCost =
             (data.usage.completion_tokens / 1000000) *
             selectedModel.pricing.completion;
-          totalCost += promptCost + completionCost;
+          stage2CostValue = promptCost + completionCost;
+          totalCost += stage2CostValue;
         }
       }
 
       setStage2Cost(stage2CostValue);
-      setActualCost((prev) => prev + stage2CostValue);
+      setActualCost(totalCost);
 
       // Parse JSON response
       const result = data.choices[0].message.content;
@@ -337,8 +339,12 @@ export default function NewsTab() {
                 <Sparkles className="h-6 w-6" />
               </div>
               <div>
-                <p className="text-sm font-medium text-green-800">Total Cost Spent</p>
-                <p className="text-xs text-green-600">Cumulative across all API calls</p>
+                <p className="text-sm font-medium text-green-800">
+                  Total Cost Spent
+                </p>
+                <p className="text-xs text-green-600">
+                  Cumulative across all API calls
+                </p>
               </div>
             </div>
             <div className="text-right">
@@ -349,7 +355,7 @@ export default function NewsTab() {
           </div>
         </div>
       )}
-      
+
       {/* Generate Report Section */}
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-200">
         <div className="flex items-center justify-between mb-4">
