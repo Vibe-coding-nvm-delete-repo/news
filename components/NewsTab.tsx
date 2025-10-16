@@ -29,6 +29,8 @@ interface Stage1Result {
   result?: string;
   error?: string;
   cost?: number;
+  startTime?: number;
+  duration?: number;
 }
 
 export default function NewsTab() {
@@ -173,21 +175,91 @@ export default function NewsTab() {
       ? settings.selectedModel
       : `${settings.selectedModel}:online`;
 
-    // Stage 1: Search for each keyword WITH CONTROLLED CONCURRENCY
-    // Run searches with a concurrency limit to avoid overwhelming the API
-    // Increased limit for faster processing - most APIs can handle 10+ concurrent requests
-    const CONCURRENT_LIMIT = 10; // Process up to 10 searches at a time for optimal performance
+    // Stage 1: Search for each keyword WITH WORKER POOL CONCURRENCY
+    // Worker pool pattern: maintains exactly N concurrent searches for optimal throughput
+    // No head-of-line blocking - new searches start immediately when slots free up
+    const CONCURRENT_LIMIT = 15; // Optimal: 15-20 concurrent searches (increased from 10)
+
+    /**
+     * Worker pool helper: processes items with controlled concurrency
+     * Ensures exactly N workers are always active (until queue is empty)
+     * @returns Array of results in original order
+     */
+    const processWithWorkerPool = async <T, R>(
+      items: T[],
+      concurrency: number,
+      processor: (item: T, index: number) => Promise<R>
+    ): Promise<R[]> => {
+      const results: R[] = new Array(items.length);
+      let currentIndex = 0;
+
+      const worker = async () => {
+        while (currentIndex < items.length) {
+          const index = currentIndex++;
+          results[index] = await processor(items[index], index);
+        }
+      };
+
+      // Spawn N workers that share the queue
+      const workers = Array.from(
+        { length: Math.min(concurrency, items.length) },
+        () => worker()
+      );
+      await Promise.all(workers);
+      return results;
+    };
+
+    /**
+     * Retry wrapper with exponential backoff
+     * Handles transient network failures gracefully
+     */
+    const searchWithRetry = async (
+      keyword: any,
+      index: number,
+      maxRetries = 2
+    ) => {
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+          return await searchKeyword(keyword, index);
+        } catch (error: any) {
+          // Don't retry user cancellations
+          if (error.name === 'AbortError') throw error;
+
+          // If this was the last attempt, give up
+          if (attempt === maxRetries) throw error;
+
+          // Exponential backoff: 1s, 2s, 4s (capped at 5s)
+          const backoff = Math.min(1000 * Math.pow(2, attempt), 5000);
+          console.log(
+            `[${keyword.text}] ⚠️ Retry ${attempt + 1}/${maxRetries} after ${backoff}ms (${error.message})...`
+          );
+          await new Promise(resolve => setTimeout(resolve, backoff));
+        }
+      }
+      // TypeScript: this line is unreachable but required
+      throw new Error('Retry logic failed');
+    };
 
     const searchKeyword = async (keyword: any, index: number) => {
+      const keywordStartTime = Date.now();
+
       try {
         console.log(`[${keyword.text}] Starting search...`);
-        const startTime = Date.now();
 
-        // Create a timeout promise (30 seconds for faster failure detection)
+        // Track start time in state
+        setStage1Results(prev =>
+          prev.map((r, idx) =>
+            idx === index
+              ? { ...r, status: 'loading', startTime: keywordStartTime }
+              : r
+          )
+        );
+
+        // Create a timeout promise (20 seconds for faster failure detection - reduced from 30s)
         const timeoutPromise = new Promise((_, reject) => {
           setTimeout(
-            () => reject(new Error('Search timeout after 30 seconds')),
-            30000
+            () => reject(new Error('Search timeout after 20 seconds')),
+            20000
           );
         });
 
@@ -272,7 +344,7 @@ export default function NewsTab() {
         ])) as Response;
 
         console.log(
-          `[${keyword.text}] Response received in ${((Date.now() - startTime) / 1000).toFixed(1)}s`
+          `[${keyword.text}] Response received in ${((Date.now() - keywordStartTime) / 1000).toFixed(1)}s`
         );
 
         const data = await response.json();
@@ -372,11 +444,14 @@ export default function NewsTab() {
           }
         }
 
-        // Update status to complete
+        // Calculate duration
+        const duration = Date.now() - keywordStartTime;
+
+        // Update status to complete with duration
         setStage1Results(prev => {
           const updated = prev.map((r, idx) =>
             idx === index
-              ? { ...r, status: 'complete' as const, result, cost }
+              ? { ...r, status: 'complete' as const, result, cost, duration }
               : r
           );
           // Update progress
@@ -427,21 +502,17 @@ export default function NewsTab() {
       }
     };
 
-    // Process searches with controlled concurrency
+    // Process searches with worker pool for optimal throughput
+    // No head-of-line blocking - new searches start immediately when slots free up
     console.log(
-      `Starting searches with concurrency limit of ${CONCURRENT_LIMIT}...`
+      `Starting searches with worker pool (${CONCURRENT_LIMIT} concurrent workers)...`
     );
-    const results: Awaited<ReturnType<typeof searchKeyword>>[] = [];
 
-    for (let i = 0; i < enabledKeywords.length; i += CONCURRENT_LIMIT) {
-      const batch = enabledKeywords.slice(i, i + CONCURRENT_LIMIT);
-      const batchPromises = batch.map((keyword, batchIndex) =>
-        searchKeyword(keyword, i + batchIndex)
-      );
-      const batchResults = await Promise.all(batchPromises);
-      results.push(...batchResults);
-      console.log(`Batch ${Math.floor(i / CONCURRENT_LIMIT) + 1} completed`);
-    }
+    const results = await processWithWorkerPool(
+      enabledKeywords,
+      CONCURRENT_LIMIT,
+      searchWithRetry
+    );
 
     console.log('All searches completed!');
 
@@ -986,6 +1057,23 @@ export default function NewsTab() {
                           >
                             {result.status}
                           </span>
+
+                          {/* Show duration for completed/error results */}
+                          {(isComplete || isError) && result.duration && (
+                            <span className="text-xs font-mono text-slate-500 ml-2">
+                              {(result.duration / 1000).toFixed(1)}s
+                            </span>
+                          )}
+
+                          {/* Show elapsed time for loading results */}
+                          {isLoading && result.startTime && (
+                            <span className="text-xs font-mono text-blue-500 ml-2 animate-pulse">
+                              {((Date.now() - result.startTime) / 1000).toFixed(
+                                1
+                              )}
+                              s
+                            </span>
+                          )}
                         </div>
 
                         {result.status === 'complete' &&
