@@ -183,14 +183,14 @@ export default function NewsTab() {
     let totalStoriesReceived = 0;
     let totalStoriesRejected = 0;
 
-    // Ensure model has :online suffix for web search capability
+    // Ensure model has :online suffix for web search capability - ALWAYS ENABLED
     const onlineModel = settings.selectedModel?.includes(':online')
       ? settings.selectedModel
       : `${settings.selectedModel}:online`;
 
     // Stage 1: Search for each keyword WITH CONTROLLED CONCURRENCY
     // OpenRouter's :online models require web searches which are slow and rate-limited
-    // Lower concurrency (2-3) prevents API throttling and improves consistency
+    // Lower concurrency (3) prevents API throttling and improves consistency
     const CONCURRENT_LIMIT = 3; // Optimal for :online models to prevent rate limiting
 
     /**
@@ -278,15 +278,20 @@ export default function NewsTab() {
 
         // Build request body
         const requestBody = {
-          model: onlineModel,
+          model: onlineModel, // Use model with :online suffix for web search capability
           messages: [
             {
               role: 'user',
-              content: `${settings.searchInstructions}\n\n"${keyword.text}"`,
+              content: `${settings.searchInstructions}\n\n"${keyword.text}"`, // Pure user instructions + keyword only
             },
           ],
-          // ALWAYS force JSON output
-          response_format: { type: 'json_object' },
+          // Only add response_format if user configured it in model parameters
+          ...(settings.modelParameters?.response_format && {
+            response_format:
+              settings.modelParameters.response_format === 'json_object'
+                ? { type: 'json_object' }
+                : settings.modelParameters.response_format,
+          }),
           // Add model parameters for improved quality and consistency
           ...(settings.modelParameters?.temperature !== undefined && {
             temperature: settings.modelParameters.temperature,
