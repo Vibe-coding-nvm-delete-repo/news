@@ -1,6 +1,6 @@
-# News Report Generator
+# NewsForge AI
 
-A simplified AI-powered news aggregation tool using OpenRouter.
+A simplified AI-powered news aggregation and intelligent reporting tool using OpenRouter.
 
 ## Quick Start
 

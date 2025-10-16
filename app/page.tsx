@@ -41,10 +41,10 @@ export default function Home() {
       <div className="mx-auto w-full max-w-[1200px] px-4 py-8">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-slate-900 mb-2">
-            News Report Generator
+            NewsForge AI
           </h1>
           <p className="text-slate-600">
-            AI-powered news aggregation and analysis
+            AI-powered news aggregation and intelligent reporting
           </p>
         </div>
 

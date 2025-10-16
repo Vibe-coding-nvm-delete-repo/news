@@ -13,8 +13,8 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'News Report Generator',
-  description: 'AI-powered news aggregation and analysis',
+  title: 'NewsForge AI',
+  description: 'AI-powered news aggregation and intelligent reporting',
 };
 
 /**
