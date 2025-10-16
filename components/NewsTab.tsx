@@ -3,6 +3,16 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useStore, Card } from '@/lib/store';
 import { normalizeModelParameters } from '@/lib/openrouter';
+import {
+  parseOpenRouterResponse,
+  type OpenRouterResponsePayload,
+} from '@/lib/openrouterResponse';
+import {
+  SYSTEM_LOGIC_DEFINITIONS,
+  createInitialSystemLogicSteps,
+  SystemLogicStep,
+  SystemLogicStepId,
+} from '@/lib/systemLogic';
 import { Button } from '@/components/ui/button';
 import {
   Loader2,
@@ -23,6 +33,7 @@ import { parseJSON } from '@/lib/utils';
 import ActiveCardsTab from './ActiveCardsTab';
 import ArchivedCardsTab from './ArchivedCardsTab';
 import HistoryTab from './HistoryTab';
+import SystemLogicSteps from './SystemLogicSteps';
 
 interface Stage1Result {
   keyword: string;
@@ -39,7 +50,15 @@ interface Stage1Result {
   storiesFound?: number;
   responseLength?: number;
   apiResponse?: any;
+  steps: SystemLogicStep[];
 }
+
+const SYSTEM_LOGIC_STEP_ORDER: SystemLogicStepId[] =
+  SYSTEM_LOGIC_DEFINITIONS.map(definition => definition.id);
+
+const getSystemLogicLabel = (stepId: SystemLogicStepId) =>
+  SYSTEM_LOGIC_DEFINITIONS.find(definition => definition.id === stepId)
+    ?.label ?? stepId;
 
 export default function NewsTab() {
   const log = (...args: any[]) => {
@@ -84,6 +103,63 @@ export default function NewsTab() {
   const [currentGenerationCardCount, setCurrentGenerationCardCount] =
     useState(0);
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  const updateLogicStep = (
+    keywordText: string,
+    stepId: SystemLogicStepId,
+    updates: Partial<SystemLogicStep>
+  ) => {
+    setStage1Results(prev =>
+      prev.map(result => {
+        if (result.keyword !== keywordText) return result;
+        return {
+          ...result,
+          steps: result.steps.map(step =>
+            step.id === stepId ? { ...step, ...updates } : step
+          ),
+        };
+      })
+    );
+  };
+
+  const markDownstreamStepsAsSkipped = (
+    keywordText: string,
+    failedStepId: SystemLogicStepId,
+    detail: string
+  ) => {
+    const failedIndex = SYSTEM_LOGIC_STEP_ORDER.indexOf(failedStepId);
+    if (failedIndex === -1) return;
+
+    const timestamp = Date.now();
+    setStage1Results(prevResults =>
+      prevResults.map(result => {
+        if (result.keyword !== keywordText) return result;
+
+        return {
+          ...result,
+          steps: result.steps.map((step, index) => {
+            if (index <= failedIndex) return step;
+            if (step.status === 'success' || step.status === 'error')
+              return step;
+
+            const startedAt = step.startedAt ?? timestamp;
+            const elapsedMs =
+              step.elapsedMs !== undefined
+                ? step.elapsedMs
+                : timestamp - startedAt;
+            return {
+              ...step,
+              status: 'error',
+              detail,
+              startedAt,
+              endedAt: timestamp,
+              elapsedMs,
+            };
+          }),
+        };
+      })
+    );
+  };
 
   // Calculate estimated cost whenever keywords or model changes
   useEffect(() => {
@@ -183,6 +259,7 @@ export default function NewsTab() {
     const initialResults: Stage1Result[] = enabledKeywords.map(k => ({
       keyword: k.text,
       status: 'loading',
+      steps: createInitialSystemLogicSteps(),
     }));
     setStage1Results(initialResults);
 
@@ -241,7 +318,7 @@ export default function NewsTab() {
     ) => {
       for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
-          return await searchKeyword(keyword, index);
+          return await searchKeyword(keyword, index, attempt);
         } catch (error: any) {
           // Don't retry user cancellations
           if (error.name === 'AbortError') throw error;
@@ -261,8 +338,53 @@ export default function NewsTab() {
       throw new Error('Retry logic failed');
     };
 
-    const searchKeyword = async (keyword: any, index: number) => {
+    const searchKeyword = async (
+      keyword: any,
+      index: number,
+      attempt: number
+    ) => {
       const keywordStartTime = Date.now();
+      const stepTimings: Partial<Record<SystemLogicStepId, number>> = {};
+      let lastStepStarted: SystemLogicStepId | null = null;
+      let failedStep: SystemLogicStepId | null = null;
+
+      const markStepStart = (stepId: SystemLogicStepId, detail?: string) => {
+        const startedAt = Date.now();
+        stepTimings[stepId] = startedAt;
+        lastStepStarted = stepId;
+        updateLogicStep(keyword.text, stepId, {
+          status: 'in-progress',
+          startedAt,
+          endedAt: undefined,
+          elapsedMs: undefined,
+          ...(detail ? { detail } : {}),
+        });
+      };
+
+      const markStepSuccess = (stepId: SystemLogicStepId, detail?: string) => {
+        const endedAt = Date.now();
+        const startedAt = stepTimings[stepId] ?? endedAt;
+        updateLogicStep(keyword.text, stepId, {
+          status: 'success',
+          startedAt,
+          endedAt,
+          elapsedMs: endedAt - startedAt,
+          ...(detail ? { detail } : {}),
+        });
+      };
+
+      const markStepError = (stepId: SystemLogicStepId, message: string) => {
+        const endedAt = Date.now();
+        const startedAt = stepTimings[stepId] ?? endedAt;
+        failedStep = stepId;
+        updateLogicStep(keyword.text, stepId, {
+          status: 'error',
+          startedAt,
+          endedAt,
+          elapsedMs: endedAt - startedAt,
+          detail: message,
+        });
+      };
 
       try {
         log(`[${keyword.text}] Starting search...`);
@@ -271,9 +393,33 @@ export default function NewsTab() {
         setStage1Results(prev =>
           prev.map((r, idx) =>
             idx === index
-              ? { ...r, status: 'loading', startTime: keywordStartTime }
+              ? {
+                  ...r,
+                  status: 'loading',
+                  startTime: keywordStartTime,
+                  result: undefined,
+                  error: undefined,
+                  cost: undefined,
+                  duration: undefined,
+                  storiesFound: undefined,
+                  responseLength: undefined,
+                  apiResponse: undefined,
+                  modelUsed: undefined,
+                  modelParameters: undefined,
+                  searchQuery: undefined,
+                  steps: createInitialSystemLogicSteps(),
+                }
               : r
           )
+        );
+
+        markStepStart(
+          'validate-config',
+          `Attempt ${attempt + 1}: API key & model ${settings.selectedModel}`
+        );
+        markStepSuccess(
+          'validate-config',
+          `Using ${onlineModel} with ${settings.keywords.filter(k => k.enabled).length} enabled keyword(s).`
         );
 
         // Create a timeout promise (20 seconds for faster failure detection - reduced from 30s)
@@ -285,6 +431,10 @@ export default function NewsTab() {
         });
 
         // Build request body
+        markStepStart(
+          'compose-prompt',
+          'Merging search instructions with keyword and parameters.'
+        );
         const normalizedParameters = normalizeModelParameters(
           settings.modelParameters,
           onlineModel
@@ -301,6 +451,13 @@ export default function NewsTab() {
           // Send normalized parameters so the API receives valid values only
           ...normalizedParameters,
         };
+        const parameterSummary = Object.keys(normalizedParameters).length
+          ? `Parameters: ${Object.keys(normalizedParameters).join(', ')}`
+          : 'Parameters: defaults';
+        markStepSuccess(
+          'compose-prompt',
+          `${parameterSummary}\nPrompt length: ${requestBody.messages[0].content.length} chars.`
+        );
 
         log(
           `[${keyword.text}] 📤 Request body:`,
@@ -308,6 +465,10 @@ export default function NewsTab() {
         );
 
         // Race between fetch and timeout
+        markStepStart(
+          'call-openrouter',
+          'POST https://openrouter.ai/api/v1/chat/completions'
+        );
         const fetchPromise = fetch(
           'https://openrouter.ai/api/v1/chat/completions',
           {
@@ -331,23 +492,69 @@ export default function NewsTab() {
           timeoutPromise,
         ])) as Response;
 
+        if (!response.ok) {
+          const errorText = await response.text();
+          markStepError(
+            'call-openrouter',
+            `HTTP ${response.status} ${response.statusText}: ${errorText.substring(0, 200)}`
+          );
+          throw new Error(
+            `OpenRouter request failed with status ${response.status} ${response.statusText}`
+          );
+        }
+
+        markStepSuccess(
+          'call-openrouter',
+          `HTTP ${response.status} ${response.statusText}`
+        );
+
         log(
           `[${keyword.text}] Response received in ${((Date.now() - keywordStartTime) / 1000).toFixed(1)}s`
         );
 
-        const data = await response.json();
+        markStepStart('read-response', 'Decoding OpenRouter payload.');
+        let parsedPayload: OpenRouterResponsePayload;
+        let payloadMode: 'json' | 'stream' = 'json';
+        try {
+          const result = await parseOpenRouterResponse(response);
+          parsedPayload = result.payload;
+          payloadMode = result.mode;
+        } catch (readError: any) {
+          const decodingMessage =
+            readError?.message ?? 'Unknown response decoding error';
+          markStepError('read-response', decodingMessage);
+          throw new Error(
+            `Unable to decode OpenRouter response: ${decodingMessage}`
+          );
+        }
+
+        const data = parsedPayload;
 
         if (data.error) {
           logError(`[${keyword.text}] API Error:`, data.error);
-          throw new Error(data.error.message || 'API Error');
+          const apiMessage = data.error.message || 'API Error';
+          markStepError('read-response', apiMessage);
+          throw new Error(apiMessage);
         }
 
-        if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+        markStepSuccess(
+          'read-response',
+          `Tokens used — prompt: ${data.usage?.prompt_tokens ?? 0}, completion: ${
+            data.usage?.completion_tokens ?? 0
+          } (${payloadMode === 'stream' ? 'streamed' : 'json'})`
+        );
+
+        const message = data.choices?.[0]?.message;
+        if (!message || typeof message.content !== 'string') {
           logError(`[${keyword.text}] Invalid API response:`, data);
+          markStepError(
+            'read-response',
+            'Missing choices[0].message in API response'
+          );
           throw new Error('Invalid API response format');
         }
 
-        const result = data.choices[0].message.content;
+        const result = message.content;
         log(`[${keyword.text}] ✅ Received response`);
         log(`[${keyword.text}] 📏 Length: ${result.length} chars`);
         log(`[${keyword.text}] 🔍 First 200 chars:`, result.substring(0, 200));
@@ -359,6 +566,10 @@ export default function NewsTab() {
         // Parse JSON from this keyword's search
         let parsedResult: any;
         try {
+          markStepStart(
+            'parse-json',
+            'Parsing stories array from AI response text.'
+          );
           parsedResult = parseJSON(result);
           log(`[${keyword.text}] ✅ JSON parsed successfully`);
 
@@ -372,14 +583,39 @@ export default function NewsTab() {
               `[${keyword.text}] Invalid JSON format. Response:`,
               result.substring(0, 500)
             );
+            markStepError(
+              'parse-json',
+              "Invalid JSON format: missing 'stories' array"
+            );
             throw new Error("Invalid JSON format: missing 'stories' array");
           }
+          markStepSuccess(
+            'parse-json',
+            `Parsed ${parsedResult.stories.length} stories.`
+          );
         } catch (parseError: any) {
           logError(
             `[${keyword.text}] ❌ JSON PARSE ERROR:`,
             parseError.message
           );
           logError(`[${keyword.text}] 📄 FULL RESPONSE:`, result);
+          if (parseError.message) {
+            markStepError('parse-json', parseError.message);
+          }
+          updateLogicStep(keyword.text, 'build-cards', {
+            status: 'error',
+            detail: 'Skipped: JSON parsing failed.',
+            startedAt: Date.now(),
+            endedAt: Date.now(),
+            elapsedMs: 0,
+          });
+          updateLogicStep(keyword.text, 'store-cards', {
+            status: 'error',
+            detail: 'Skipped: JSON parsing failed.',
+            startedAt: Date.now(),
+            endedAt: Date.now(),
+            elapsedMs: 0,
+          });
           // Return empty result instead of throwing - don't break the entire generation
           return {
             success: false,
@@ -396,10 +632,16 @@ export default function NewsTab() {
           `[${keyword.text}] Successfully parsed ${parsedResult.stories.length} stories`
         );
 
+        markStepStart(
+          'build-cards',
+          `Transforming ${parsedResult.stories.length} stories into cards.`
+        );
         // Add keyword and reportId to each story, convert to Card
         const cardsFromStories: Card[] = parsedResult.stories.map(
           (story: any) => ({
-            id: `${reportId}-${keyword.text}-${Date.now()}-${Math.random().toString(36).substring(2)}`,
+            id: `${reportId}-${keyword.text}-${Date.now()}-${Math.random()
+              .toString(36)
+              .substring(2)}`,
             reportId: reportId,
             keyword: keyword.text,
             category: story.category || 'Uncategorized',
@@ -416,20 +658,24 @@ export default function NewsTab() {
             status: 'active' as const,
           })
         );
+        markStepSuccess(
+          'build-cards',
+          `${cardsFromStories.length} card(s) constructed.`
+        );
 
         // Track cost
         let cost = 0;
         if (data.usage) {
+          const promptTokens = data.usage.prompt_tokens ?? 0;
+          const completionTokens = data.usage.completion_tokens ?? 0;
           const selectedModel = models.find(
             m => m.id === settings.selectedModel
           );
           if (selectedModel) {
             const promptCost =
-              (data.usage.prompt_tokens / 1000000) *
-              selectedModel.pricing.prompt;
+              (promptTokens / 1000000) * selectedModel.pricing.prompt;
             const completionCost =
-              (data.usage.completion_tokens / 1000000) *
-              selectedModel.pricing.completion;
+              (completionTokens / 1000000) * selectedModel.pricing.completion;
             cost = promptCost + completionCost;
           }
         }
@@ -465,12 +711,22 @@ export default function NewsTab() {
           return updated;
         });
 
+        markStepStart(
+          'store-cards',
+          `Persisting ${cardsFromStories.length} card(s) to store.`
+        );
         // Immediately add completed cards to the active list (don't wait for all to finish)
         if (cardsFromStories.length > 0) {
           addCardsToActive(cardsFromStories);
           // Update the current generation card count for real-time feedback
           setCurrentGenerationCardCount(prev => prev + cardsFromStories.length);
         }
+        markStepSuccess(
+          'store-cards',
+          cardsFromStories.length > 0
+            ? `${cardsFromStories.length} card(s) added to active list.`
+            : 'No cards produced from response.'
+        );
 
         return {
           success: true,
@@ -483,9 +739,32 @@ export default function NewsTab() {
         // Check if the error is due to abort
         if (error.name === 'AbortError') {
           log(`[${keyword.text}] Search aborted by user`);
+          markStepError('call-openrouter', 'Request aborted by user');
+          markDownstreamStepsAsSkipped(
+            keyword.text,
+            'call-openrouter',
+            'Skipped: request aborted by user.'
+          );
+          markStepError('store-cards', 'Skipped: request aborted by user.');
           return { success: false, cards: [], cost: 0 };
         }
         logError(`[${keyword.text}] Error:`, error.message);
+
+        const errorMessage = error?.message ?? 'Unknown error';
+        if (!failedStep && lastStepStarted) {
+          markStepError(lastStepStarted, errorMessage);
+        }
+
+        const failureStep: SystemLogicStepId =
+          failedStep ?? lastStepStarted ?? 'validate-config';
+        const failureLabel = getSystemLogicLabel(failureStep);
+        markDownstreamStepsAsSkipped(
+          keyword.text,
+          failureStep,
+          `Skipped: halted after "${failureLabel}" — ${errorMessage}.`
+        );
+
+        markStepError('store-cards', 'Not executed due to upstream error.');
 
         // Update status to error
         setStage1Results(prev => {
@@ -1133,172 +1412,206 @@ export default function NewsTab() {
 
                       {expandedResults.has(result.keyword) && (
                         <div className="border-t bg-white">
-                          {/* Enhanced Visibility Panel */}
-                          {result.status === 'complete' && (
-                            <div className="px-4 py-4 space-y-4">
-                              {/* Quick Stats */}
-                              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
-                                  <p className="text-xs font-semibold text-blue-700 mb-1">
-                                    Stories Found
-                                  </p>
-                                  <p className="text-2xl font-bold text-blue-900">
-                                    {result.storiesFound || 0}
-                                  </p>
-                                </div>
-                                <div className="bg-purple-50 p-3 rounded-lg border border-purple-200">
-                                  <p className="text-xs font-semibold text-purple-700 mb-1">
-                                    Duration
-                                  </p>
-                                  <p className="text-2xl font-bold text-purple-900">
-                                    {result.duration
-                                      ? (result.duration / 1000).toFixed(1)
-                                      : 0}
-                                    s
-                                  </p>
-                                </div>
-                                <div className="bg-green-50 p-3 rounded-lg border border-green-200">
-                                  <p className="text-xs font-semibold text-green-700 mb-1">
-                                    Cost
-                                  </p>
-                                  <p className="text-2xl font-bold text-green-900">
-                                    $
-                                    {result.cost
-                                      ? result.cost.toFixed(4)
-                                      : '0.0000'}
-                                  </p>
-                                </div>
-                                <div className="bg-orange-50 p-3 rounded-lg border border-orange-200">
-                                  <p className="text-xs font-semibold text-orange-700 mb-1">
-                                    Response Size
-                                  </p>
-                                  <p className="text-2xl font-bold text-orange-900">
-                                    {result.responseLength
-                                      ? (result.responseLength / 1000).toFixed(
-                                          1
-                                        )
-                                      : 0}
-                                    KB
-                                  </p>
-                                </div>
-                              </div>
-
-                              {/* Model & Parameters */}
-                              <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
-                                <h4 className="text-sm font-bold text-slate-900 mb-2 flex items-center gap-2">
-                                  <Sparkles className="h-4 w-4 text-indigo-600" />
-                                  Model & Parameters
-                                </h4>
-                                <div className="space-y-2 text-sm">
-                                  <div className="flex items-start gap-2">
-                                    <span className="text-slate-600 font-medium min-w-[120px]">
-                                      Model:
-                                    </span>
-                                    <span className="text-slate-900 font-mono text-xs bg-white px-2 py-1 rounded border">
-                                      {result.modelUsed}
-                                    </span>
-                                  </div>
-                                  {result.modelParameters && (
-                                    <div className="grid grid-cols-2 gap-2 mt-2">
-                                      {Object.entries(
-                                        result.modelParameters
-                                      ).map(
-                                        ([key, value]) =>
-                                          value !== undefined && (
-                                            <div
-                                              key={key}
-                                              className="flex items-center gap-2"
-                                            >
-                                              <span className="text-slate-600 text-xs">
-                                                {key}:
-                                              </span>
-                                              <span className="text-slate-900 font-mono text-xs bg-white px-2 py-0.5 rounded border">
-                                                {typeof value === 'object'
-                                                  ? JSON.stringify(value)
-                                                  : String(value)}
-                                              </span>
-                                            </div>
-                                          )
-                                      )}
+                          <div className="px-4 py-4">
+                            <div className="grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+                              <div className="space-y-4">
+                                {/* Enhanced Visibility Panel */}
+                                {result.status === 'complete' && (
+                                  <>
+                                    {/* Quick Stats */}
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                      <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                                        <p className="text-xs font-semibold text-blue-700 mb-1">
+                                          Stories Found
+                                        </p>
+                                        <p className="text-2xl font-bold text-blue-900">
+                                          {result.storiesFound || 0}
+                                        </p>
+                                      </div>
+                                      <div className="bg-purple-50 p-3 rounded-lg border border-purple-200">
+                                        <p className="text-xs font-semibold text-purple-700 mb-1">
+                                          Duration
+                                        </p>
+                                        <p className="text-2xl font-bold text-purple-900">
+                                          {result.duration
+                                            ? (result.duration / 1000).toFixed(
+                                                1
+                                              )
+                                            : 0}
+                                          s
+                                        </p>
+                                      </div>
+                                      <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+                                        <p className="text-xs font-semibold text-green-700 mb-1">
+                                          Cost
+                                        </p>
+                                        <p className="text-2xl font-bold text-green-900">
+                                          $
+                                          {result.cost
+                                            ? result.cost.toFixed(4)
+                                            : '0.0000'}
+                                        </p>
+                                      </div>
+                                      <div className="bg-orange-50 p-3 rounded-lg border border-orange-200">
+                                        <p className="text-xs font-semibold text-orange-700 mb-1">
+                                          Response Size
+                                        </p>
+                                        <p className="text-2xl font-bold text-orange-900">
+                                          {result.responseLength
+                                            ? (
+                                                result.responseLength / 1000
+                                              ).toFixed(1)
+                                            : 0}
+                                          KB
+                                        </p>
+                                      </div>
                                     </div>
-                                  )}
-                                </div>
-                              </div>
 
-                              {/* Search Query */}
-                              <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-200">
-                                <h4 className="text-sm font-bold text-indigo-900 mb-2 flex items-center gap-2">
-                                  <FileText className="h-4 w-4 text-indigo-600" />
-                                  Search Query Sent to AI
-                                </h4>
-                                <div className="bg-white p-3 rounded border border-indigo-200 max-h-64 overflow-y-auto">
-                                  <pre className="text-xs text-slate-700 whitespace-pre-wrap font-mono">
-                                    {result.searchQuery}
-                                  </pre>
-                                </div>
-                              </div>
-
-                              {/* API Response */}
-                              {result.apiResponse && (
-                                <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                                  <h4 className="text-sm font-bold text-yellow-900 mb-2 flex items-center gap-2">
-                                    <CheckCircle2 className="h-4 w-4 text-yellow-600" />
-                                    Parsed Stories ({result.storiesFound || 0})
-                                  </h4>
-                                  {result.storiesFound === 0 &&
-                                  result.status === 'complete' ? (
-                                    <div className="bg-red-100 border border-red-300 rounded p-3">
-                                      <p className="text-sm font-bold text-red-800 mb-1">
-                                        ⚠️ No Stories Found
-                                      </p>
-                                      <p className="text-xs text-red-700">
-                                        The AI model returned{' '}
-                                        <code className="bg-red-200 px-1 py-0.5 rounded">
-                                          {JSON.stringify({ stories: [] })}
-                                        </code>{' '}
-                                        despite having online search enabled.
-                                        This may indicate no recent news was
-                                        found for this keyword.
-                                      </p>
-                                    </div>
-                                  ) : (
-                                    <div className="bg-white p-3 rounded border border-yellow-200 max-h-96 overflow-y-auto">
-                                      <pre className="text-xs text-slate-700 whitespace-pre-wrap font-mono">
-                                        {JSON.stringify(
-                                          result.apiResponse,
-                                          null,
-                                          2
+                                    {/* Model & Parameters */}
+                                    <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                                      <h4 className="text-sm font-bold text-slate-900 mb-2 flex items-center gap-2">
+                                        <Sparkles className="h-4 w-4 text-indigo-600" />
+                                        Model & Parameters
+                                      </h4>
+                                      <div className="space-y-2 text-sm">
+                                        <div className="flex items-start gap-2">
+                                          <span className="text-slate-600 font-medium min-w-[120px]">
+                                            Model:
+                                          </span>
+                                          <span className="text-slate-900 font-mono text-xs bg-white px-2 py-1 rounded border">
+                                            {result.modelUsed}
+                                          </span>
+                                        </div>
+                                        {result.modelParameters && (
+                                          <div className="grid grid-cols-2 gap-2 mt-2">
+                                            {Object.entries(
+                                              result.modelParameters
+                                            ).map(
+                                              ([key, value]) =>
+                                                value !== undefined && (
+                                                  <div
+                                                    key={key}
+                                                    className="flex items-center gap-2"
+                                                  >
+                                                    <span className="text-slate-600 text-xs">
+                                                      {key}:
+                                                    </span>
+                                                    <span className="text-slate-900 font-mono text-xs bg-white px-2 py-0.5 rounded border">
+                                                      {typeof value === 'object'
+                                                        ? JSON.stringify(value)
+                                                        : String(value)}
+                                                    </span>
+                                                  </div>
+                                                )
+                                            )}
+                                          </div>
                                         )}
-                                      </pre>
+                                      </div>
+                                    </div>
+
+                                    {/* Search Query */}
+                                    <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-200">
+                                      <h4 className="text-sm font-bold text-indigo-900 mb-2 flex items-center gap-2">
+                                        <FileText className="h-4 w-4 text-indigo-600" />
+                                        Search Query Sent to AI
+                                      </h4>
+                                      <div className="bg-white p-3 rounded border border-indigo-200 max-h-64 overflow-y-auto">
+                                        <pre className="text-xs text-slate-700 whitespace-pre-wrap font-mono">
+                                          {result.searchQuery}
+                                        </pre>
+                                      </div>
+                                    </div>
+
+                                    {/* API Response */}
+                                    {result.apiResponse && (
+                                      <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                                        <h4 className="text-sm font-bold text-yellow-900 mb-2 flex items-center gap-2">
+                                          <CheckCircle2 className="h-4 w-4 text-yellow-600" />
+                                          Parsed Stories (
+                                          {result.storiesFound || 0})
+                                        </h4>
+                                        {result.storiesFound === 0 &&
+                                        result.status === 'complete' ? (
+                                          <div className="bg-red-100 border border-red-300 rounded p-3">
+                                            <p className="text-sm font-bold text-red-800 mb-1">
+                                              ⚠️ No Stories Found
+                                            </p>
+                                            <p className="text-xs text-red-700">
+                                              The AI model returned{' '}
+                                              <code className="bg-red-200 px-1 py-0.5 rounded">
+                                                {JSON.stringify({
+                                                  stories: [],
+                                                })}
+                                              </code>{' '}
+                                              despite having online search
+                                              enabled. This may indicate no
+                                              recent news was found for this
+                                              keyword.
+                                            </p>
+                                          </div>
+                                        ) : (
+                                          <div className="bg-white p-3 rounded border border-yellow-200 max-h-96 overflow-y-auto">
+                                            <pre className="text-xs text-slate-700 whitespace-pre-wrap font-mono">
+                                              {JSON.stringify(
+                                                result.apiResponse,
+                                                null,
+                                                2
+                                              )}
+                                            </pre>
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+
+                                    {/* Raw Response */}
+                                    {result.result && (
+                                      <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                                        <h4 className="text-sm font-bold text-slate-900 mb-2">
+                                          Raw AI Response
+                                        </h4>
+                                        <div className="bg-white p-3 rounded border border-slate-200 max-h-64 overflow-y-auto">
+                                          <pre className="text-xs text-slate-700 whitespace-pre-wrap font-mono">
+                                            {result.result}
+                                          </pre>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </>
+                                )}
+
+                                {result.status === 'loading' &&
+                                  !result.error && (
+                                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                      <p className="text-sm font-semibold text-blue-800">
+                                        Keyword search in progress...
+                                      </p>
+                                      <p className="text-xs text-blue-700 mt-1">
+                                        Watch the system logic trace to see
+                                        which step is currently running.
+                                      </p>
                                     </div>
                                   )}
-                                </div>
-                              )}
 
-                              {/* Raw Response */}
-                              {result.result && (
-                                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
-                                  <h4 className="text-sm font-bold text-slate-900 mb-2">
-                                    Raw AI Response
-                                  </h4>
-                                  <div className="bg-white p-3 rounded border border-slate-200 max-h-64 overflow-y-auto">
-                                    <pre className="text-xs text-slate-700 whitespace-pre-wrap font-mono">
-                                      {result.result}
-                                    </pre>
+                                {/* Error Display */}
+                                {result.error && (
+                                  <div className="bg-red-100 border border-red-200 rounded-lg p-4">
+                                    <p className="text-sm font-semibold text-red-800">
+                                      Error: {result.error}
+                                    </p>
+                                    <p className="text-xs text-red-700 mt-1">
+                                      Review the system logic trace for the
+                                      exact failure point.
+                                    </p>
                                   </div>
-                                </div>
-                              )}
-                            </div>
-                          )}
+                                )}
+                              </div>
 
-                          {/* Error Display */}
-                          {result.error && (
-                            <div className="px-4 py-3 bg-red-100">
-                              <p className="text-sm text-red-600">
-                                Error: {result.error}
-                              </p>
+                              <SystemLogicSteps
+                                keyword={result.keyword}
+                                steps={result.steps}
+                              />
                             </div>
-                          )}
+                          </div>
                         </div>
                       )}
                     </div>
