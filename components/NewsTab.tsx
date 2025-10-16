@@ -174,7 +174,7 @@ export default function NewsTab() {
     let totalStoriesRejected = 0;
 
     // Ensure model has :online suffix for web search capability
-    const onlineModel = settings.selectedModel.includes(':online')
+    const onlineModel = settings.selectedModel?.includes(':online')
       ? settings.selectedModel
       : `${settings.selectedModel}:online`;
 
@@ -224,47 +224,48 @@ export default function NewsTab() {
                 },
               ],
               // Add model parameters for improved quality and consistency
-              ...(settings.modelParameters.temperature !== undefined && {
+              ...(settings.modelParameters?.temperature !== undefined && {
                 temperature: settings.modelParameters.temperature,
               }),
-              ...(settings.modelParameters.max_tokens !== undefined && {
+              ...(settings.modelParameters?.max_tokens !== undefined && {
                 max_tokens: settings.modelParameters.max_tokens,
               }),
-              ...(settings.modelParameters.response_format &&
+              ...(settings.modelParameters?.response_format &&
                 settings.modelParameters.response_format !== 'auto' && {
                   response_format: {
                     type: settings.modelParameters.response_format,
                   },
                 }),
-              ...(settings.modelParameters.top_p !== undefined && {
+              ...(settings.modelParameters?.top_p !== undefined && {
                 top_p: settings.modelParameters.top_p,
               }),
-              ...(settings.modelParameters.frequency_penalty !== undefined && {
+              ...(settings.modelParameters?.frequency_penalty !== undefined && {
                 frequency_penalty: settings.modelParameters.frequency_penalty,
               }),
-              ...(settings.modelParameters.presence_penalty !== undefined && {
+              ...(settings.modelParameters?.presence_penalty !== undefined && {
                 presence_penalty: settings.modelParameters.presence_penalty,
               }),
-              ...(settings.modelParameters.reasoning && {
+              ...(settings.modelParameters?.reasoning && {
                 reasoning: settings.modelParameters.reasoning,
               }),
-              ...(settings.modelParameters.include_reasoning !== undefined && {
+              ...(settings.modelParameters?.include_reasoning !== undefined && {
                 include_reasoning: settings.modelParameters.include_reasoning,
               }),
-              ...(settings.modelParameters.stop &&
+              ...(settings.modelParameters?.stop &&
                 settings.modelParameters.stop.length > 0 && {
                   stop: settings.modelParameters.stop,
                 }),
-              ...(settings.modelParameters.seed !== undefined && {
+              ...(settings.modelParameters?.seed !== undefined && {
                 seed: settings.modelParameters.seed,
               }),
-              ...(settings.modelParameters.top_k !== undefined && {
+              ...(settings.modelParameters?.top_k !== undefined && {
                 top_k: settings.modelParameters.top_k,
               }),
-              ...(settings.modelParameters.min_p !== undefined && {
+              ...(settings.modelParameters?.min_p !== undefined && {
                 min_p: settings.modelParameters.min_p,
               }),
-              ...(settings.modelParameters.repetition_penalty !== undefined && {
+              ...(settings.modelParameters?.repetition_penalty !==
+                undefined && {
                 repetition_penalty: settings.modelParameters.repetition_penalty,
               }),
             }),
@@ -315,7 +316,9 @@ export default function NewsTab() {
 
         // Filter stories to ONLY include those from the last 24 hours
         const now = new Date();
-        const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        const twentyFourHoursAgo = new Date(
+          now.getTime() - 24 * 60 * 60 * 1000
+        );
 
         const validStories = parsedResult.stories.filter((story: any) => {
           // Reject stories without dates

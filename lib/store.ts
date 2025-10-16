@@ -205,6 +205,18 @@ interface StoreState {
   ) => void;
 }
 
+/**
+ * Default model parameters for backward compatibility and new users
+ */
+const DEFAULT_MODEL_PARAMETERS: ModelParameters = {
+  temperature: 0.5,
+  max_tokens: 2000,
+  response_format: 'json_object',
+  top_p: 0.9,
+  frequency_penalty: 0.5,
+  presence_penalty: 0.3,
+};
+
 export const useStore = create<StoreState>()(
   persist(
     set => ({
@@ -238,14 +250,7 @@ RULES:
 
 Keyword:`,
         onlineEnabled: true,
-        modelParameters: {
-          temperature: 0.5,
-          max_tokens: 2000,
-          response_format: 'json_object',
-          top_p: 0.9,
-          frequency_penalty: 0.5,
-          presence_penalty: 0.3,
-        },
+        modelParameters: DEFAULT_MODEL_PARAMETERS,
       },
       models: [],
       isLoadingModels: false,
@@ -301,7 +306,7 @@ Keyword:`,
           settings: {
             ...state.settings,
             modelParameters: {
-              ...state.settings.modelParameters,
+              ...(state.settings.modelParameters || DEFAULT_MODEL_PARAMETERS),
               ...parameters,
             },
           },
@@ -336,6 +341,16 @@ Keyword:`,
     }),
     {
       name: 'news-report-generator-storage',
+      version: 1,
+      migrate: (persistedState: any, version: number) => {
+        // Ensure modelParameters exists for backward compatibility
+        if (persistedState && persistedState.settings) {
+          if (!persistedState.settings.modelParameters) {
+            persistedState.settings.modelParameters = DEFAULT_MODEL_PARAMETERS;
+          }
+        }
+        return persistedState as StoreState;
+      },
     }
   )
 );

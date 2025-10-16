@@ -452,7 +452,7 @@ export default function SettingsTab() {
                   Temperature
                 </label>
                 <span className="text-sm text-slate-600">
-                  {settings.modelParameters.temperature ?? 0.5}
+                  {settings.modelParameters?.temperature ?? 0.5}
                 </span>
               </div>
               <input
@@ -460,7 +460,7 @@ export default function SettingsTab() {
                 min="0"
                 max="2"
                 step="0.1"
-                value={settings.modelParameters.temperature ?? 0.5}
+                value={settings.modelParameters?.temperature ?? 0.5}
                 onChange={e =>
                   setModelParameters({
                     temperature: parseFloat(e.target.value),
@@ -484,7 +484,7 @@ export default function SettingsTab() {
                   type="number"
                   min="100"
                   max="10000"
-                  value={settings.modelParameters.max_tokens ?? 2000}
+                  value={settings.modelParameters?.max_tokens ?? 2000}
                   onChange={e =>
                     setModelParameters({
                       max_tokens: parseInt(e.target.value) || 2000,
@@ -506,7 +506,7 @@ export default function SettingsTab() {
               </label>
               <select
                 value={
-                  settings.modelParameters.response_format ?? 'json_object'
+                  settings.modelParameters?.response_format ?? 'json_object'
                 }
                 onChange={e =>
                   setModelParameters({
@@ -535,7 +535,7 @@ export default function SettingsTab() {
                   Top P (Nucleus Sampling)
                 </label>
                 <span className="text-sm text-slate-600">
-                  {settings.modelParameters.top_p ?? 0.9}
+                  {settings.modelParameters?.top_p ?? 0.9}
                 </span>
               </div>
               <input
@@ -543,7 +543,7 @@ export default function SettingsTab() {
                 min="0"
                 max="1"
                 step="0.05"
-                value={settings.modelParameters.top_p ?? 0.9}
+                value={settings.modelParameters?.top_p ?? 0.9}
                 onChange={e =>
                   setModelParameters({ top_p: parseFloat(e.target.value) })
                 }
@@ -569,7 +569,7 @@ export default function SettingsTab() {
                   Frequency Penalty
                 </label>
                 <span className="text-sm text-slate-600">
-                  {settings.modelParameters.frequency_penalty ?? 0.5}
+                  {settings.modelParameters?.frequency_penalty ?? 0.5}
                 </span>
               </div>
               <input
@@ -577,7 +577,7 @@ export default function SettingsTab() {
                 min="0"
                 max="2"
                 step="0.1"
-                value={settings.modelParameters.frequency_penalty ?? 0.5}
+                value={settings.modelParameters?.frequency_penalty ?? 0.5}
                 onChange={e =>
                   setModelParameters({
                     frequency_penalty: parseFloat(e.target.value),
@@ -597,7 +597,7 @@ export default function SettingsTab() {
                   Presence Penalty
                 </label>
                 <span className="text-sm text-slate-600">
-                  {settings.modelParameters.presence_penalty ?? 0.3}
+                  {settings.modelParameters?.presence_penalty ?? 0.3}
                 </span>
               </div>
               <input
@@ -605,7 +605,7 @@ export default function SettingsTab() {
                 min="0"
                 max="2"
                 step="0.1"
-                value={settings.modelParameters.presence_penalty ?? 0.3}
+                value={settings.modelParameters?.presence_penalty ?? 0.3}
                 onChange={e =>
                   setModelParameters({
                     presence_penalty: parseFloat(e.target.value),
