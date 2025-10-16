@@ -23,6 +23,7 @@ export interface Settings {
   keywords: Keyword[];
   searchInstructions: string;
   formatPrompt: string;
+  onlineEnabled: boolean;
 }
 
 interface StoreState {
@@ -38,6 +39,7 @@ interface StoreState {
   toggleKeyword: (id: string) => void;
   setSearchInstructions: (instructions: string) => void;
   setFormatPrompt: (prompt: string) => void;
+  setOnlineEnabled: (enabled: boolean) => void;
 }
 
 export const useStore = create<StoreState>()(
@@ -63,6 +65,7 @@ export const useStore = create<StoreState>()(
 }
 
 Rate each story based on significance, novelty, and relevance. Sort by rating (highest to lowest).`,
+        onlineEnabled: true,
       },
       models: [],
       isLoadingModels: false,
@@ -106,6 +109,10 @@ Rate each story based on significance, novelty, and relevance. Sort by rating (h
       setFormatPrompt: (prompt) =>
         set((state) => ({
           settings: { ...state.settings, formatPrompt: prompt },
+        })),
+      setOnlineEnabled: (enabled) =>
+        set((state) => ({
+          settings: { ...state.settings, onlineEnabled: enabled },
         })),
     }),
     {

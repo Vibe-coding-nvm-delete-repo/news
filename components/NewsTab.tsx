@@ -122,6 +122,7 @@ export default function NewsTab() {
           },
           body: JSON.stringify({
             model: settings.selectedModel,
+            online: settings.onlineEnabled,
             messages: [
               {
                 role: "user",
