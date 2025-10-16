@@ -247,13 +247,15 @@ export default function NewsTab() {
           ...(settings.modelParameters?.min_p !== undefined && {
             min_p: settings.modelParameters.min_p,
           }),
-          ...(settings.modelParameters?.repetition_penalty !==
-            undefined && {
+          ...(settings.modelParameters?.repetition_penalty !== undefined && {
             repetition_penalty: settings.modelParameters.repetition_penalty,
           }),
         };
 
-        console.log(`[${keyword.text}] 📤 Request body:`, JSON.stringify(requestBody, null, 2));
+        console.log(
+          `[${keyword.text}] 📤 Request body:`,
+          JSON.stringify(requestBody, null, 2)
+        );
 
         // Race between fetch and timeout
         const fetchPromise = fetch(
@@ -298,26 +300,44 @@ export default function NewsTab() {
         const result = data.choices[0].message.content;
         console.log(`[${keyword.text}] ✅ Received response`);
         console.log(`[${keyword.text}] 📏 Length: ${result.length} chars`);
-        console.log(`[${keyword.text}] 🔍 First 200 chars:`, result.substring(0, 200));
-        console.log(`[${keyword.text}] 🔍 Last 200 chars:`, result.substring(Math.max(0, result.length - 200)));
+        console.log(
+          `[${keyword.text}] 🔍 First 200 chars:`,
+          result.substring(0, 200)
+        );
+        console.log(
+          `[${keyword.text}] 🔍 Last 200 chars:`,
+          result.substring(Math.max(0, result.length - 200))
+        );
 
         // Parse JSON from this keyword's search
         let parsedResult;
         try {
           parsedResult = parseJSON(result);
           console.log(`[${keyword.text}] ✅ JSON parsed successfully`);
-        } catch (parseError: any) {
-          console.error(`[${keyword.text}] ❌ JSON PARSE ERROR:`, parseError.message);
-          console.error(`[${keyword.text}] 📄 FULL RESPONSE:`, result);
-          throw new Error(`JSON Parse Error: ${parseError.message}`);
-        }
 
-        if (!parsedResult.stories || !Array.isArray(parsedResult.stories)) {
+          // Validate stories array exists
+          if (!parsedResult.stories || !Array.isArray(parsedResult.stories)) {
+            console.error(
+              `[${keyword.text}] Invalid JSON format. Response:`,
+              result.substring(0, 500)
+            );
+            throw new Error("Invalid JSON format: missing 'stories' array");
+          }
+        } catch (parseError: any) {
           console.error(
-            `[${keyword.text}] Invalid JSON format. Response:`,
-            result.substring(0, 500)
+            `[${keyword.text}] ❌ JSON PARSE ERROR:`,
+            parseError.message
           );
-          throw new Error("Invalid JSON format: missing 'stories' array");
+          console.error(`[${keyword.text}] 📄 FULL RESPONSE:`, result);
+          // Return empty array instead of throwing - don't break the entire generation
+          return {
+            success: false,
+            cards: [],
+            cost: 0,
+            totalStories: 0,
+            rejectedStories: 0,
+            error: `JSON Parse Error: ${parseError.message}`,
+          };
         }
 
         console.log(
@@ -693,18 +713,24 @@ export default function NewsTab() {
 
           {/* Success Banner */}
           {showSuccessBanner && (
-            <div className={`bg-gradient-to-r p-6 rounded-xl border-2 shadow-2xl ${
-              lastReportCardCount > 0
-                ? 'from-green-50 to-emerald-50 border-green-400'
-                : 'from-yellow-50 to-orange-50 border-yellow-400'
-            }`}>
+            <div
+              className={`bg-gradient-to-r p-6 rounded-xl border-2 shadow-2xl ${
+                lastReportCardCount > 0
+                  ? 'from-green-50 to-emerald-50 border-green-400'
+                  : 'from-yellow-50 to-orange-50 border-yellow-400'
+              }`}
+            >
               <div className="space-y-4">
                 {/* Header with prominent CTA */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <div className={`text-white rounded-full p-3 ${
-                      lastReportCardCount > 0 ? 'bg-green-500' : 'bg-yellow-500'
-                    }`}>
+                    <div
+                      className={`text-white rounded-full p-3 ${
+                        lastReportCardCount > 0
+                          ? 'bg-green-500'
+                          : 'bg-yellow-500'
+                      }`}
+                    >
                       {lastReportCardCount > 0 ? (
                         <CheckCircle2 className="h-8 w-8" />
                       ) : (
@@ -712,16 +738,24 @@ export default function NewsTab() {
                       )}
                     </div>
                     <div>
-                      <p className={`text-2xl font-bold ${
-                        lastReportCardCount > 0 ? 'text-green-900' : 'text-yellow-900'
-                      }`}>
+                      <p
+                        className={`text-2xl font-bold ${
+                          lastReportCardCount > 0
+                            ? 'text-green-900'
+                            : 'text-yellow-900'
+                        }`}
+                      >
                         {lastReportCardCount > 0
                           ? 'Report Generated Successfully!'
                           : 'Report Generation Complete'}
                       </p>
-                      <p className={`text-sm mt-1 ${
-                        lastReportCardCount > 0 ? 'text-green-700' : 'text-yellow-700'
-                      }`}>
+                      <p
+                        className={`text-sm mt-1 ${
+                          lastReportCardCount > 0
+                            ? 'text-green-700'
+                            : 'text-yellow-700'
+                        }`}
+                      >
                         {lastReportCardCount > 0
                           ? `${lastReportCardCount} cards created • Cost: $${lastReportCost.toFixed(4)}`
                           : `No cards generated • Cost: $${lastReportCost.toFixed(4)}`}
@@ -794,7 +828,9 @@ export default function NewsTab() {
                                   <div className="font-bold text-slate-900">
                                     {count}
                                   </div>
-                                  <div className="text-slate-500">★{rating}</div>
+                                  <div className="text-slate-500">
+                                    ★{rating}
+                                  </div>
                                 </div>
                               )
                           )}
@@ -809,8 +845,8 @@ export default function NewsTab() {
                       </p>
                       <p className="text-green-700 text-sm mb-3">
                         Click &quot;View Active Cards&quot; above to see all{' '}
-                        {lastReportCardCount} news stories organized by rating and
-                        category!
+                        {lastReportCardCount} news stories organized by rating
+                        and category!
                       </p>
                     </div>
                   </>
@@ -823,15 +859,21 @@ export default function NewsTab() {
                       ⚠️ No Cards Generated
                     </p>
                     <p className="text-yellow-800 text-sm mb-3">
-                      All keyword searches completed, but no valid news stories were found. This could be because:
+                      All keyword searches completed, but no valid news stories
+                      were found. This could be because:
                     </p>
                     <ul className="text-yellow-800 text-sm space-y-1 ml-6 list-disc">
                       <li>All keywords failed or encountered errors</li>
-                      <li>No recent stories (last 24 hours) matched your keywords</li>
-                      <li>The AI model couldn&apos;t find relevant news articles</li>
+                      <li>
+                        No recent stories (last 24 hours) matched your keywords
+                      </li>
+                      <li>
+                        The AI model couldn&apos;t find relevant news articles
+                      </li>
                     </ul>
                     <p className="text-yellow-800 text-sm mt-3 font-medium">
-                      Try adjusting your keywords or checking the individual keyword results above for more details.
+                      Try adjusting your keywords or checking the individual
+                      keyword results above for more details.
                     </p>
                   </div>
                 )}

@@ -63,9 +63,7 @@ export function parseJSON(text: string): any {
   // Check for empty or invalid input
   if (!text || typeof text !== 'string') {
     console.error('❌ INVALID INPUT:', text);
-    throw new Error(
-      `Invalid input to parseJSON: ${typeof text} - "${text}"`
-    );
+    throw new Error(`Invalid input to parseJSON: ${typeof text} - "${text}"`);
   }
 
   const trimmed = text.trim();
@@ -138,14 +136,57 @@ export function parseJSON(text: string): any {
     console.log('❌ Strategy 5 failed:', (e5 as Error).message);
   }
 
+  // Strategy 6: Extract JSON from text with stronger pattern matching
+  try {
+    // Look for JSON with "stories" key specifically
+    const storiesMatch = trimmed.match(/\{[\s\S]*"stories"[\s\S]*\}/);
+    if (storiesMatch) {
+      const parsed = JSON.parse(storiesMatch[0]);
+      console.log(
+        '✅ PARSED SUCCESSFULLY (Strategy 6: Extract stories object)'
+      );
+      return parsed;
+    }
+  } catch (e6) {
+    console.log('❌ Strategy 6 failed:', (e6 as Error).message);
+  }
+
+  // Strategy 7: Last resort - try to find any valid JSON structure
+  try {
+    // Split by newlines and look for lines that start with { or [
+    const lines = trimmed.split('\n');
+    for (const line of lines) {
+      const trimmedLine = line.trim();
+      if (
+        (trimmedLine.startsWith('{') || trimmedLine.startsWith('[')) &&
+        trimmedLine.length > 2
+      ) {
+        try {
+          const parsed = JSON.parse(trimmedLine);
+          console.log(
+            '✅ PARSED SUCCESSFULLY (Strategy 7: Line-by-line search)'
+          );
+          if (Array.isArray(parsed)) {
+            return { stories: parsed };
+          }
+          return parsed;
+        } catch {
+          // Continue to next line
+        }
+      }
+    }
+  } catch (e7) {
+    console.log('❌ Strategy 7 failed:', (e7 as Error).message);
+  }
+
   // All strategies failed - provide detailed error
   console.error('❌ ALL PARSING STRATEGIES FAILED');
   console.error('Full response:', text);
   throw new Error(
     `Failed to parse JSON response after trying all strategies.\n\n` +
-    `Response length: ${text.length} characters\n` +
-    `First 500 chars: "${text.substring(0, 500)}"\n\n` +
-    `FULL RESPONSE:\n${text}`
+      `Response length: ${text.length} characters\n` +
+      `First 500 chars: "${text.substring(0, 500)}"\n\n` +
+      `FULL RESPONSE:\n${text}`
   );
 }
 
