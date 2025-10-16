@@ -32,6 +32,16 @@ A simplified AI-powered news aggregation tool using OpenRouter.
 - Browse and select your preferred model
 - Models are sorted by price (cheapest first)
 
+### Step 2.5: Configure Model Parameters (Optional)
+
+- Go to Settings > Model Parameters
+- Adjust parameters for better accuracy and consistency:
+  - **Temperature**: Controls randomness (lower = more factual)
+  - **Max Tokens**: Limits response length (controls cost)
+  - **Response Format**: Set to JSON for reliable parsing
+  - **Penalties**: Reduce repetition and encourage diversity
+- Default values are optimized for news search
+
 ### Step 3: Add Keywords
 
 - Add keywords you want to search for (comma-separated for multiple)
@@ -48,6 +58,7 @@ A simplified AI-powered news aggregation tool using OpenRouter.
 
 - ✅ **Simple Setup**: Just add your OpenRouter API key
 - ✅ **Model Selection**: Browse and select from all available models
+- ✅ **Model Parameters**: Fine-tune AI behavior with 13+ parameters for better accuracy
 - ✅ **Keyword Management**: Add, enable/disable, and remove keywords
 - ✅ **Cost Tracking**: See estimated and actual costs
 - ✅ **Local Storage**: All settings persist in your browser

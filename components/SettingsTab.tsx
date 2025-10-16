@@ -16,6 +16,7 @@ import {
   Hash,
   FileText,
   FolderOpen,
+  Sliders,
 } from 'lucide-react';
 import { formatCost, isValidOpenRouterApiKey } from '@/lib/utils';
 
@@ -33,11 +34,13 @@ export default function SettingsTab() {
     toggleKeyword,
     setSearchInstructions,
     setOnlineEnabled,
+    setModelParameters,
   } = useStore();
 
   const [activeSubTab, setActiveSubTab] = useState<
     | 'api-key'
     | 'model-selection'
+    | 'model-parameters'
     | 'keywords'
     | 'search-instructions'
     | 'categories'
@@ -237,6 +240,17 @@ export default function SettingsTab() {
             Model Selection
           </button>
           <button
+            onClick={() => setActiveSubTab('model-parameters')}
+            className={`px-6 py-3 font-medium text-sm transition-colors border-b-2 flex items-center gap-2 whitespace-nowrap ${
+              activeSubTab === 'model-parameters'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300'
+            }`}
+          >
+            <Sliders className="h-4 w-4" />
+            Model Parameters
+          </button>
+          <button
             onClick={() => setActiveSubTab('keywords')}
             className={`px-6 py-3 font-medium text-sm transition-colors border-b-2 flex items-center gap-2 whitespace-nowrap ${
               activeSubTab === 'keywords'
@@ -406,6 +420,223 @@ export default function SettingsTab() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Model Parameters Tab */}
+      {activeSubTab === 'model-parameters' && (
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-2xl font-semibold text-slate-900">
+              Model Parameters
+            </h2>
+            <p className="text-sm text-slate-600 mt-2">
+              Control model behavior for improved accuracy and consistency.{' '}
+              <span className="text-green-600 font-medium">
+                ✓ Already active
+              </span>{' '}
+              — These defaults are optimized for news search.
+            </p>
+          </div>
+
+          {/* Core Parameters */}
+          <div className="space-y-4 border-t pt-4">
+            <h3 className="text-lg font-semibold text-slate-800">
+              Core Parameters
+            </h3>
+
+            {/* Temperature */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-slate-700">
+                  Temperature
+                </label>
+                <span className="text-sm text-slate-600">
+                  {settings.modelParameters.temperature ?? 0.5}
+                </span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="2"
+                step="0.1"
+                value={settings.modelParameters.temperature ?? 0.5}
+                onChange={e =>
+                  setModelParameters({
+                    temperature: parseFloat(e.target.value),
+                  })
+                }
+                className="w-full"
+              />
+              <p className="text-xs text-slate-500">
+                Controls randomness. Lower (0.3-0.5) = more factual and
+                consistent. Higher (0.8-1.5) = more creative.
+              </p>
+            </div>
+
+            {/* Max Tokens */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-slate-700">
+                  Max Tokens
+                </label>
+                <Input
+                  type="number"
+                  min="100"
+                  max="10000"
+                  value={settings.modelParameters.max_tokens ?? 2000}
+                  onChange={e =>
+                    setModelParameters({
+                      max_tokens: parseInt(e.target.value) || 2000,
+                    })
+                  }
+                  className="w-24 text-right"
+                />
+              </div>
+              <p className="text-xs text-slate-500">
+                Maximum response length. Controls cost and prevents overly long
+                responses. Recommended: 1500-2500.
+              </p>
+            </div>
+
+            {/* Response Format */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">
+                Response Format
+              </label>
+              <select
+                value={
+                  settings.modelParameters.response_format ?? 'json_object'
+                }
+                onChange={e =>
+                  setModelParameters({
+                    response_format: e.target.value as
+                      | 'auto'
+                      | 'json_object'
+                      | 'text',
+                  })
+                }
+                className="w-full px-3 py-2 border rounded-md"
+              >
+                <option value="json_object">JSON Object (Recommended)</option>
+                <option value="auto">Auto</option>
+                <option value="text">Text</option>
+              </select>
+              <p className="text-xs text-slate-500">
+                <strong>json_object</strong> enforces valid JSON output. Highly
+                recommended for this app.
+              </p>
+            </div>
+
+            {/* Top P */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-slate-700">
+                  Top P (Nucleus Sampling)
+                </label>
+                <span className="text-sm text-slate-600">
+                  {settings.modelParameters.top_p ?? 0.9}
+                </span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={settings.modelParameters.top_p ?? 0.9}
+                onChange={e =>
+                  setModelParameters({ top_p: parseFloat(e.target.value) })
+                }
+                className="w-full"
+              />
+              <p className="text-xs text-slate-500">
+                Alternative to temperature. 0.9-0.95 = balanced results. Lower =
+                more focused.
+              </p>
+            </div>
+          </div>
+
+          {/* Quality Controls */}
+          <div className="space-y-4 border-t pt-4">
+            <h3 className="text-lg font-semibold text-slate-800">
+              Quality Controls
+            </h3>
+
+            {/* Frequency Penalty */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-slate-700">
+                  Frequency Penalty
+                </label>
+                <span className="text-sm text-slate-600">
+                  {settings.modelParameters.frequency_penalty ?? 0.5}
+                </span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="2"
+                step="0.1"
+                value={settings.modelParameters.frequency_penalty ?? 0.5}
+                onChange={e =>
+                  setModelParameters({
+                    frequency_penalty: parseFloat(e.target.value),
+                  })
+                }
+                className="w-full"
+              />
+              <p className="text-xs text-slate-500">
+                Reduces word repetition. 0.5 = good balance for varied output.
+              </p>
+            </div>
+
+            {/* Presence Penalty */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-slate-700">
+                  Presence Penalty
+                </label>
+                <span className="text-sm text-slate-600">
+                  {settings.modelParameters.presence_penalty ?? 0.3}
+                </span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="2"
+                step="0.1"
+                value={settings.modelParameters.presence_penalty ?? 0.3}
+                onChange={e =>
+                  setModelParameters({
+                    presence_penalty: parseFloat(e.target.value),
+                  })
+                }
+                className="w-full"
+              />
+              <p className="text-xs text-slate-500">
+                Encourages diverse topics. 0.3 = good for varied news coverage.
+              </p>
+            </div>
+          </div>
+
+          {/* Reset to Defaults */}
+          <div className="border-t pt-4">
+            <Button
+              onClick={() =>
+                setModelParameters({
+                  temperature: 0.5,
+                  max_tokens: 2000,
+                  response_format: 'json_object',
+                  top_p: 0.9,
+                  frequency_penalty: 0.5,
+                  presence_penalty: 0.3,
+                })
+              }
+              variant="outline"
+            >
+              Reset to Recommended Defaults
+            </Button>
+          </div>
         </div>
       )}
 

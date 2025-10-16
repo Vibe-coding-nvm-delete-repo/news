@@ -101,9 +101,37 @@ HTTP-Referer: {your-origin}
       "role": "user",
       "content": "Search instructions and keyword"
     }
-  ]
+  ],
+  "temperature": 0.5,
+  "max_tokens": 2000,
+  "response_format": { "type": "json_object" },
+  "top_p": 0.9,
+  "frequency_penalty": 0.5,
+  "presence_penalty": 0.3
 }
 ```
+
+**Model Parameters:**
+
+The application supports 13+ model parameters to improve accuracy and consistency:
+
+| Parameter            | Type         | Default     | Description                                  |
+| -------------------- | ------------ | ----------- | -------------------------------------------- |
+| `temperature`        | number (0-2) | 0.5         | Controls randomness. Lower = more factual    |
+| `max_tokens`         | number       | 2000        | Maximum response length. Controls cost       |
+| `response_format`    | string       | json_object | Enforces valid JSON output                   |
+| `top_p`              | number (0-1) | 0.9         | Nucleus sampling. Alternative to temperature |
+| `frequency_penalty`  | number (0-2) | 0.5         | Reduces word repetition                      |
+| `presence_penalty`   | number (0-2) | 0.3         | Encourages topic diversity                   |
+| `reasoning`          | string       | -           | For O1/O3 models: low/medium/high            |
+| `include_reasoning`  | boolean      | -           | Shows model's thought process                |
+| `stop`               | string[]     | -           | Stop sequences                               |
+| `seed`               | number       | -           | For reproducible results                     |
+| `top_k`              | number       | -           | Limits token sampling                        |
+| `min_p`              | number       | -           | Minimum probability threshold                |
+| `repetition_penalty` | number (1-2) | -           | Reduces repetition                           |
+
+**Note:** All parameters are optional. The app provides optimized defaults for news search.
 
 **Response:**
 
@@ -142,6 +170,17 @@ const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         content: `${searchInstructions}\n\n"${keyword}"`,
       },
     ],
+    // Model parameters (all optional)
+    temperature: settings.modelParameters.temperature,
+    max_tokens: settings.modelParameters.max_tokens,
+    response_format:
+      settings.modelParameters.response_format === 'json_object'
+        ? { type: 'json_object' }
+        : undefined,
+    top_p: settings.modelParameters.top_p,
+    frequency_penalty: settings.modelParameters.frequency_penalty,
+    presence_penalty: settings.modelParameters.presence_penalty,
+    // ... other parameters as configured
   }),
 });
 ```

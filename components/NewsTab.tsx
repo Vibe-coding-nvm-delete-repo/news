@@ -223,6 +223,50 @@ export default function NewsTab() {
                   content: `${settings.searchInstructions}\n\n"${keyword.text}"\n\nIMPORTANT: Today is ${todayDateString}. Only include articles published on or after ${cutoffDateString}.`,
                 },
               ],
+              // Add model parameters for improved quality and consistency
+              ...(settings.modelParameters.temperature !== undefined && {
+                temperature: settings.modelParameters.temperature,
+              }),
+              ...(settings.modelParameters.max_tokens !== undefined && {
+                max_tokens: settings.modelParameters.max_tokens,
+              }),
+              ...(settings.modelParameters.response_format &&
+                settings.modelParameters.response_format !== 'auto' && {
+                  response_format: {
+                    type: settings.modelParameters.response_format,
+                  },
+                }),
+              ...(settings.modelParameters.top_p !== undefined && {
+                top_p: settings.modelParameters.top_p,
+              }),
+              ...(settings.modelParameters.frequency_penalty !== undefined && {
+                frequency_penalty: settings.modelParameters.frequency_penalty,
+              }),
+              ...(settings.modelParameters.presence_penalty !== undefined && {
+                presence_penalty: settings.modelParameters.presence_penalty,
+              }),
+              ...(settings.modelParameters.reasoning && {
+                reasoning: settings.modelParameters.reasoning,
+              }),
+              ...(settings.modelParameters.include_reasoning !== undefined && {
+                include_reasoning: settings.modelParameters.include_reasoning,
+              }),
+              ...(settings.modelParameters.stop &&
+                settings.modelParameters.stop.length > 0 && {
+                  stop: settings.modelParameters.stop,
+                }),
+              ...(settings.modelParameters.seed !== undefined && {
+                seed: settings.modelParameters.seed,
+              }),
+              ...(settings.modelParameters.top_k !== undefined && {
+                top_k: settings.modelParameters.top_k,
+              }),
+              ...(settings.modelParameters.min_p !== undefined && {
+                min_p: settings.modelParameters.min_p,
+              }),
+              ...(settings.modelParameters.repetition_penalty !== undefined && {
+                repetition_penalty: settings.modelParameters.repetition_penalty,
+              }),
             }),
             signal: abortControllerRef.current?.signal,
           }

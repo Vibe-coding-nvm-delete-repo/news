@@ -40,6 +40,39 @@ export interface Model {
 }
 
 /**
+ * OpenRouter API parameters for controlling model behavior and output quality.
+ * These parameters improve accuracy, consistency, and cost control.
+ */
+export interface ModelParameters {
+  /** Controls randomness (0.0 = deterministic, 2.0 = very creative). Recommended: 0.5 for factual news */
+  temperature?: number;
+  /** Maximum tokens in response. Controls cost and length. Recommended: 2000 */
+  max_tokens?: number;
+  /** Enforces response format. 'json_object' guarantees valid JSON. Highly recommended */
+  response_format?: 'auto' | 'json_object' | 'text';
+  /** Nucleus sampling (0.0-1.0). Alternative to temperature. Recommended: 0.9 */
+  top_p?: number;
+  /** Reduces word repetition (0.0-2.0). Recommended: 0.5 */
+  frequency_penalty?: number;
+  /** Encourages topic diversity (0.0-2.0). Recommended: 0.3 */
+  presence_penalty?: number;
+  /** Reasoning depth for O1/O3/reasoning models only */
+  reasoning?: 'low' | 'medium' | 'high';
+  /** Show model's reasoning process (for reasoning models) */
+  include_reasoning?: boolean;
+  /** Stop generation at these sequences */
+  stop?: string[];
+  /** Seed for reproducible results */
+  seed?: number;
+  /** Limits sampling to top K tokens */
+  top_k?: number;
+  /** Minimum probability threshold */
+  min_p?: number;
+  /** Repetition penalty (1.0-2.0) */
+  repetition_penalty?: number;
+}
+
+/**
  * Represents a news story card generated from AI search results.
  */
 export interface Card {
@@ -106,6 +139,8 @@ export interface Settings {
   /** Custom prompt for keyword searches */
   searchInstructions: string;
   onlineEnabled: boolean;
+  /** Model parameters for controlling API behavior and output quality */
+  modelParameters: ModelParameters;
 }
 
 /**
@@ -150,6 +185,8 @@ interface StoreState {
   /** Updates the search instructions prompt */
   setSearchInstructions: (instructions: string) => void;
   setOnlineEnabled: (enabled: boolean) => void;
+  /** Updates model parameters */
+  setModelParameters: (parameters: Partial<ModelParameters>) => void;
 
   // Actions - Cards
   /** Adds new cards to the active cards list */
@@ -201,6 +238,14 @@ RULES:
 
 Keyword:`,
         onlineEnabled: true,
+        modelParameters: {
+          temperature: 0.5,
+          max_tokens: 2000,
+          response_format: 'json_object',
+          top_p: 0.9,
+          frequency_penalty: 0.5,
+          presence_penalty: 0.3,
+        },
       },
       models: [],
       isLoadingModels: false,
@@ -250,6 +295,16 @@ Keyword:`,
       setOnlineEnabled: enabled =>
         set(state => ({
           settings: { ...state.settings, onlineEnabled: enabled },
+        })),
+      setModelParameters: parameters =>
+        set(state => ({
+          settings: {
+            ...state.settings,
+            modelParameters: {
+              ...state.settings.modelParameters,
+              ...parameters,
+            },
+          },
         })),
       addCardsToActive: cards =>
         set(state => ({
