@@ -224,24 +224,36 @@ export const useStore = create<StoreState>()(
         apiKey: null,
         selectedModel: null,
         keywords: [],
-        searchInstructions: `Search for recent news about this keyword.
+        searchInstructions: `You are a news aggregation AI. Search for recent, relevant news stories about the given keyword.
 
-Return ONLY this exact JSON format (no extra text or fields):
+INSTRUCTIONS:
+- Find 3-5 recent news stories (from the last 7 days) about the keyword
+- Focus on significant, newsworthy events, developments, or announcements
+- Prioritize stories from reputable news sources
+- Each story should be substantial and worth reporting
+
+REQUIRED JSON FORMAT (return ONLY this format, no extra text):
 {
   "stories": [
     {
-      "title": "Headline",
-      "category": "Technology",
-      "rating": 7,
-      "summary": "Brief summary",
-      "source": "Source name",
-      "url": "https://...",
+      "title": "Complete headline of the news story",
+      "category": "One of: Technology, Business, Politics, Science, Health, Sports, Entertainment, World, or Other",
+      "rating": 8,
+      "summary": "2-3 sentence summary explaining what happened and why it matters",
+      "source": "Name of the news publication",
+      "url": "https://full-url-to-article.com",
       "date": "2025-10-16"
     }
   ]
 }
 
-If no news found, return: {"stories": []}
+RATING SCALE (1-10):
+- 1-3: Minor updates, routine announcements
+- 4-6: Notable developments, moderate impact
+- 7-8: Significant news, important developments
+- 9-10: Major breaking news, high impact events
+
+If no recent news found, return: {"stories": []}
 
 Keyword:`,
         onlineEnabled: true,
