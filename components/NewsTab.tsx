@@ -183,7 +183,6 @@ export default function NewsTab() {
     setStage1Results(initialResults);
 
     let totalCost = 0;
-    const allCards: Card[] = [];
     let totalStoriesReceived = 0;
     let totalStoriesRejected = 0;
 
@@ -560,11 +559,9 @@ export default function NewsTab() {
 
     log('All searches completed!');
 
-    // Aggregate results (cards were already added incrementally)
+    // Aggregate results (cards were already added incrementally to active list)
+    // We don't need to add cards to allCards again since they're already in the active list
     results.forEach(result => {
-      if (result && result.success && result.cards) {
-        allCards.push(...result.cards);
-      }
       if (result && result.cost) {
         totalCost += result.cost;
       }
@@ -574,14 +571,14 @@ export default function NewsTab() {
       }
     });
 
-    // Ensure we have the final count from allCards, not just currentGenerationCardCount
-    const finalCardCount = allCards.length;
+    // Use the current generation card count as the final count since cards were added incrementally
+    const finalCardCount = currentGenerationCardCount;
     log(
       `Final aggregation: ${finalCardCount} cards, ${totalCost.toFixed(4)} cost`
     );
 
     log(
-      `Generated ${allCards.length} cards with total cost $${totalCost.toFixed(4)}`
+      `Generated ${finalCardCount} cards with total cost $${totalCost.toFixed(4)}`
     );
     // Update total cost
     setActualCost(totalCost);
@@ -594,20 +591,24 @@ export default function NewsTab() {
     // Calculate report metadata using final card count
     let metadata = null;
     if (finalCardCount > 0) {
+      // Get cards from the current generation by filtering activeCards by reportId
+      const currentGenerationCards = activeCards.filter(
+        card => card.reportId === reportId
+      );
       const categories = Array.from(
-        new Set(allCards.map(card => card.category))
+        new Set(currentGenerationCards.map(card => card.category))
       );
       const avgRating =
-        allCards.reduce((sum, card) => {
+        currentGenerationCards.reduce((sum, card) => {
           const rating =
             typeof card.rating === 'number'
               ? card.rating
               : parseFloat(card.rating) || 0;
           return sum + rating;
-        }, 0) / allCards.length;
+        }, 0) / currentGenerationCards.length;
       const ratingDistribution: { [key: number]: number } = {};
       for (let i = 1; i <= 10; i++) {
-        ratingDistribution[i] = allCards.filter(card => {
+        ratingDistribution[i] = currentGenerationCards.filter(card => {
           const rating =
             typeof card.rating === 'number'
               ? card.rating
