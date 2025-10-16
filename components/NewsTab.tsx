@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useStore } from '@/lib/store';
+import { useStore, Card } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import {
   Loader2,
@@ -10,12 +10,18 @@ import {
   Check,
   X,
   Clock,
-  Star,
   Sparkles,
   CheckCircle2,
   XCircle,
+  FileText,
+  Archive,
+  History,
+  ArrowRight,
 } from 'lucide-react';
 import { parseJSON } from '@/lib/utils';
+import ActiveCardsTab from './ActiveCardsTab';
+import ArchivedCardsTab from './ArchivedCardsTab';
+import HistoryTab from './HistoryTab';
 
 interface Stage1Result {
   keyword: string;
@@ -25,17 +31,15 @@ interface Stage1Result {
   cost?: number;
 }
 
-interface Story {
-  title: string;
-  rating: number;
-  summary: string;
-  source?: string | null;
-  url?: string | null;
-  date?: string | null;
-}
-
 export default function NewsTab() {
-  const { settings, models } = useStore();
+  const { 
+    settings, 
+    models, 
+    activeNewsTab, 
+    setActiveNewsTab,
+    addCardsToActive,
+    addReportHistory,
+  } = useStore();
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [currentStage, setCurrentStage] = useState<1 | 2 | null>(null);
@@ -43,13 +47,15 @@ export default function NewsTab() {
   const [expandedResults, setExpandedResults] = useState<Set<string>>(
     new Set()
   );
-  const [stories, setStories] = useState<Story[]>([]);
   const [estimatedCost, setEstimatedCost] = useState(0);
   const [actualCost, setActualCost] = useState(0);
   const [stage1Progress, setStage1Progress] = useState(0);
   const [stage1StartTime, setStage1StartTime] = useState<number | null>(null);
   const [stage1ElapsedTime, setStage1ElapsedTime] = useState(0);
   const [showCompletionAnimation, setShowCompletionAnimation] = useState(false);
+  const [showSuccessBanner, setShowSuccessBanner] = useState(false);
+  const [lastReportCost, setLastReportCost] = useState(0);
+  const [lastReportCardCount, setLastReportCardCount] = useState(0);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   // Calculate estimated cost whenever keywords or model changes
@@ -106,8 +112,8 @@ export default function NewsTab() {
     setCurrentStage(null);
     setStage1Results([]);
     setExpandedResults(new Set());
-    setStories([]);
     setActualCost(0);
+    setShowSuccessBanner(false);
     setStage1Progress(0);
     setStage1StartTime(null);
     setStage1ElapsedTime(0);
@@ -132,12 +138,15 @@ export default function NewsTab() {
 
     setIsGenerating(true);
     setCurrentStage(1);
-    setStories([]);
     setActualCost(0);
     setStage1Progress(0);
     setStage1StartTime(Date.now());
     setStage1ElapsedTime(0);
     setShowCompletionAnimation(false);
+    setShowSuccessBanner(false);
+
+    // Generate unique reportId for this generation
+    const reportId = Date.now().toString();
 
     // Initialize stage 1 results - all start as loading since they run in parallel
     const initialResults: Stage1Result[] = enabledKeywords.map(k => ({
@@ -147,7 +156,7 @@ export default function NewsTab() {
     setStage1Results(initialResults);
 
     let totalCost = 0;
-    const allStories: Story[] = [];
+    const allCards: Card[] = [];
 
     // Ensure model has :online suffix for web search capability
     const onlineModel = settings.selectedModel.includes(':online')
@@ -175,7 +184,7 @@ export default function NewsTab() {
               messages: [
                 {
                   role: 'user',
-                  content: `${settings.searchInstructions} ${keyword.text}`,
+                  content: `${settings.searchInstructions}\n\n"${keyword.text}"`,
                 },
               ],
             }),
@@ -197,6 +206,22 @@ export default function NewsTab() {
         if (!parsedResult.stories || !Array.isArray(parsedResult.stories)) {
           throw new Error("Invalid JSON format: missing 'stories' array");
         }
+
+        // Add keyword and reportId to each story, convert to Card
+        const cardsFromStories: Card[] = parsedResult.stories.map((story: any) => ({
+          id: `${reportId}-${keyword.text}-${Date.now()}-${Math.random().toString(36).substring(2)}`,
+          reportId: reportId,
+          keyword: keyword.text,
+          category: story.category || 'Uncategorized',
+          title: story.title,
+          rating: story.rating,
+          summary: story.summary,
+          source: story.source,
+          url: story.url,
+          date: story.date,
+          generatedAt: new Date().toISOString(),
+          status: 'active' as const,
+        }));
 
         // Track cost
         let cost = 0;
@@ -230,7 +255,7 @@ export default function NewsTab() {
           return updated;
         });
 
-        return { success: true, stories: parsedResult.stories, cost };
+        return { success: true, cards: cardsFromStories, cost };
       } catch (error: any) {
         // Check if the error is due to abort
         if (error.name === 'AbortError') {
@@ -256,10 +281,10 @@ export default function NewsTab() {
     // Wait for all searches to complete (TRUE PARALLEL PROCESSING)
     const results = await Promise.all(searchPromises);
 
-    // Aggregate all stories from successful searches
+    // Aggregate all cards from successful searches
     results.forEach(result => {
-      if (result && result.success && result.stories) {
-        allStories.push(...result.stories);
+      if (result && result.success && result.cards) {
+        allCards.push(...result.cards);
       }
       if (result && result.cost) {
         totalCost += result.cost;
@@ -273,12 +298,26 @@ export default function NewsTab() {
     setShowCompletionAnimation(true);
     setTimeout(() => setShowCompletionAnimation(false), 2000);
 
-    // Client-side aggregation: Sort all stories by rating (no Stage 2 LLM call needed!)
-    const sortedStories = allStories.sort(
-      (a: Story, b: Story) => b.rating - a.rating
-    );
+    // Save cards to active cards
+    if (allCards.length > 0) {
+      addCardsToActive(allCards);
+      
+      // Create history entry
+      addReportHistory({
+        id: reportId,
+        generatedAt: new Date().toISOString(),
+        keywords: enabledKeywords.map(k => k.text),
+        totalCards: allCards.length,
+        modelUsed: settings.selectedModel || 'unknown',
+        costSpent: totalCost,
+      });
 
-    setStories(sortedStories);
+      // Show success banner
+      setLastReportCost(totalCost);
+      setLastReportCardCount(allCards.length);
+      setShowSuccessBanner(true);
+    }
+
     setIsGenerating(false);
     setCurrentStage(null);
     abortControllerRef.current = null;
@@ -298,31 +337,118 @@ export default function NewsTab() {
 
   return (
     <div className="space-y-6">
-      {/* Cumulative Cost Counter */}
-      {actualCost > 0 && (
-        <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-lg border-2 border-green-300 shadow-md">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="bg-green-500 text-white rounded-full p-2">
-                <Sparkles className="h-6 w-6" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-green-800">
-                  Total Cost Spent
-                </p>
-                <p className="text-xs text-green-600">
-                  Cumulative across all API calls
-                </p>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="text-3xl font-bold text-green-900 font-mono">
-                ${actualCost.toFixed(6)}
-              </p>
-            </div>
-          </div>
+      {/* Tab Navigation */}
+      <div className="border-b border-slate-200">
+        <div className="flex gap-1 -mb-px">
+          <button
+            onClick={() => setActiveNewsTab('generate')}
+            className={`px-6 py-3 font-medium text-sm transition-colors border-b-2 flex items-center gap-2 ${
+              activeNewsTab === 'generate'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300'
+            }`}
+          >
+            <Sparkles className="h-4 w-4" />
+            Generate Report
+          </button>
+          <button
+            onClick={() => setActiveNewsTab('active')}
+            className={`px-6 py-3 font-medium text-sm transition-colors border-b-2 flex items-center gap-2 ${
+              activeNewsTab === 'active'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300'
+            }`}
+          >
+            <FileText className="h-4 w-4" />
+            Active Cards
+          </button>
+          <button
+            onClick={() => setActiveNewsTab('archived')}
+            className={`px-6 py-3 font-medium text-sm transition-colors border-b-2 flex items-center gap-2 ${
+              activeNewsTab === 'archived'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300'
+            }`}
+          >
+            <Archive className="h-4 w-4" />
+            Archived Cards
+          </button>
+          <button
+            onClick={() => setActiveNewsTab('history')}
+            className={`px-6 py-3 font-medium text-sm transition-colors border-b-2 flex items-center gap-2 ${
+              activeNewsTab === 'history'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300'
+            }`}
+          >
+            <History className="h-4 w-4" />
+            History
+          </button>
         </div>
-      )}
+      </div>
+
+      {/* Tab Content */}
+      {activeNewsTab === 'active' && <ActiveCardsTab />}
+      {activeNewsTab === 'archived' && <ArchivedCardsTab />}
+      {activeNewsTab === 'history' && <HistoryTab />}
+
+      {/* Generate Report Tab */}
+      {activeNewsTab === 'generate' && (
+        <div className="space-y-6">
+          {/* Cumulative Cost Counter */}
+          {actualCost > 0 && (
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-lg border-2 border-green-300 shadow-md">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="bg-green-500 text-white rounded-full p-2">
+                    <Sparkles className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-green-800">
+                      Total Cost Spent
+                    </p>
+                    <p className="text-xs text-green-600">
+                      Cumulative across all API calls
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-3xl font-bold text-green-900 font-mono">
+                    ${actualCost.toFixed(6)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Success Banner */}
+          {showSuccessBanner && (
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-5 rounded-lg border-2 border-green-400 shadow-lg animate-pulse">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="bg-green-500 text-white rounded-full p-3">
+                    <CheckCircle2 className="h-8 w-8" />
+                  </div>
+                  <div>
+                    <p className="text-lg font-bold text-green-900">
+                      Report Generated Successfully!
+                    </p>
+                    <p className="text-sm text-green-700">
+                      {lastReportCardCount} cards created • Cost: ${lastReportCost.toFixed(4)}
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => setActiveNewsTab('active')}
+                  className="bg-green-600 hover:bg-green-700"
+                  size="lg"
+                >
+                  View Active Cards
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              </div>
+            </div>
+          )}
 
       {/* Generate Report Section */}
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-200">
@@ -523,75 +649,16 @@ export default function NewsTab() {
         </div>
       )}
 
-      {/* Final Stories */}
-      {stories.length > 0 && (
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <h3 className="text-xl font-semibold text-slate-900">
-              News Stories
-            </h3>
-            <div className="flex items-center gap-1 text-green-600">
-              <CheckCircle2 className="h-5 w-5" />
-              <span className="text-sm font-medium">Report Complete</span>
+          {/* Empty State */}
+          {!isGenerating && !showSuccessBanner && stage1Results.length === 0 && (
+            <div className="text-center py-12 text-slate-500">
+              <p className="text-lg">Ready to generate a report.</p>
+              <p className="text-sm mt-2">
+                Configure your settings and click &quot;Generate Report&quot; to get
+                started.
+              </p>
             </div>
-          </div>
-
-          <div className="space-y-3">
-            {stories.map((story, index) => (
-              <div
-                key={index}
-                className="border rounded-lg p-4 bg-white hover:shadow-lg transition-all duration-300 hover:scale-[1.01]"
-                style={{
-                  animation: `fadeIn 0.5s ease-out ${index * 0.1}s both`,
-                }}
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="flex items-center gap-1 bg-yellow-100 px-2 py-1 rounded">
-                        <Star className="h-4 w-4 text-yellow-600 fill-yellow-600" />
-                        <span className="font-bold text-yellow-900">
-                          {story.rating.toFixed(1)}
-                        </span>
-                      </div>
-                      <h4 className="text-lg font-semibold text-slate-900">
-                        {story.title}
-                      </h4>
-                    </div>
-
-                    <p className="text-slate-700 mb-3">{story.summary}</p>
-
-                    <div className="flex gap-4 text-sm text-slate-500">
-                      {story.source && <span>Source: {story.source}</span>}
-                      {story.date && <span>Date: {story.date}</span>}
-                    </div>
-
-                    {story.url && (
-                      <a
-                        href={story.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline text-sm mt-2 inline-block"
-                      >
-                        Read more →
-                      </a>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Empty State */}
-      {stories.length === 0 && !isGenerating && (
-        <div className="text-center py-12 text-slate-500">
-          <p className="text-lg">No reports generated yet.</p>
-          <p className="text-sm mt-2">
-            Configure your settings and click &quot;Generate Report&quot; to get
-            started.
-          </p>
+          )}
         </div>
       )}
     </div>
