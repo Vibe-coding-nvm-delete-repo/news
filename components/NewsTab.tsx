@@ -46,12 +46,9 @@ export default function NewsTab() {
   const [stories, setStories] = useState<Story[]>([]);
   const [estimatedCost, setEstimatedCost] = useState(0);
   const [actualCost, setActualCost] = useState(0);
-  const [stage2Cost, setStage2Cost] = useState(0);
   const [stage1Progress, setStage1Progress] = useState(0);
   const [stage1StartTime, setStage1StartTime] = useState<number | null>(null);
   const [stage1ElapsedTime, setStage1ElapsedTime] = useState(0);
-  const [stage2StartTime, setStage2StartTime] = useState<number | null>(null);
-  const [stage2ElapsedTime, setStage2ElapsedTime] = useState(0);
   const [showCompletionAnimation, setShowCompletionAnimation] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -61,7 +58,7 @@ export default function NewsTab() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings.keywords, settings.selectedModel, models]);
 
-  // Track elapsed time for Stage 1
+  // Track elapsed time for search process
   useEffect(() => {
     if (!stage1StartTime) return;
 
@@ -71,17 +68,6 @@ export default function NewsTab() {
 
     return () => clearInterval(interval);
   }, [stage1StartTime]);
-
-  // Track elapsed time for Stage 2
-  useEffect(() => {
-    if (!stage2StartTime) return;
-
-    const interval = setInterval(() => {
-      setStage2ElapsedTime(Date.now() - stage2StartTime);
-    }, 100);
-
-    return () => clearInterval(interval);
-  }, [stage2StartTime]);
 
   const calculateEstimatedCost = () => {
     const enabledKeywords = settings.keywords.filter(k => k.enabled);
@@ -97,13 +83,11 @@ export default function NewsTab() {
     }
 
     // Rough token estimation:
-    // Stage 1: ~500 tokens per keyword (input + output)
-    // Stage 2: ~2000 tokens (aggregating all results)
-    const tokensPerKeyword = 500;
-    const stage2Tokens = 2000;
+    // ~800 tokens per keyword (input + output including JSON formatting)
+    // No Stage 2 - client-side aggregation only!
+    const tokensPerKeyword = 800;
 
-    const totalTokens =
-      enabledKeywords.length * tokensPerKeyword + stage2Tokens;
+    const totalTokens = enabledKeywords.length * tokensPerKeyword;
     const costPer1MTokens = selectedModel.totalCostPer1M;
     const estimatedCostValue = (totalTokens / 1000000) * costPer1MTokens;
 
@@ -156,8 +140,6 @@ export default function NewsTab() {
     setStage1Progress(0);
     setStage1StartTime(Date.now());
     setStage1ElapsedTime(0);
-    setStage2StartTime(null);
-    setStage2ElapsedTime(0);
     setShowCompletionAnimation(false);
 
     // Initialize stage 1 results - all start as loading since they run in parallel
@@ -168,18 +150,15 @@ export default function NewsTab() {
     setStage1Results(initialResults);
 
     let totalCost = 0;
-    const completedResults: any[] = [];
-    setStage2Cost(0);
+    const allStories: Story[] = [];
 
-    // Stage 1: Search for each keyword
-    for (let i = 0; i < enabledKeywords.length; i++) {
-      const keyword = enabledKeywords[i];
+    // Ensure model has :online suffix for web search capability
+    const onlineModel = settings.selectedModel.includes(':online')
+      ? settings.selectedModel
+      : `${settings.selectedModel}:online`;
 
-      // Update status to loading
-      setStage1Results(prev =>
-        prev.map((r, idx) => (idx === i ? { ...r, status: 'loading' } : r))
-      );
-
+    // Stage 1: Search for each keyword IN PARALLEL
+    const searchPromises = enabledKeywords.map(async (keyword, index) => {
       try {
         const response = await fetch(
           'https://openrouter.ai/api/v1/chat/completions',
@@ -195,16 +174,13 @@ export default function NewsTab() {
                   : 'http://localhost:3000',
             },
             body: JSON.stringify({
-              model: settings.selectedModel,
+              model: onlineModel,
               messages: [
                 {
                   role: 'user',
-                  content: `${settings.searchInstructions}\n\nKeyword: ${keyword.text}`,
+                  content: `${settings.searchInstructions} ${keyword.text}`,
                 },
               ],
-              ...(settings.onlineEnabled && {
-                tools: [{ type: 'web_search' }],
-              }),
             }),
             signal: abortControllerRef.current?.signal,
           }
@@ -218,7 +194,15 @@ export default function NewsTab() {
 
         const result = data.choices[0].message.content;
 
-        // Track cost and update in real-time
+        // Parse JSON from this keyword's search
+        const parsedResult = parseJSON(result);
+
+        if (!parsedResult.stories || !Array.isArray(parsedResult.stories)) {
+          throw new Error("Invalid JSON format: missing 'stories' array");
+        }
+
+        // Track cost
+        let cost = 0;
         if (data.usage) {
           const selectedModel = models.find(
             m => m.id === settings.selectedModel
@@ -230,20 +214,16 @@ export default function NewsTab() {
             const completionCost =
               (data.usage.completion_tokens / 1000000) *
               selectedModel.pricing.completion;
-            totalCost += promptCost + completionCost;
-            setActualCost(totalCost);
+            cost = promptCost + completionCost;
           }
         }
-
-        completedResults.push({
-          keyword: keyword.text,
-          result,
-        });
 
         // Update status to complete
         setStage1Results(prev => {
           const updated = prev.map((r, idx) =>
-            idx === i ? { ...r, status: 'complete' as const, result } : r
+            idx === index
+              ? { ...r, status: 'complete' as const, result, cost }
+              : r
           );
           // Update progress
           const completedCount = updated.filter(
@@ -252,6 +232,8 @@ export default function NewsTab() {
           setStage1Progress((completedCount / enabledKeywords.length) * 100);
           return updated;
         });
+
+        return { success: true, stories: parsedResult.stories, cost };
       } catch (error: any) {
         // Check if the error is due to abort
         if (error.name === 'AbortError') {
@@ -260,7 +242,7 @@ export default function NewsTab() {
         // Update status to error
         setStage1Results(prev => {
           const updated = prev.map((r, idx) =>
-            idx === i
+            idx === index
               ? { ...r, status: 'error' as const, error: error.message }
               : r
           );
@@ -315,35 +297,32 @@ export default function NewsTab() {
 
       const data = await response.json();
 
-      if (data.error) {
-        throw new Error(data.error.message || 'API Error');
+        return { success: false, error: error.message, cost: 0 };
       }
+    });
 
-      // Track cost for stage 2
-      let stage2CostValue = 0;
-      if (data.usage) {
-        const selectedModel = models.find(m => m.id === settings.selectedModel);
-        if (selectedModel) {
-          const promptCost =
-            (data.usage.prompt_tokens / 1000000) * selectedModel.pricing.prompt;
-          const completionCost =
-            (data.usage.completion_tokens / 1000000) *
-            selectedModel.pricing.completion;
-          stage2CostValue = promptCost + completionCost;
-          totalCost += stage2CostValue;
-        }
+    // Wait for all searches to complete (TRUE PARALLEL PROCESSING)
+    const results = await Promise.all(searchPromises);
+
+    // Aggregate all stories from successful searches
+    results.forEach(result => {
+      if (result.success && result.stories) {
+        allStories.push(...result.stories);
       }
+      totalCost += result.cost;
+    });
 
-      setStage2Cost(stage2CostValue);
-      setActualCost(totalCost);
+    // Update total cost
+    setActualCost(totalCost);
 
-      // Parse JSON response
-      const result = data.choices[0].message.content;
-      const parsedResult = parseJSON(result);
+    // Show completion animation
+    setShowCompletionAnimation(true);
+    setTimeout(() => setShowCompletionAnimation(false), 2000);
 
-      if (!parsedResult.stories || !Array.isArray(parsedResult.stories)) {
-        throw new Error("Invalid JSON format: missing 'stories' array");
-      }
+    // Client-side aggregation: Sort all stories by rating (no Stage 2 LLM call needed!)
+    const sortedStories = allStories.sort(
+      (a: Story, b: Story) => b.rating - a.rating
+    );
 
       // Sort by rating (highest to lowest)
       const sortedStories = parsedResult.stories.sort(
@@ -469,7 +448,7 @@ export default function NewsTab() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-xl font-semibold text-slate-900">
-              Stage 1: Individual Keyword Searches
+              Parallel Keyword Searches (Online Mode)
             </h3>
 
             {currentStage === 1 && (
@@ -604,40 +583,6 @@ export default function NewsTab() {
         </div>
       )}
 
-      {/* Stage 2: Loading Indicator */}
-      {currentStage === 2 && (
-        <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-lg border border-purple-200 shadow-lg">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <Loader2 className="h-6 w-6 animate-spin text-purple-600" />
-                <div className="absolute inset-0 animate-ping opacity-20">
-                  <Sparkles className="h-6 w-6 text-purple-400" />
-                </div>
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-slate-900">
-                  Stage 2: Aggregating and Formatting Results
-                </h3>
-                <p className="text-sm text-slate-600">
-                  Combining all keyword searches into a final report...
-                </p>
-              </div>
-            </div>
-            <div className="text-sm font-mono text-slate-600">
-              {(stage2ElapsedTime / 1000).toFixed(1)}s
-            </div>
-          </div>
-          {/* Animated progress bar */}
-          <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 animate-pulse"
-              style={{ width: '100%' }}
-            />
-          </div>
-        </div>
-      )}
-
       {/* Final Stories */}
       {stories.length > 0 && (
         <div className="space-y-4">
@@ -649,14 +594,6 @@ export default function NewsTab() {
               <CheckCircle2 className="h-5 w-5" />
               <span className="text-sm font-medium">Report Complete</span>
             </div>
-            {stage2Cost > 0 && (
-              <div className="flex items-center gap-2 bg-purple-50 px-3 py-1.5 rounded-lg border border-purple-200">
-                <span className="text-sm text-purple-700">Stage 2 Cost:</span>
-                <span className="text-sm font-mono font-semibold text-purple-900">
-                  ${stage2Cost.toFixed(6)}
-                </span>
-              </div>
-            )}
           </div>
 
           <div className="space-y-3">

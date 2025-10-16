@@ -51,14 +51,7 @@ export const useStore = create<StoreState>()(
         keywords: [],
         searchInstructions: `You are a news research assistant. Search the web for the latest news and developments about the given keyword/topic. Focus on events from the past 7 days.
 
-Provide a comprehensive summary that includes:
-- Recent news articles and updates
-- Important developments and trends  
-- Key discussions and notable events
-- Sources and dates when available
-
-Do NOT provide code, commands, or apologies. Provide actual news content and information.`,
-        formatPrompt: `Analyze all the news results and create a JSON response with this schema:
+RETURN YOUR RESPONSE AS A JSON OBJECT with this exact schema:
 {
   "stories": [
     {
@@ -74,12 +67,14 @@ Do NOT provide code, commands, or apologies. Provide actual news content and inf
 
 REQUIREMENTS:
 1. Return ONLY the JSON object starting with { and ending with }
-2. Include ALL stories found across all keyword searches
-3. Sort stories by rating (highest to lowest)
-4. Use null for any missing fields (source, url, date)
+2. Include ALL news stories you find for this keyword
+3. Each story must have all fields (use null for missing data)
+4. Rating should reflect significance, novelty, and relevance (1-10)
 5. Ensure all JSON is properly formatted and valid
+6. Do NOT include explanatory text, code blocks, or apologies - ONLY the JSON object
 
-Now analyze all the search results below and return the JSON response:`,
+Keyword to search:`,
+        formatPrompt: `DEPRECATED - Not used anymore. JSON is returned directly from keyword searches.`,
         onlineEnabled: true,
       },
       models: [],
