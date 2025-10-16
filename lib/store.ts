@@ -224,18 +224,39 @@ export const useStore = create<StoreState>()(
         apiKey: null,
         selectedModel: null,
         keywords: [],
-        searchInstructions: `Search for recent news about this keyword.
+        searchInstructions: `Search for recent news about this keyword. Find a WIDE VARIETY of stories with diverse perspectives, sources, and angles.
+
+DIVERSITY REQUIREMENTS:
+- Include stories from MULTIPLE sources (mainstream, niche, independent, international)
+- Mix different story types: breaking news, analysis, opinion pieces, investigative reports, feature stories
+- Vary significance ratings (1-10) based on true impact - not all stories should be 7-8
+- Use diverse categories that accurately reflect content
+- Include different perspectives and viewpoints on the topic
+- Find both popular stories AND lesser-known but significant coverage
+
+STORY SELECTION CRITERIA:
+- Prioritize RECENCY: Only stories from the last 24 hours
+- Seek VARIETY: Don't just return mainstream sources
+- Value SIGNIFICANCE: Rate based on actual impact and importance
+- Ensure ACCURACY: Verify dates, sources, and URLs are real
+
+RATING GUIDELINES (1-10):
+- 9-10: Major breaking news with global impact
+- 7-8: Significant developments, industry-shaping news
+- 5-6: Notable stories, moderate importance
+- 3-4: Minor updates, niche interest
+- 1-2: Small mentions, very limited impact
 
 Return ONLY this exact JSON format (no extra text or fields):
 {
   "stories": [
     {
-      "title": "Headline",
-      "category": "Technology",
+      "title": "Exact headline from source",
+      "category": "Technology|Business|Politics|Science|Health|Entertainment|Sports|World|Opinion|Analysis|etc.",
       "rating": 7,
-      "summary": "Brief summary",
-      "source": "Source name",
-      "url": "https://...",
+      "summary": "2-3 sentence summary focusing on key facts and significance",
+      "source": "Exact source publication name",
+      "url": "https://full-article-url",
       "date": "2025-10-16"
     }
   ]
