@@ -15,8 +15,13 @@ export default function ActiveCardsTab() {
   // Calculate average rating
   const avgRating =
     activeCards.length > 0
-      ? activeCards.reduce((sum, card) => sum + card.rating, 0) /
-        activeCards.length
+      ? activeCards.reduce((sum, card) => {
+          const rating =
+            typeof card.rating === 'number'
+              ? card.rating
+              : parseFloat(card.rating) || 0;
+          return sum + rating;
+        }, 0) / activeCards.length
       : 0;
 
   // Group cards by reportId
@@ -107,7 +112,11 @@ export default function ActiveCardsTab() {
             <div>
               <p className="text-xs text-slate-600 font-medium">AVG RATING</p>
               <p className="text-xl font-bold text-slate-900">
-                {avgRating.toFixed(1)}/10
+                {(typeof avgRating === 'number'
+                  ? avgRating
+                  : parseFloat(avgRating) || 0
+                ).toFixed(1)}
+                /10
               </p>
             </div>
           </div>

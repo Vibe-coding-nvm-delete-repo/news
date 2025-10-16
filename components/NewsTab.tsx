@@ -477,12 +477,22 @@ export default function NewsTab() {
         new Set(allCards.map(card => card.category))
       );
       const avgRating =
-        allCards.reduce((sum, card) => sum + card.rating, 0) / allCards.length;
+        allCards.reduce((sum, card) => {
+          const rating =
+            typeof card.rating === 'number'
+              ? card.rating
+              : parseFloat(card.rating) || 0;
+          return sum + rating;
+        }, 0) / allCards.length;
       const ratingDistribution: { [key: number]: number } = {};
       for (let i = 1; i <= 10; i++) {
-        ratingDistribution[i] = allCards.filter(
-          card => Math.round(card.rating) === i
-        ).length;
+        ratingDistribution[i] = allCards.filter(card => {
+          const rating =
+            typeof card.rating === 'number'
+              ? card.rating
+              : parseFloat(card.rating) || 0;
+          return Math.round(rating) === i;
+        }).length;
       }
       metadata = { categories, avgRating, ratingDistribution };
     }
@@ -700,7 +710,11 @@ export default function NewsTab() {
                           AVERAGE RATING
                         </p>
                         <p className="text-2xl font-bold text-yellow-600">
-                          {lastReportMetadata.avgRating.toFixed(1)}/10
+                          {(typeof lastReportMetadata.avgRating === 'number'
+                            ? lastReportMetadata.avgRating
+                            : parseFloat(lastReportMetadata.avgRating) || 0
+                          ).toFixed(1)}
+                          /10
                         </p>
                         <div className="flex gap-1 mt-2">
                           {[...Array(10)].map((_, i) => (
