@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useStore, Card } from '@/lib/store';
+import { normalizeModelParameters } from '@/lib/openrouter';
 import { Button } from '@/components/ui/button';
 import {
   Loader2,
@@ -34,7 +35,7 @@ interface Stage1Result {
   // Enhanced visibility fields
   searchQuery?: string;
   modelUsed?: string;
-  modelParameters?: any;
+  modelParameters?: Record<string, unknown>;
   storiesFound?: number;
   responseLength?: number;
   apiResponse?: any;
@@ -284,6 +285,11 @@ export default function NewsTab() {
         });
 
         // Build request body
+        const normalizedParameters = normalizeModelParameters(
+          settings.modelParameters,
+          onlineModel
+        );
+
         const requestBody = {
           model: onlineModel, // Use model with :online suffix for web search capability
           messages: [
@@ -292,8 +298,8 @@ export default function NewsTab() {
               content: `${settings.searchInstructions}\n\n"${keyword.text}"`, // Pure user instructions + keyword only
             },
           ],
-          // Send ALL user model parameters directly
-          ...settings.modelParameters,
+          // Send normalized parameters so the API receives valid values only
+          ...normalizedParameters,
         };
 
         log(
@@ -444,7 +450,7 @@ export default function NewsTab() {
                   // Enhanced visibility fields
                   searchQuery: `${settings.searchInstructions}\n\n"${keyword.text}"`,
                   modelUsed: onlineModel,
-                  modelParameters: settings.modelParameters,
+                  modelParameters: normalizedParameters,
                   storiesFound: parsedResult.stories.length,
                   responseLength: result.length,
                   apiResponse: parsedResult,
@@ -904,7 +910,8 @@ export default function NewsTab() {
                   </p>
                   <p className="text-xs text-blue-700 mt-1">
                     Results appear as they complete (5-20 seconds each). Higher
-                    concurrency for faster parallel processing. Check browser console (F12) for progress logs.
+                    concurrency for faster parallel processing. Check browser
+                    console (F12) for progress logs.
                   </p>
                 </div>
               </div>
