@@ -6,7 +6,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { Loader2, Search, Plus, Trash2 } from 'lucide-react';
+import {
+  Loader2,
+  Search,
+  Plus,
+  Trash2,
+  Key,
+  Cpu,
+  Hash,
+  FileText,
+  FolderOpen,
+} from 'lucide-react';
 import { formatCost, isValidOpenRouterApiKey } from '@/lib/utils';
 
 export default function SettingsTab() {
@@ -22,9 +32,16 @@ export default function SettingsTab() {
     removeKeyword,
     toggleKeyword,
     setSearchInstructions,
-    setFormatPrompt,
     setOnlineEnabled,
   } = useStore();
+
+  const [activeSubTab, setActiveSubTab] = useState<
+    | 'api-key'
+    | 'model-selection'
+    | 'keywords'
+    | 'search-instructions'
+    | 'categories'
+  >('api-key');
 
   // OpenRouter API Key
   const [apiKeyInput, setApiKeyInput] = useState(settings.apiKey || '');
@@ -193,87 +210,141 @@ export default function SettingsTab() {
   );
 
   return (
-    <div className="space-y-8">
-      {/* API Key Section */}
-      <div className="space-y-4">
-        <h2 className="text-2xl font-semibold text-slate-900">
-          Step 1: Add Your OpenRouter API Key
-        </h2>
-        <p className="text-sm text-slate-600">
-          Get your API key from{' '}
-          <a
-            href="https://openrouter.ai/keys"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:underline"
+    <div className="space-y-6">
+      {/* Subtab Navigation */}
+      <div className="border-b border-slate-200">
+        <div className="flex gap-1 -mb-px overflow-x-auto">
+          <button
+            onClick={() => setActiveSubTab('api-key')}
+            className={`px-6 py-3 font-medium text-sm transition-colors border-b-2 flex items-center gap-2 whitespace-nowrap ${
+              activeSubTab === 'api-key'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300'
+            }`}
           >
-            openrouter.ai/keys
-          </a>
-        </p>
-
-        <div className="space-y-2">
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Input
-                type="password"
-                placeholder="sk-or-v1-..."
-                value={apiKeyInput}
-                onChange={e => setApiKeyInput(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && validateAndSaveApiKey()}
-                className="pr-10"
-              />
-              {isValidating && (
-                <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                  <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
-                </div>
-              )}
-            </div>
-            <Button
-              onClick={validateAndSaveApiKey}
-              disabled={isValidating || !apiKeyInput.trim()}
-            >
-              {isValidating ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Validating...
-                </>
-              ) : (
-                'Validate & Save'
-              )}
-            </Button>
-          </div>
-
-          {validationStatus !== 'idle' && (
-            <p
-              className={`text-sm ${
-                validationStatus === 'success'
-                  ? 'text-green-600'
-                  : 'text-red-600'
-              }`}
-            >
-              {validationMessage}
-            </p>
-          )}
+            <Key className="h-4 w-4" />
+            API Key
+          </button>
+          <button
+            onClick={() => setActiveSubTab('model-selection')}
+            className={`px-6 py-3 font-medium text-sm transition-colors border-b-2 flex items-center gap-2 whitespace-nowrap ${
+              activeSubTab === 'model-selection'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300'
+            }`}
+          >
+            <Cpu className="h-4 w-4" />
+            Model Selection
+          </button>
+          <button
+            onClick={() => setActiveSubTab('keywords')}
+            className={`px-6 py-3 font-medium text-sm transition-colors border-b-2 flex items-center gap-2 whitespace-nowrap ${
+              activeSubTab === 'keywords'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300'
+            }`}
+          >
+            <Hash className="h-4 w-4" />
+            Keywords
+          </button>
+          <button
+            onClick={() => setActiveSubTab('search-instructions')}
+            className={`px-6 py-3 font-medium text-sm transition-colors border-b-2 flex items-center gap-2 whitespace-nowrap ${
+              activeSubTab === 'search-instructions'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300'
+            }`}
+          >
+            <FileText className="h-4 w-4" />
+            Search Instructions
+          </button>
+          <button
+            onClick={() => setActiveSubTab('categories')}
+            disabled={true}
+            className={`px-6 py-3 font-medium text-sm transition-colors border-b-2 flex items-center gap-2 whitespace-nowrap opacity-50 cursor-not-allowed ${
+              activeSubTab === 'categories'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-slate-400'
+            }`}
+          >
+            <FolderOpen className="h-4 w-4" />
+            Categories
+          </button>
         </div>
       </div>
 
-      {/* Model Selection Section */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
+      {/* API Key Tab */}
+      {activeSubTab === 'api-key' && (
+        <div className="space-y-4">
           <h2 className="text-2xl font-semibold text-slate-900">
-            Step 2: Fetch & Select a Model
+            Add Your OpenRouter API Key
           </h2>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-md">
-              <Switch
-                checked={true}
-                onCheckedChange={() => {}}
-                disabled={true}
-              />
-              <span className="text-sm font-medium text-green-700">
-                Online Mode (Always Enabled)
-              </span>
+          <p className="text-sm text-slate-600">
+            Get your API key from{' '}
+            <a
+              href="https://openrouter.ai/keys"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline"
+            >
+              openrouter.ai/keys
+            </a>
+          </p>
+
+          <div className="space-y-2">
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Input
+                  type="password"
+                  placeholder="sk-or-v1-..."
+                  value={apiKeyInput}
+                  onChange={e => setApiKeyInput(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && validateAndSaveApiKey()}
+                  className="pr-10"
+                />
+                {isValidating && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+                  </div>
+                )}
+              </div>
+              <Button
+                onClick={validateAndSaveApiKey}
+                disabled={isValidating || !apiKeyInput.trim()}
+              >
+                {isValidating ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Validating...
+                  </>
+                ) : (
+                  'Validate & Save'
+                )}
+              </Button>
             </div>
+
+            {validationStatus !== 'idle' && (
+              <p
+                className={`text-sm ${
+                  validationStatus === 'success'
+                    ? 'text-green-600'
+                    : 'text-red-600'
+                }`}
+              >
+                {validationMessage}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Model Selection Tab */}
+      {activeSubTab === 'model-selection' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-semibold text-slate-900">
+              Fetch & Select a Model
+            </h2>
             <Button
               onClick={fetchModels}
               disabled={isLoadingModels || !settings.apiKey}
@@ -284,141 +355,156 @@ export default function SettingsTab() {
               Fetch Models
             </Button>
           </div>
-        </div>
-        <p className="text-sm text-slate-600">
-          <strong>Note:</strong> All searches automatically use the{' '}
-          <code>:online</code> variant of your selected model for real-time web
-          search capabilities. Models are sorted by cost (cheapest first).
-        </p>
 
-        {models.length > 0 && (
-          <div className="space-y-2">
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-              <Input
-                placeholder="Search models..."
-                value={modelSearch}
-                onChange={e => setModelSearch(e.target.value)}
-                className="pl-9"
-              />
-            </div>
+          <div className="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-md w-fit">
+            <Switch checked={true} onCheckedChange={() => {}} disabled={true} />
+            <span className="text-sm font-medium text-green-700">
+              Online Mode (Always Enabled)
+            </span>
+          </div>
 
-            <div className="border rounded-md max-h-96 overflow-y-auto">
-              {filteredModels.map(model => (
-                <button
-                  key={model.id}
-                  onClick={() => handleModelSelect(model.id)}
-                  className={`w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50 transition-colors border-b last:border-b-0 ${
-                    settings.selectedModel === model.id
-                      ? 'bg-blue-50 border-l-4 border-l-blue-600'
-                      : ''
-                  }`}
-                >
-                  <div className="text-left">
-                    <div className="font-medium text-slate-900">
-                      {model.name}
+          <p className="text-sm text-slate-600">
+            <strong>Note:</strong> All searches automatically use the{' '}
+            <code>:online</code> variant of your selected model for real-time
+            web search capabilities. Models are sorted by cost (cheapest first).
+          </p>
+
+          {models.length > 0 && (
+            <div className="space-y-2">
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                <Input
+                  placeholder="Search models..."
+                  value={modelSearch}
+                  onChange={e => setModelSearch(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+
+              <div className="border rounded-md max-h-[600px] overflow-y-auto">
+                {filteredModels.map(model => (
+                  <button
+                    key={model.id}
+                    onClick={() => handleModelSelect(model.id)}
+                    className={`w-full px-4 py-2.5 flex items-center justify-between hover:bg-slate-50 transition-colors border-b last:border-b-0 ${
+                      settings.selectedModel === model.id
+                        ? 'bg-blue-50 border-l-4 border-l-blue-600'
+                        : ''
+                    }`}
+                  >
+                    <div className="text-left">
+                      <div className="font-medium text-slate-900 text-sm">
+                        {model.name}
+                      </div>
+                      <div className="text-xs text-slate-500">{model.id}</div>
                     </div>
-                    <div className="text-xs text-slate-500">{model.id}</div>
+                    <div className="text-xs font-mono text-slate-600">
+                      {formatCost(model.totalCostPer1M)}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Keywords Tab */}
+      {activeSubTab === 'keywords' && (
+        <div className="space-y-4">
+          <h2 className="text-2xl font-semibold text-slate-900">
+            Add Keywords
+          </h2>
+          <p className="text-sm text-slate-600">
+            Add keywords to search for (comma-separated for multiple)
+          </p>
+
+          <div className="flex gap-2">
+            <Input
+              placeholder="e.g., AI, Crypto, Tech News"
+              value={keywordInput}
+              onChange={e => setKeywordInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && createKeywords()}
+              className="flex-1"
+            />
+            <Button onClick={createKeywords} disabled={!keywordInput.trim()}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add
+            </Button>
+          </div>
+
+          {settings.keywords.length > 0 && (
+            <div className="space-y-2">
+              {settings.keywords.map(keyword => (
+                <div
+                  key={keyword.id}
+                  className="flex items-center justify-between p-3 border rounded-md bg-white"
+                >
+                  <div className="flex items-center gap-3">
+                    <Switch
+                      checked={keyword.enabled}
+                      onCheckedChange={() => toggleKeyword(keyword.id)}
+                    />
+                    <span
+                      className={
+                        keyword.enabled ? 'text-slate-900' : 'text-slate-400'
+                      }
+                    >
+                      {keyword.text}
+                    </span>
                   </div>
-                  <div className="text-sm font-mono text-slate-600">
-                    {formatCost(model.totalCostPer1M)}
-                  </div>
-                </button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeKeyword(keyword.id)}
+                  >
+                    <Trash2 className="h-4 w-4 text-red-500" />
+                  </Button>
+                </div>
               ))}
             </div>
-          </div>
-        )}
-      </div>
-
-      {/* Keywords Section */}
-      <div className="space-y-4">
-        <h2 className="text-2xl font-semibold text-slate-900">
-          Step 3: Add Keywords
-        </h2>
-        <p className="text-sm text-slate-600">
-          Add keywords to search for (comma-separated for multiple)
-        </p>
-
-        <div className="flex gap-2">
-          <Input
-            placeholder="e.g., AI, Crypto, Tech News"
-            value={keywordInput}
-            onChange={e => setKeywordInput(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && createKeywords()}
-            className="flex-1"
-          />
-          <Button onClick={createKeywords} disabled={!keywordInput.trim()}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add
-          </Button>
+          )}
         </div>
+      )}
 
-        {settings.keywords.length > 0 && (
-          <div className="space-y-2">
-            {settings.keywords.map(keyword => (
-              <div
-                key={keyword.id}
-                className="flex items-center justify-between p-3 border rounded-md bg-white"
-              >
-                <div className="flex items-center gap-3">
-                  <Switch
-                    checked={keyword.enabled}
-                    onCheckedChange={() => toggleKeyword(keyword.id)}
-                  />
-                  <span
-                    className={
-                      keyword.enabled ? 'text-slate-900' : 'text-slate-400'
-                    }
-                  >
-                    {keyword.text}
-                  </span>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => removeKeyword(keyword.id)}
-                >
-                  <Trash2 className="h-4 w-4 text-red-500" />
-                </Button>
-              </div>
-            ))}
+      {/* Search Instructions Tab */}
+      {activeSubTab === 'search-instructions' && (
+        <div className="space-y-4">
+          <h2 className="text-2xl font-semibold text-slate-900">
+            Search Instructions
+          </h2>
+          <p className="text-sm text-slate-600">
+            Customize how the AI searches for each keyword
+          </p>
+          <Textarea
+            value={settings.searchInstructions}
+            onChange={e => setSearchInstructions(e.target.value)}
+            rows={12}
+            placeholder="Enter search instructions..."
+            className="font-mono text-sm"
+          />
+        </div>
+      )}
+
+      {/* Categories Tab */}
+      {activeSubTab === 'categories' && (
+        <div className="space-y-4">
+          <h2 className="text-2xl font-semibold text-slate-900 text-slate-400">
+            Categories
+          </h2>
+          <p className="text-sm text-slate-500">
+            This feature is coming soon. Categories will display all
+            auto-generated categories from your reports with additional data and
+            insights.
+          </p>
+          <div className="bg-slate-50 border-2 border-dashed border-slate-300 rounded-lg p-12 text-center">
+            <FolderOpen className="h-16 w-16 text-slate-300 mx-auto mb-4" />
+            <p className="text-slate-400 font-medium">
+              Categories Feature Coming Soon
+            </p>
           </div>
-        )}
-      </div>
-
-      {/* Search Instructions Section */}
-      <div className="space-y-4">
-        <h2 className="text-2xl font-semibold text-slate-900">
-          Search Instructions (Optional)
-        </h2>
-        <p className="text-sm text-slate-600">
-          Customize how the AI searches for each keyword
-        </p>
-        <Textarea
-          value={settings.searchInstructions}
-          onChange={e => setSearchInstructions(e.target.value)}
-          rows={6}
-          placeholder="Enter search instructions..."
-          className="font-mono text-sm"
-        />
-      </div>
-
-      {/* Format Prompt Section */}
-      <div className="space-y-4">
-        <h2 className="text-2xl font-semibold text-slate-900">
-          Format Prompt (Optional)
-        </h2>
-        <p className="text-sm text-slate-600">
-          Customize how the AI formats the final report
-        </p>
-        <Textarea
-          value={settings.formatPrompt}
-          onChange={e => setFormatPrompt(e.target.value)}
-          rows={12}
-          placeholder="Enter format prompt..."
-          className="font-mono text-sm"
-        />
-      </div>
+        </div>
+      )}
     </div>
   );
 }
