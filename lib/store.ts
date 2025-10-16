@@ -175,7 +175,7 @@ export const useStore = create<StoreState>()(
         apiKey: null,
         selectedModel: null,
         keywords: [],
-        searchInstructions: `You are a news research assistant. Search the web for the latest news and developments about the given keyword/topic. Focus on events from the past 7 days.
+        searchInstructions: `You are a news research assistant. Search the web for the latest news and developments about the given keyword/topic. Focus ONLY on events from the past 24 hours.
 
 RETURN YOUR RESPONSE AS A JSON OBJECT with this exact schema:
 {
