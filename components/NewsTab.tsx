@@ -179,7 +179,16 @@ export default function NewsTab() {
                   ? window.location.origin
                   : 'http://localhost:3000',
             },
-            body: JSON.stringify(requestBody),
+            body: JSON.stringify({
+              model: settings.selectedModel,
+              messages: [
+                {
+                  role: 'user',
+                  content: `${settings.searchInstructions}\n\nKeyword: ${keyword.text}`,
+                },
+              ],
+              tools: settings.onlineEnabled ? [{ type: 'web_search' }] : undefined,
+            }),
           }
         );
 
@@ -280,7 +289,16 @@ export default function NewsTab() {
                 ? window.location.origin
                 : 'http://localhost:3000',
           },
-          body: JSON.stringify(stage2RequestBody),
+          body: JSON.stringify({
+            model: settings.selectedModel,
+            messages: [
+              {
+                role: 'user',
+                content: `${settings.formatPrompt}\n\nAll search results:\n\n${aggregatedResults}`,
+              },
+            ],
+            tools: settings.onlineEnabled ? [{ type: 'web_search' }] : undefined,
+          }),
         }
       );
 
