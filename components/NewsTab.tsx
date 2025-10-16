@@ -21,6 +21,7 @@ interface Stage1Result {
   status: 'pending' | 'loading' | 'complete' | 'error';
   result?: string;
   error?: string;
+  cost?: number;
 }
 
 interface Story {
@@ -44,6 +45,7 @@ export default function NewsTab() {
   const [stories, setStories] = useState<Story[]>([]);
   const [estimatedCost, setEstimatedCost] = useState(0);
   const [actualCost, setActualCost] = useState(0);
+  const [stage2Cost, setStage2Cost] = useState(0);
   const [stage1Progress, setStage1Progress] = useState(0);
   const [stage1StartTime, setStage1StartTime] = useState<number | null>(null);
   const [stage1ElapsedTime, setStage1ElapsedTime] = useState(0);
@@ -139,6 +141,7 @@ export default function NewsTab() {
 
     let totalCost = 0;
     const completedResults: any[] = [];
+    setStage2Cost(0);
 
     // Stage 1: Search for each keyword
     for (let i = 0; i < enabledKeywords.length; i++) {
@@ -272,6 +275,7 @@ export default function NewsTab() {
       }
 
       // Track cost for stage 2
+      let stage2CostValue = 0;
       if (data.usage) {
         const selectedModel = models.find(m => m.id === settings.selectedModel);
         if (selectedModel) {
@@ -284,7 +288,8 @@ export default function NewsTab() {
         }
       }
 
-      setActualCost(totalCost);
+      setStage2Cost(stage2CostValue);
+      setActualCost((prev) => prev + stage2CostValue);
 
       // Parse JSON response
       const result = data.choices[0].message.content;
@@ -323,6 +328,28 @@ export default function NewsTab() {
 
   return (
     <div className="space-y-6">
+      {/* Cumulative Cost Counter */}
+      {actualCost > 0 && (
+        <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-lg border-2 border-green-300 shadow-md">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="bg-green-500 text-white rounded-full p-2">
+                <Sparkles className="h-6 w-6" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-green-800">Total Cost Spent</p>
+                <p className="text-xs text-green-600">Cumulative across all API calls</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-3xl font-bold text-green-900 font-mono">
+                ${actualCost.toFixed(6)}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Generate Report Section */}
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-200">
         <div className="flex items-center justify-between mb-4">
@@ -559,6 +586,14 @@ export default function NewsTab() {
               <CheckCircle2 className="h-5 w-5" />
               <span className="text-sm font-medium">Report Complete</span>
             </div>
+            {stage2Cost > 0 && (
+              <div className="flex items-center gap-2 bg-purple-50 px-3 py-1.5 rounded-lg border border-purple-200">
+                <span className="text-sm text-purple-700">Stage 2 Cost:</span>
+                <span className="text-sm font-mono font-semibold text-purple-900">
+                  ${stage2Cost.toFixed(6)}
+                </span>
+              </div>
+            )}
           </div>
 
           <div className="space-y-3">
