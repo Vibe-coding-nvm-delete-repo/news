@@ -33,6 +33,7 @@ export default function SettingsTab() {
     removeKeyword,
     toggleKeyword,
     setSearchInstructions,
+    setJsonConversionInstructions,
     setOnlineEnabled,
     setModelParameters,
   } = useStore();
@@ -711,6 +712,32 @@ export default function SettingsTab() {
             placeholder="Enter search instructions..."
             className="font-mono text-sm"
           />
+          <div className="space-y-2">
+            <h3 className="text-lg font-semibold text-slate-900">
+              JSON Conversion Instructions
+            </h3>
+            <p className="text-sm text-slate-600">
+              Provide JSON describing how to convert the plain-text response
+              into structured stories. The default configuration expects stories
+              to be separated by a line containing three hyphens (
+              <code>---</code>) and fields labelled <code>Title:</code>,{' '}
+              <code>Summary:</code>,<code>Category:</code>, <code>Rating:</code>
+              , <code>Source:</code>,<code>URL:</code>, and <code>Date:</code>.
+            </p>
+            <Textarea
+              value={settings.jsonConversionInstructions}
+              onChange={e => setJsonConversionInstructions(e.target.value)}
+              rows={14}
+              placeholder={
+                '{\n  "storyDelimiter": "\\n---\\n",\n  "fields": { ... }\n}'
+              }
+              className="font-mono text-xs"
+            />
+            <p className="text-xs text-slate-500">
+              Tip: Mark fields as <code>required</code> in the JSON to skip
+              incomplete stories instead of failing the entire run.
+            </p>
+          </div>
         </div>
       )}
 
