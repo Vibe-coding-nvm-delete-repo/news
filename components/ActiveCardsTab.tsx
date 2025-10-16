@@ -112,7 +112,11 @@ export default function ActiveCardsTab() {
             <div>
               <p className="text-xs text-slate-600 font-medium">AVG RATING</p>
               <p className="text-xl font-bold text-slate-900">
-                {avgRating.toFixed(1)}/10
+                {(typeof avgRating === 'number'
+                  ? avgRating
+                  : parseFloat(avgRating) || 0
+                ).toFixed(1)}
+                /10
               </p>
             </div>
           </div>

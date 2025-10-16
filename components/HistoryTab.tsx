@@ -172,7 +172,11 @@ export default function HistoryTab() {
                       </span>
                     </div>
                     <p className="text-lg font-bold text-slate-900">
-                      {report.avgRating.toFixed(1)}/10
+                      {(typeof report.avgRating === 'number'
+                        ? report.avgRating
+                        : parseFloat(report.avgRating) || 0
+                      ).toFixed(1)}
+                      /10
                     </p>
                   </div>
                 )}
