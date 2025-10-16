@@ -59,12 +59,12 @@ describe('RootLayout', () => {
 
 describe('Layout Metadata', () => {
   it('has correct title', () => {
-    expect(metadata.title).toBe('News Report Generator');
+    expect(metadata.title).toBe('NewsForge AI');
   });
 
   it('has correct description', () => {
     expect(metadata.description).toBe(
-      'AI-powered news aggregation and analysis'
+      'AI-powered news aggregation and intelligent reporting'
     );
   });
 });

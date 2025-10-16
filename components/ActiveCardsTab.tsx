@@ -16,11 +16,11 @@ export default function ActiveCardsTab() {
   const avgRating =
     activeCards.length > 0
       ? activeCards.reduce((sum, card) => {
-          const rating =
+          const r =
             typeof card.rating === 'number'
               ? card.rating
-              : parseFloat(card.rating) || 0;
-          return sum + rating;
+              : parseFloat((card as any).rating) || 0;
+          return sum + r;
         }, 0) / activeCards.length
       : 0;
 
