@@ -64,6 +64,11 @@ export default function NewsTab() {
     avgRating: number;
     ratingDistribution: { [key: number]: number };
   } | null>(null);
+  const [dateFilterStats, setDateFilterStats] = useState<{
+    totalStories: number;
+    filteredStories: number;
+    rejectedCount: number;
+  } | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   // Calculate estimated cost whenever keywords or model changes
@@ -191,13 +196,18 @@ export default function NewsTab() {
           );
         });
 
+        // Calculate 24-hour cutoff date dynamically
+        const cutoffDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        const cutoffDateString = cutoffDate.toISOString().split('T')[0]; // YYYY-MM-DD format
+        const todayDateString = new Date().toISOString().split('T')[0];
+
         // Build request body
         const requestBody = {
           model: onlineModel,
           messages: [
             {
               role: 'user',
-              content: `${settings.searchInstructions}\n\n"${keyword.text}"`,
+              content: `${settings.searchInstructions}\n\n"${keyword.text}"\n\nIMPORTANT: Today is ${todayDateString}. Only include articles published on or after ${cutoffDateString}.`,
             },
           ],
           // ALWAYS force JSON output
@@ -237,15 +247,13 @@ export default function NewsTab() {
           ...(settings.modelParameters?.min_p !== undefined && {
             min_p: settings.modelParameters.min_p,
           }),
-          ...(settings.modelParameters?.repetition_penalty !== undefined && {
+          ...(settings.modelParameters?.repetition_penalty !==
+            undefined && {
             repetition_penalty: settings.modelParameters.repetition_penalty,
           }),
         };
 
-        console.log(
-          `[${keyword.text}] 📤 Request body:`,
-          JSON.stringify(requestBody, null, 2)
-        );
+        console.log(`[${keyword.text}] 📤 Request body:`, JSON.stringify(requestBody, null, 2));
 
         // Race between fetch and timeout
         const fetchPromise = fetch(
@@ -290,14 +298,8 @@ export default function NewsTab() {
         const result = data.choices[0].message.content;
         console.log(`[${keyword.text}] ✅ Received response`);
         console.log(`[${keyword.text}] 📏 Length: ${result.length} chars`);
-        console.log(
-          `[${keyword.text}] 🔍 First 200 chars:`,
-          result.substring(0, 200)
-        );
-        console.log(
-          `[${keyword.text}] 🔍 Last 200 chars:`,
-          result.substring(Math.max(0, result.length - 200))
-        );
+        console.log(`[${keyword.text}] 🔍 First 200 chars:`, result.substring(0, 200));
+        console.log(`[${keyword.text}] 🔍 Last 200 chars:`, result.substring(Math.max(0, result.length - 200)));
 
         // Parse JSON from this keyword's search
         let parsedResult;
@@ -305,10 +307,7 @@ export default function NewsTab() {
           parsedResult = parseJSON(result);
           console.log(`[${keyword.text}] ✅ JSON parsed successfully`);
         } catch (parseError: any) {
-          console.error(
-            `[${keyword.text}] ❌ JSON PARSE ERROR:`,
-            parseError.message
-          );
+          console.error(`[${keyword.text}] ❌ JSON PARSE ERROR:`, parseError.message);
           console.error(`[${keyword.text}] 📄 FULL RESPONSE:`, result);
           throw new Error(`JSON Parse Error: ${parseError.message}`);
         }
@@ -325,23 +324,72 @@ export default function NewsTab() {
           `[${keyword.text}] Successfully parsed ${parsedResult.stories.length} stories`
         );
 
-        // Add keyword and reportId to each story, convert to Card
-        const cardsFromStories: Card[] = parsedResult.stories.map(
-          (story: any) => ({
-            id: `${reportId}-${keyword.text}-${Date.now()}-${Math.random().toString(36).substring(2)}`,
-            reportId: reportId,
-            keyword: keyword.text,
-            category: story.category || 'Uncategorized',
-            title: story.title,
-            rating: story.rating,
-            summary: story.summary,
-            source: story.source,
-            url: story.url,
-            date: story.date,
-            generatedAt: new Date().toISOString(),
-            status: 'active' as const,
-          })
+        // Filter stories to ONLY include those from the last 24 hours
+        const now = new Date();
+        const twentyFourHoursAgo = new Date(
+          now.getTime() - 24 * 60 * 60 * 1000
         );
+
+        const validStories = parsedResult.stories.filter((story: any) => {
+          // Reject stories without dates
+          if (!story.date) {
+            console.warn(
+              `[${keyword.text}] ❌ Rejected (no date): "${story.title?.substring(0, 50)}..."`
+            );
+            return false;
+          }
+
+          // Parse and validate date
+          const storyDate = new Date(story.date);
+          if (isNaN(storyDate.getTime())) {
+            console.warn(
+              `[${keyword.text}] ❌ Rejected (invalid date "${story.date}"): "${story.title?.substring(0, 50)}..."`
+            );
+            return false;
+          }
+
+          // Reject stories older than 24 hours
+          if (storyDate < twentyFourHoursAgo) {
+            console.warn(
+              `[${keyword.text}] ❌ Rejected (too old - ${story.date}): "${story.title?.substring(0, 50)}..."`
+            );
+            return false;
+          }
+
+          // Reject stories with future dates (likely errors)
+          if (storyDate > now) {
+            console.warn(
+              `[${keyword.text}] ❌ Rejected (future date - ${story.date}): "${story.title?.substring(0, 50)}..."`
+            );
+            return false;
+          }
+
+          console.log(
+            `[${keyword.text}] ✅ Accepted (${story.date}): "${story.title?.substring(0, 50)}..."`
+          );
+          return true;
+        });
+
+        const rejectedCount = parsedResult.stories.length - validStories.length;
+        console.log(
+          `[${keyword.text}] Filtered: ${validStories.length}/${parsedResult.stories.length} stories passed 24-hour validation${rejectedCount > 0 ? ` (${rejectedCount} rejected)` : ''}`
+        );
+
+        // Add keyword and reportId to each story, convert to Card
+        const cardsFromStories: Card[] = validStories.map((story: any) => ({
+          id: `${reportId}-${keyword.text}-${Date.now()}-${Math.random().toString(36).substring(2)}`,
+          reportId: reportId,
+          keyword: keyword.text,
+          category: story.category || 'Uncategorized',
+          title: story.title,
+          rating: story.rating,
+          summary: story.summary,
+          source: story.source,
+          url: story.url,
+          date: story.date,
+          generatedAt: new Date().toISOString(),
+          status: 'active' as const,
+        }));
 
         // Track cost
         let cost = 0;
@@ -385,7 +433,7 @@ export default function NewsTab() {
           cards: cardsFromStories,
           cost,
           totalStories: parsedResult.stories.length,
-          rejectedStories: 0,
+          rejectedStories: parsedResult.stories.length - validStories.length,
         };
       } catch (error: any) {
         // Check if the error is due to abort
@@ -451,11 +499,16 @@ export default function NewsTab() {
       `Generated ${allCards.length} cards with total cost $${totalCost.toFixed(4)}`
     );
     console.log(
-      `📊 Generated ${allCards.length} cards from ${totalStoriesReceived} stories`
+      `📊 Date filtering stats: ${totalStoriesReceived} stories received, ${totalStoriesRejected} rejected (${((totalStoriesRejected / Math.max(totalStoriesReceived, 1)) * 100).toFixed(1)}% filtered out)`
     );
 
-    // Update total cost
+    // Update total cost and filter stats
     setActualCost(totalCost);
+    setDateFilterStats({
+      totalStories: totalStoriesReceived,
+      filteredStories: allCards.length,
+      rejectedCount: totalStoriesRejected,
+    });
 
     // Show completion animation
     setShowCompletionAnimation(true);
@@ -606,26 +659,52 @@ export default function NewsTab() {
             </div>
           </div>
 
+          {/* Date Filter Warning Banner */}
+          {dateFilterStats && dateFilterStats.rejectedCount > 0 && (
+            <div className="bg-gradient-to-r from-yellow-50 to-orange-50 p-4 rounded-lg border-2 border-yellow-400">
+              <div className="flex items-start gap-3">
+                <div className="bg-yellow-500 text-white rounded-full p-2 mt-0.5">
+                  <Clock className="h-5 w-5" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-bold text-yellow-900 mb-1">
+                    📅 Date Filter Active
+                  </p>
+                  <p className="text-sm text-yellow-800">
+                    <span className="font-semibold">
+                      {dateFilterStats.rejectedCount}
+                    </span>{' '}
+                    out of{' '}
+                    <span className="font-semibold">
+                      {dateFilterStats.totalStories}
+                    </span>{' '}
+                    stories were filtered out because they were older than 24
+                    hours.
+                    <br />
+                    <span className="text-xs text-yellow-700 mt-1 inline-block">
+                      ✅ Only showing news from the last 24 hours (
+                      {dateFilterStats.filteredStories} recent stories)
+                    </span>
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Success Banner */}
           {showSuccessBanner && (
-            <div
-              className={`bg-gradient-to-r p-6 rounded-xl border-2 shadow-2xl ${
-                lastReportCardCount > 0
-                  ? 'from-green-50 to-emerald-50 border-green-400'
-                  : 'from-yellow-50 to-orange-50 border-yellow-400'
-              }`}
-            >
+            <div className={`bg-gradient-to-r p-6 rounded-xl border-2 shadow-2xl ${
+              lastReportCardCount > 0
+                ? 'from-green-50 to-emerald-50 border-green-400'
+                : 'from-yellow-50 to-orange-50 border-yellow-400'
+            }`}>
               <div className="space-y-4">
                 {/* Header with prominent CTA */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <div
-                      className={`text-white rounded-full p-3 ${
-                        lastReportCardCount > 0
-                          ? 'bg-green-500'
-                          : 'bg-yellow-500'
-                      }`}
-                    >
+                    <div className={`text-white rounded-full p-3 ${
+                      lastReportCardCount > 0 ? 'bg-green-500' : 'bg-yellow-500'
+                    }`}>
                       {lastReportCardCount > 0 ? (
                         <CheckCircle2 className="h-8 w-8" />
                       ) : (
@@ -633,24 +712,16 @@ export default function NewsTab() {
                       )}
                     </div>
                     <div>
-                      <p
-                        className={`text-2xl font-bold ${
-                          lastReportCardCount > 0
-                            ? 'text-green-900'
-                            : 'text-yellow-900'
-                        }`}
-                      >
+                      <p className={`text-2xl font-bold ${
+                        lastReportCardCount > 0 ? 'text-green-900' : 'text-yellow-900'
+                      }`}>
                         {lastReportCardCount > 0
                           ? 'Report Generated Successfully!'
                           : 'Report Generation Complete'}
                       </p>
-                      <p
-                        className={`text-sm mt-1 ${
-                          lastReportCardCount > 0
-                            ? 'text-green-700'
-                            : 'text-yellow-700'
-                        }`}
-                      >
+                      <p className={`text-sm mt-1 ${
+                        lastReportCardCount > 0 ? 'text-green-700' : 'text-yellow-700'
+                      }`}>
                         {lastReportCardCount > 0
                           ? `${lastReportCardCount} cards created • Cost: $${lastReportCost.toFixed(4)}`
                           : `No cards generated • Cost: $${lastReportCost.toFixed(4)}`}
@@ -723,9 +794,7 @@ export default function NewsTab() {
                                   <div className="font-bold text-slate-900">
                                     {count}
                                   </div>
-                                  <div className="text-slate-500">
-                                    ★{rating}
-                                  </div>
+                                  <div className="text-slate-500">★{rating}</div>
                                 </div>
                               )
                           )}
@@ -740,8 +809,8 @@ export default function NewsTab() {
                       </p>
                       <p className="text-green-700 text-sm mb-3">
                         Click &quot;View Active Cards&quot; above to see all{' '}
-                        {lastReportCardCount} news stories organized by rating
-                        and category!
+                        {lastReportCardCount} news stories organized by rating and
+                        category!
                       </p>
                     </div>
                   </>
@@ -754,19 +823,15 @@ export default function NewsTab() {
                       ⚠️ No Cards Generated
                     </p>
                     <p className="text-yellow-800 text-sm mb-3">
-                      All keyword searches completed, but no valid news stories
-                      were found. This could be because:
+                      All keyword searches completed, but no valid news stories were found. This could be because:
                     </p>
                     <ul className="text-yellow-800 text-sm space-y-1 ml-6 list-disc">
                       <li>All keywords failed or encountered errors</li>
-                      <li>No recent stories matched your keywords</li>
-                      <li>
-                        The AI model couldn&apos;t find relevant news articles
-                      </li>
+                      <li>No recent stories (last 24 hours) matched your keywords</li>
+                      <li>The AI model couldn&apos;t find relevant news articles</li>
                     </ul>
                     <p className="text-yellow-800 text-sm mt-3 font-medium">
-                      Try adjusting your keywords or checking the individual
-                      keyword results above for more details.
+                      Try adjusting your keywords or checking the individual keyword results above for more details.
                     </p>
                   </div>
                 )}
