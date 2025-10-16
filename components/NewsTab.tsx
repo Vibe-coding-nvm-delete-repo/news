@@ -183,7 +183,7 @@ export default function NewsTab() {
 
         const result = data.choices[0].message.content;
 
-        // Track cost
+        // Track cost and update in real-time
         if (data.usage) {
           const selectedModel = models.find(
             m => m.id === settings.selectedModel
@@ -196,6 +196,7 @@ export default function NewsTab() {
               (data.usage.completion_tokens / 1000000) *
               selectedModel.pricing.completion;
             totalCost += promptCost + completionCost;
+            setActualCost(totalCost);
           }
         }
 
@@ -285,12 +286,13 @@ export default function NewsTab() {
           const completionCost =
             (data.usage.completion_tokens / 1000000) *
             selectedModel.pricing.completion;
-          totalCost += promptCost + completionCost;
+          stage2CostValue = promptCost + completionCost;
+          totalCost += stage2CostValue;
         }
       }
 
       setStage2Cost(stage2CostValue);
-      setActualCost(prev => prev + stage2CostValue);
+      setActualCost(totalCost);
 
       // Parse JSON response
       const result = data.choices[0].message.content;
