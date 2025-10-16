@@ -1,5 +1,23 @@
-import { useStore } from '@/lib/store';
-import type { Keyword, Model, Card, ReportHistory } from '@/lib/store';
+import {
+  useStore,
+  DEFAULT_JSON_CONVERSION_CONFIG,
+  DEFAULT_JSON_CONVERSION_INSTRUCTIONS,
+} from '@/lib/store';
+import type {
+  Keyword,
+  Model,
+  Card,
+  ReportHistory,
+  JsonConversionInstructions,
+} from '@/lib/store';
+import {
+  convertTextToStories,
+  parseJsonConversionInstructions,
+} from '@/components/NewsTab';
+
+const cloneConfig = (
+  config: JsonConversionInstructions
+): JsonConversionInstructions => JSON.parse(JSON.stringify(config));
 
 describe('useStore - Settings Management', () => {
   beforeEach(() => {
@@ -11,6 +29,7 @@ describe('useStore - Settings Management', () => {
         selectedModel: null,
         keywords: [],
         searchInstructions: settings.searchInstructions,
+        jsonConversionInstructions: settings.jsonConversionInstructions,
         onlineEnabled: true,
         modelParameters: {
           temperature: 0.5,
@@ -623,6 +642,47 @@ describe('useStore - Card Management', () => {
       expect(useStore.getState().activeNewsTab).toBe('archived');
       expect(useStore.getState().archivedCards[0].id).toBe('1');
       expect(useStore.getState().archivedCards[0].status).toBe('archived');
+    });
+  });
+
+  describe('JSON conversion utilities', () => {
+    test('parses default conversion instructions', () => {
+      const config = parseJsonConversionInstructions(
+        DEFAULT_JSON_CONVERSION_INSTRUCTIONS
+      );
+      expect(config.fields.title.pattern).toContain('Title');
+    });
+
+    test('extracts stories using the default configuration', () => {
+      const config = cloneConfig(DEFAULT_JSON_CONVERSION_CONFIG);
+      const raw = `Title: Story A\nSummary: Story A summary.\nCategory: Technology\nRating: 7\nSource: Example News\nURL: https://example.com/a\nDate: 2025-10-16\n---\nTitle: Story B\nSummary: Story B summary.\nCategory: Finance\nRating: 8\nSource: Money Daily\nURL: N/A\nDate: 2025-10-15`;
+
+      const result = convertTextToStories(raw, config);
+
+      expect(result.rejectedStories).toBe(0);
+      expect(result.stories).toHaveLength(2);
+      expect(result.stories[0].title).toBe('Story A');
+      expect(result.stories[1].rating).toBe(8);
+    });
+
+    test('skips stories missing required fields and counts rejections', () => {
+      const config = cloneConfig(DEFAULT_JSON_CONVERSION_CONFIG);
+      const raw = `Title: Complete Story\nSummary: Present\nCategory: General\nRating: 5\nSource: Example\nURL: https://example.com/ok\nDate: 2025-10-16\n---\nTitle: Incomplete Story\nCategory: General\nRating: 4\nSource: Example\nURL: https://example.com/bad\nDate: 2025-10-16`;
+
+      const result = convertTextToStories(raw, config);
+
+      expect(result.stories).toHaveLength(1);
+      expect(result.rejectedStories).toBe(1);
+      expect(result.stories[0].summary).toBe('Present');
+    });
+
+    test('throws descriptive errors for invalid regex configuration', () => {
+      const config = cloneConfig(DEFAULT_JSON_CONVERSION_CONFIG);
+      config.fields.title = { pattern: '(', flags: 'g' } as any;
+
+      expect(() => convertTextToStories('Title: Example', config)).toThrow(
+        /Invalid regex for field "title"/
+      );
     });
   });
 });

@@ -7,6 +7,21 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import {
+  DEFAULT_JSON_CONVERSION_CONFIG,
+  DEFAULT_JSON_CONVERSION_INSTRUCTIONS,
+  type JsonConversionInstructions,
+} from './textConversion';
+
+export {
+  DEFAULT_JSON_CONVERSION_CONFIG,
+  DEFAULT_JSON_CONVERSION_INSTRUCTIONS,
+} from './textConversion';
+export type {
+  JsonConversionFieldInstruction,
+  JsonConversionInstructions,
+  JsonConversionStoryPattern,
+} from './textConversion';
 
 /**
  * Represents a search keyword with toggle capability.
@@ -138,6 +153,8 @@ export interface Settings {
   keywords: Keyword[];
   /** Custom prompt for keyword searches */
   searchInstructions: string;
+  /** JSON instructions that describe how to convert raw text into structured stories */
+  jsonConversionInstructions: string;
   onlineEnabled: boolean;
   /** Model parameters for controlling API behavior and output quality */
   modelParameters: ModelParameters;
@@ -184,6 +201,7 @@ interface StoreState {
   // Actions - Prompts
   /** Updates the search instructions prompt */
   setSearchInstructions: (instructions: string) => void;
+  setJsonConversionInstructions: (instructions: string) => void;
   setOnlineEnabled: (enabled: boolean) => void;
   /** Updates model parameters */
   setModelParameters: (parameters: Partial<ModelParameters>) => void;
@@ -218,6 +236,19 @@ const DEFAULT_MODEL_PARAMETERS: ModelParameters = {
   presence_penalty: 0.0,
 };
 
+const DEFAULT_SEARCH_INSTRUCTIONS = `You are a diligent news researcher. For the keyword provided after these instructions, identify the most significant and timely stories (up to 5). Respond in plain text only, with each story separated by a line containing exactly three hyphens (---).
+
+For every story, output the following fields on their own lines:
+Title: <concise headline>
+Summary: <two-sentence summary highlighting impact>
+Category: <primary category>
+Rating: <1-10 significance score>
+Source: <source name or N/A>
+URL: <direct link or N/A>
+Date: <YYYY-MM-DD or N/A>
+
+Do not use JSON or bullet lists. Keep the order of fields exactly as shown.`;
+
 export const useStore = create<StoreState>()(
   persist(
     set => ({
@@ -225,7 +256,8 @@ export const useStore = create<StoreState>()(
         apiKey: null,
         selectedModel: null,
         keywords: [],
-        searchInstructions: `Search for news about the following keyword and provide your findings:`,
+        searchInstructions: DEFAULT_SEARCH_INSTRUCTIONS,
+        jsonConversionInstructions: DEFAULT_JSON_CONVERSION_INSTRUCTIONS,
         onlineEnabled: true,
         modelParameters: DEFAULT_MODEL_PARAMETERS,
       },
@@ -273,6 +305,13 @@ export const useStore = create<StoreState>()(
       setSearchInstructions: instructions =>
         set(state => ({
           settings: { ...state.settings, searchInstructions: instructions },
+        })),
+      setJsonConversionInstructions: instructions =>
+        set(state => ({
+          settings: {
+            ...state.settings,
+            jsonConversionInstructions: instructions,
+          },
         })),
       setOnlineEnabled: enabled =>
         set(state => ({

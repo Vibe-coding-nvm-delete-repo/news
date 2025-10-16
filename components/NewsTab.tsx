@@ -30,6 +30,17 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { parseJSON } from '@/lib/utils';
+import {
+  convertTextToStories,
+  parseJsonConversionInstructions,
+  type ConversionOutcome,
+  type JsonConversionInstructions,
+} from '@/lib/textConversion';
+
+export {
+  convertTextToStories,
+  parseJsonConversionInstructions,
+} from '@/lib/textConversion';
 import ActiveCardsTab from './ActiveCardsTab';
 import ArchivedCardsTab from './ArchivedCardsTab';
 import HistoryTab from './HistoryTab';
@@ -49,6 +60,8 @@ interface Stage1Result {
   modelParameters?: Record<string, unknown>;
   storiesFound?: number;
   responseLength?: number;
+  rejectedStories?: number;
+  convertedJson?: string;
   apiResponse?: any;
   steps: SystemLogicStep[];
 }
@@ -563,71 +576,164 @@ export default function NewsTab() {
           result.substring(Math.max(0, result.length - 200))
         );
 
-        // Parse JSON from this keyword's search
-        let parsedResult: any;
-        try {
-          markStepStart(
-            'parse-json',
-            'Parsing stories array from AI response text.'
-          );
-          parsedResult = parseJSON(result);
-          log(`[${keyword.text}] ✅ JSON parsed successfully`);
+        // Convert JSON from this keyword's search
+        markStepStart(
+          'parse-json',
+          'Applying JSON conversion instructions and parsing stories.'
+        );
 
-          // Validate stories array exists
-          if (
-            !parsedResult ||
-            !parsedResult.stories ||
-            !Array.isArray(parsedResult.stories)
-          ) {
-            logError(
-              `[${keyword.text}] Invalid JSON format. Response:`,
-              result.substring(0, 500)
-            );
-            markStepError(
-              'parse-json',
-              "Invalid JSON format: missing 'stories' array"
-            );
-            throw new Error("Invalid JSON format: missing 'stories' array");
-          }
-          markStepSuccess(
-            'parse-json',
-            `Parsed ${parsedResult.stories.length} stories.`
+        let conversionConfig: JsonConversionInstructions;
+        try {
+          conversionConfig = parseJsonConversionInstructions(
+            settings.jsonConversionInstructions
           );
-        } catch (parseError: any) {
-          logError(
-            `[${keyword.text}] ❌ JSON PARSE ERROR:`,
-            parseError.message
-          );
-          logError(`[${keyword.text}] 📄 FULL RESPONSE:`, result);
-          if (parseError.message) {
-            markStepError('parse-json', parseError.message);
-          }
+        } catch (configError: any) {
+          const message =
+            configError?.message ?? 'Invalid JSON conversion instructions.';
+          logError(`[${keyword.text}] ❌ CONFIG ERROR:`, message);
+          markStepError('parse-json', message);
           updateLogicStep(keyword.text, 'build-cards', {
             status: 'error',
-            detail: 'Skipped: JSON parsing failed.',
+            detail: 'Skipped: conversion instructions invalid.',
             startedAt: Date.now(),
             endedAt: Date.now(),
             elapsedMs: 0,
           });
           updateLogicStep(keyword.text, 'store-cards', {
             status: 'error',
-            detail: 'Skipped: JSON parsing failed.',
+            detail: 'Skipped: conversion instructions invalid.',
             startedAt: Date.now(),
             endedAt: Date.now(),
             elapsedMs: 0,
           });
-          // Return empty result instead of throwing - don't break the entire generation
           return {
             success: false,
             cards: [],
             cost: 0,
             totalStories: 0,
             rejectedStories: 0,
-            error: `JSON Parse Error: ${parseError.message}`,
+            error: `JSON Conversion Configuration Error: ${message}`,
           };
         }
 
-        // At this point, parsedResult is guaranteed to be valid with a stories array
+        let conversionOutcome: ConversionOutcome;
+        try {
+          conversionOutcome = convertTextToStories(result, conversionConfig);
+        } catch (conversionError: any) {
+          const message =
+            conversionError?.message ??
+            'Failed to convert text into structured stories.';
+          logError(`[${keyword.text}] ❌ CONVERSION ERROR:`, message);
+          logError(`[${keyword.text}] 📄 FULL RESPONSE:`, result);
+          markStepError('parse-json', message);
+          updateLogicStep(keyword.text, 'build-cards', {
+            status: 'error',
+            detail: 'Skipped: conversion to JSON failed.',
+            startedAt: Date.now(),
+            endedAt: Date.now(),
+            elapsedMs: 0,
+          });
+          updateLogicStep(keyword.text, 'store-cards', {
+            status: 'error',
+            detail: 'Skipped: conversion to JSON failed.',
+            startedAt: Date.now(),
+            endedAt: Date.now(),
+            elapsedMs: 0,
+          });
+          return {
+            success: false,
+            cards: [],
+            cost: 0,
+            totalStories: 0,
+            rejectedStories: 0,
+            error: `JSON Conversion Error: ${message}`,
+          };
+        }
+
+        const convertedJsonPayload = JSON.stringify(conversionOutcome);
+        log(
+          `[${keyword.text}] ✅ Converted ${conversionOutcome.stories.length} stories (${conversionOutcome.rejectedStories} rejected).`
+        );
+        log(
+          `[${keyword.text}] 🧾 JSON preview:`,
+          convertedJsonPayload.substring(0, 400)
+        );
+
+        let parsedResult: any;
+        try {
+          parsedResult = parseJSON(convertedJsonPayload);
+        } catch (parseError: any) {
+          const message =
+            parseError?.message ?? 'Failed to parse converted JSON payload.';
+          logError(`[${keyword.text}] ❌ JSON PARSE ERROR:`, message);
+          logError(`[${keyword.text}] 🧾 JSON PAYLOAD:`, convertedJsonPayload);
+          markStepError('parse-json', message);
+          updateLogicStep(keyword.text, 'build-cards', {
+            status: 'error',
+            detail: 'Skipped: converted JSON parsing failed.',
+            startedAt: Date.now(),
+            endedAt: Date.now(),
+            elapsedMs: 0,
+          });
+          updateLogicStep(keyword.text, 'store-cards', {
+            status: 'error',
+            detail: 'Skipped: converted JSON parsing failed.',
+            startedAt: Date.now(),
+            endedAt: Date.now(),
+            elapsedMs: 0,
+          });
+          return {
+            success: false,
+            cards: [],
+            cost: 0,
+            totalStories: 0,
+            rejectedStories: 0,
+            error: `Converted JSON Parse Error: ${message}`,
+          };
+        }
+
+        if (
+          !parsedResult ||
+          !parsedResult.stories ||
+          !Array.isArray(parsedResult.stories)
+        ) {
+          logError(
+            `[${keyword.text}] Invalid JSON format after conversion. Payload:`,
+            convertedJsonPayload.substring(0, 500)
+          );
+          markStepError(
+            'parse-json',
+            "Invalid JSON format: missing 'stories' array"
+          );
+          updateLogicStep(keyword.text, 'build-cards', {
+            status: 'error',
+            detail: 'Skipped: converted JSON missing stories array.',
+            startedAt: Date.now(),
+            endedAt: Date.now(),
+            elapsedMs: 0,
+          });
+          updateLogicStep(keyword.text, 'store-cards', {
+            status: 'error',
+            detail: 'Skipped: converted JSON missing stories array.',
+            startedAt: Date.now(),
+            endedAt: Date.now(),
+            elapsedMs: 0,
+          });
+          return {
+            success: false,
+            cards: [],
+            cost: 0,
+            totalStories: 0,
+            rejectedStories: 0,
+            error: 'Converted JSON missing stories array.',
+          };
+        }
+
+        markStepSuccess(
+          'parse-json',
+          `Parsed ${parsedResult.stories.length} stories (${conversionOutcome.rejectedStories} rejected).`
+        );
+
         log(
           `[${keyword.text}] Successfully parsed ${parsedResult.stories.length} stories`
         );
@@ -698,7 +804,9 @@ export default function NewsTab() {
                   modelUsed: onlineModel,
                   modelParameters: normalizedParameters,
                   storiesFound: parsedResult.stories.length,
+                  rejectedStories: conversionOutcome.rejectedStories,
                   responseLength: result.length,
+                  convertedJson: convertedJsonPayload,
                   apiResponse: parsedResult,
                 }
               : r
@@ -733,7 +841,7 @@ export default function NewsTab() {
           cards: cardsFromStories,
           cost,
           totalStories: parsedResult.stories.length,
-          rejectedStories: 0,
+          rejectedStories: conversionOutcome.rejectedStories,
         };
       } catch (error: any) {
         // Check if the error is due to abort
