@@ -12,6 +12,14 @@ describe('useStore - Settings Management', () => {
         keywords: [],
         searchInstructions: settings.searchInstructions,
         onlineEnabled: true,
+        modelParameters: {
+          temperature: 0.5,
+          max_tokens: 2000,
+          response_format: 'json_object',
+          top_p: 0.9,
+          frequency_penalty: 0.5,
+          presence_penalty: 0.3,
+        },
       },
       models: [],
       isLoadingModels: false,
@@ -184,6 +192,48 @@ describe('useStore - Settings Management', () => {
 
       setOnlineEnabled(true);
       expect(useStore.getState().settings.onlineEnabled).toBe(true);
+    });
+  });
+
+  describe('Model Parameters', () => {
+    test('updates model parameters', () => {
+      const { setModelParameters } = useStore.getState();
+
+      setModelParameters({ temperature: 0.8 });
+      expect(useStore.getState().settings.modelParameters.temperature).toBe(
+        0.8
+      );
+
+      setModelParameters({ max_tokens: 3000 });
+      expect(useStore.getState().settings.modelParameters.max_tokens).toBe(
+        3000
+      );
+      expect(useStore.getState().settings.modelParameters.temperature).toBe(
+        0.8
+      );
+    });
+
+    test('has default model parameters', () => {
+      const { settings } = useStore.getState();
+
+      expect(settings.modelParameters).toBeDefined();
+      expect(settings.modelParameters.temperature).toBe(0.5);
+      expect(settings.modelParameters.max_tokens).toBe(2000);
+      expect(settings.modelParameters.response_format).toBe('json_object');
+    });
+
+    test('partially updates model parameters', () => {
+      const { setModelParameters } = useStore.getState();
+
+      setModelParameters({
+        frequency_penalty: 0.7,
+        presence_penalty: 0.4,
+      });
+
+      const params = useStore.getState().settings.modelParameters;
+      expect(params.frequency_penalty).toBe(0.7);
+      expect(params.presence_penalty).toBe(0.4);
+      expect(params.temperature).toBe(0.5); // Should remain unchanged
     });
   });
 
