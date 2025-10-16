@@ -49,13 +49,16 @@ export const useStore = create<StoreState>()(
         apiKey: null,
         selectedModel: null,
         keywords: [],
-        searchInstructions: `Search for the latest news and developments about this topic. Focus on events from the past 7 days. Include important updates, trends, and notable discussions.`,
-        formatPrompt: `CRITICAL INSTRUCTIONS: You MUST return ONLY a valid JSON object. Do NOT include:
-- Markdown code blocks (no \`\`\`json or \`\`\`)
-- Explanatory text before or after the JSON
-- Any commentary or additional information
+        searchInstructions: `You are a news research assistant. Search the web for the latest news and developments about the given keyword/topic. Focus on events from the past 7 days.
 
-Required JSON Schema:
+Provide a comprehensive summary that includes:
+- Recent news articles and updates
+- Important developments and trends  
+- Key discussions and notable events
+- Sources and dates when available
+
+Do NOT provide code, commands, or apologies. Provide actual news content and information.`,
+        formatPrompt: `Analyze all the news results and create a JSON response with this schema:
 {
   "stories": [
     {
