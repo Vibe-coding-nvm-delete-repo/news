@@ -15,7 +15,7 @@ export default function ActiveCardsTab() {
   // Calculate average rating
   const avgRating =
     activeCards.length > 0
-      ? activeCards.reduce((sum, card) => sum + (card.rating ?? 0), 0) /
+      ? activeCards.reduce((sum, card) => sum + card.rating, 0) /
         activeCards.length
       : 0;
 

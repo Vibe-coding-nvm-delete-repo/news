@@ -474,8 +474,7 @@ export default function NewsTab() {
         new Set(allCards.map(card => card.category))
       );
       const avgRating =
-        allCards.reduce((sum, card) => sum + (card.rating ?? 0), 0) /
-        allCards.length;
+        allCards.reduce((sum, card) => sum + card.rating, 0) / allCards.length;
       const ratingDistribution: { [key: number]: number } = {};
       for (let i = 1; i <= 10; i++) {
         ratingDistribution[i] = allCards.filter(

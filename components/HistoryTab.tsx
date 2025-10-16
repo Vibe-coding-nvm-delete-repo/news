@@ -159,7 +159,7 @@ export default function HistoryTab() {
                     </span>
                   </div>
                   <p className="text-lg font-bold text-green-900 font-mono">
-                    ${(report.costSpent ?? 0).toFixed(4)}
+                    ${report.costSpent.toFixed(4)}
                   </p>
                 </div>
 
@@ -172,7 +172,7 @@ export default function HistoryTab() {
                       </span>
                     </div>
                     <p className="text-lg font-bold text-slate-900">
-                      {(report.avgRating ?? 0).toFixed(1)}/10
+                      {report.avgRating.toFixed(1)}/10
                     </p>
                   </div>
                 )}
