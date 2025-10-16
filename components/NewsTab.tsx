@@ -160,7 +160,17 @@ export default function NewsTab() {
         const data = await response.json();
 
         if (data.error) {
-          throw new Error(data.error.message || 'API Error');
+          // If :online variant doesn't exist, provide helpful error message
+          const errorMsg = data.error.message || 'API Error';
+          if (
+            errorMsg.toLowerCase().includes('not found') ||
+            errorMsg.toLowerCase().includes('does not exist')
+          ) {
+            throw new Error(
+              `Model "${onlineModel}" not available. Try selecting a different model.`
+            );
+          }
+          throw new Error(errorMsg);
         }
 
         const result = data.choices[0].message.content;
@@ -172,12 +182,12 @@ export default function NewsTab() {
           throw new Error("Invalid JSON format: missing 'stories' array");
         }
 
-        // Track cost
+        // Track cost - look for :online variant first, fallback to base model
         let cost = 0;
         if (data.usage) {
-          const selectedModel = models.find(
-            m => m.id === settings.selectedModel
-          );
+          const selectedModel =
+            models.find(m => m.id === onlineModel) ||
+            models.find(m => m.id === settings.selectedModel);
           if (selectedModel) {
             const promptCost =
               (data.usage.prompt_tokens / 1000000) *
