@@ -342,7 +342,10 @@ export default function NewsTab() {
             keyword: keyword.text,
             category: story.category || 'Uncategorized',
             title: story.title,
-            rating: story.rating,
+            rating:
+              typeof story.rating === 'number'
+                ? story.rating
+                : parseFloat(story.rating) || 0,
             summary: story.summary,
             source: story.source,
             url: story.url,
