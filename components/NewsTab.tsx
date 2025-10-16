@@ -42,7 +42,7 @@ interface Stage1Result {
 
 export default function NewsTab() {
   const log = (...args: any[]) => {
-    if (process.env.NODE_ENV !== 'production') console.log(...args);
+    if (process.env.NODE_ENV !== 'production') console.debug(...args);
   };
   const logError = (...args: any[]) => {
     if (process.env.NODE_ENV !== 'production') console.error(...args);

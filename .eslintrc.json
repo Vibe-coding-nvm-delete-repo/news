@@ -1,3 +1,19 @@
 {
-  "extends": "next/core-web-vitals"
+  "extends": "next/core-web-vitals",
+  "rules": {
+    "no-console": [
+      "error",
+      {
+        "allow": ["error", "warn", "debug"]
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["**/__tests__/**", "**/*.test.*"],
+      "rules": {
+        "no-console": "off"
+      }
+    }
+  ]
 }
