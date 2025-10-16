@@ -225,7 +225,30 @@ export const useStore = create<StoreState>()(
         apiKey: null,
         selectedModel: null,
         keywords: [],
-        searchInstructions: `Search for news about the following keyword and provide your findings:`,
+        searchInstructions: `Search for recent news (within the past 7 days) about the following keyword. Return ONLY valid JSON in this exact format:
+
+{
+  "stories": [
+    {
+      "title": "Headline of the news story",
+      "summary": "2-3 sentence summary of the story",
+      "source": "Publication name (e.g., Reuters, BBC)",
+      "url": "Full URL to the article",
+      "date": "YYYY-MM-DD format",
+      "category": "One of: Politics, Technology, Business, Science, Health, Entertainment, Sports, World, or Other",
+      "rating": 7
+    }
+  ]
+}
+
+IMPORTANT RULES:
+1. "rating" must be a number from 1-10 (10 = most significant/impactful news)
+2. Return at least 3-5 stories if available
+3. ALL fields are required for each story
+4. If you cannot find recent news, return {"stories": []} with an empty array
+5. Only include real, verifiable news stories from credible sources
+
+Search for: `,
         onlineEnabled: true,
         modelParameters: DEFAULT_MODEL_PARAMETERS,
       },
