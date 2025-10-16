@@ -10,7 +10,9 @@ import {
   Check, 
   X, 
   Clock,
-  Star
+  Star,
+  Sparkles,
+  CheckCircle2
 } from "lucide-react";
 import { parseJSON } from "@/lib/utils";
 
@@ -40,12 +42,40 @@ export default function NewsTab() {
   const [stories, setStories] = useState<Story[]>([]);
   const [estimatedCost, setEstimatedCost] = useState(0);
   const [actualCost, setActualCost] = useState(0);
+  const [stage1Progress, setStage1Progress] = useState(0);
+  const [stage1StartTime, setStage1StartTime] = useState<number | null>(null);
+  const [stage1ElapsedTime, setStage1ElapsedTime] = useState(0);
+  const [stage2StartTime, setStage2StartTime] = useState<number | null>(null);
+  const [stage2ElapsedTime, setStage2ElapsedTime] = useState(0);
+  const [showCompletionAnimation, setShowCompletionAnimation] = useState(false);
 
   // Calculate estimated cost whenever keywords or model changes
   useEffect(() => {
     calculateEstimatedCost();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings.keywords, settings.selectedModel, models]);
+
+  // Track elapsed time for Stage 1
+  useEffect(() => {
+    if (!stage1StartTime) return;
+    
+    const interval = setInterval(() => {
+      setStage1ElapsedTime(Date.now() - stage1StartTime);
+    }, 100);
+    
+    return () => clearInterval(interval);
+  }, [stage1StartTime]);
+
+  // Track elapsed time for Stage 2
+  useEffect(() => {
+    if (!stage2StartTime) return;
+    
+    const interval = setInterval(() => {
+      setStage2ElapsedTime(Date.now() - stage2StartTime);
+    }, 100);
+    
+    return () => clearInterval(interval);
+  }, [stage2StartTime]);
 
   const calculateEstimatedCost = () => {
     const enabledKeywords = settings.keywords.filter((k) => k.enabled);
@@ -90,88 +120,104 @@ export default function NewsTab() {
     setCurrentStage(1);
     setStories([]);
     setActualCost(0);
+    setStage1Progress(0);
+    setStage1StartTime(Date.now());
+    setStage1ElapsedTime(0);
+    setStage2StartTime(null);
+    setStage2ElapsedTime(0);
+    setShowCompletionAnimation(false);
     
-    // Initialize stage 1 results
+    // Initialize stage 1 results - all start as loading since they run in parallel
     const initialResults: Stage1Result[] = enabledKeywords.map((k) => ({
       keyword: k.text,
-      status: "pending",
+      status: "loading",
     }));
     setStage1Results(initialResults);
 
     let totalCost = 0;
     const completedResults: any[] = [];
 
-    // Stage 1: Search for each keyword
-    for (let i = 0; i < enabledKeywords.length; i++) {
-      const keyword = enabledKeywords[i];
-      
-      // Update status to loading
-      setStage1Results((prev) =>
-        prev.map((r, idx) =>
-          idx === i ? { ...r, status: "loading" } : r
-        )
-      );
-
-      try {
-        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${settings.apiKey}`,
-            "Content-Type": "application/json",
-            "X-Title": "News Report Generator",
-          },
-          body: JSON.stringify({
-            model: settings.selectedModel,
-            messages: [
-              {
-                role: "user",
-                content: `${settings.searchInstructions}\n\nKeyword: ${keyword.text}`,
-              },
-            ],
-          }),
-        });
-
-        const data = await response.json();
-        
-        if (data.error) {
-          throw new Error(data.error.message || "API Error");
-        }
-
-        const result = data.choices[0].message.content;
-        
-        // Track cost
-        if (data.usage) {
-          const selectedModel = models.find((m) => m.id === settings.selectedModel);
-          if (selectedModel) {
-            const promptCost = (data.usage.prompt_tokens / 1000000) * selectedModel.pricing.prompt;
-            const completionCost = (data.usage.completion_tokens / 1000000) * selectedModel.pricing.completion;
-            totalCost += promptCost + completionCost;
+    // Stage 1: Search for ALL keywords in PARALLEL
+    const keywordPromises = enabledKeywords.map((keyword, index) => {
+      return fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${settings.apiKey}`,
+          "Content-Type": "application/json",
+          "X-Title": "News Report Generator",
+        },
+        body: JSON.stringify({
+          model: settings.selectedModel,
+          messages: [
+            {
+              role: "user",
+              content: `${settings.searchInstructions}\n\nKeyword: ${keyword.text}`,
+            },
+          ],
+        }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.error) {
+            throw new Error(data.error.message || "API Error");
           }
-        }
 
-        completedResults.push({
-          keyword: keyword.text,
-          result,
+          const result = data.choices[0].message.content;
+          
+          // Track cost
+          if (data.usage) {
+            const selectedModel = models.find((m) => m.id === settings.selectedModel);
+            if (selectedModel) {
+              const promptCost = (data.usage.prompt_tokens / 1000000) * selectedModel.pricing.prompt;
+              const completionCost = (data.usage.completion_tokens / 1000000) * selectedModel.pricing.completion;
+              totalCost += promptCost + completionCost;
+            }
+          }
+
+          completedResults.push({
+            keyword: keyword.text,
+            result,
+          });
+
+          // Update status to complete
+          setStage1Results((prev) => {
+            const updated = prev.map((r, idx) =>
+              idx === index ? { ...r, status: "complete" as const, result } : r
+            );
+            // Update progress
+            const completedCount = updated.filter(r => r.status === "complete" || r.status === "error").length;
+            setStage1Progress((completedCount / enabledKeywords.length) * 100);
+            return updated;
+          });
+
+          return { success: true, keyword: keyword.text };
+        })
+        .catch((error: any) => {
+          // Update status to error
+          setStage1Results((prev) => {
+            const updated = prev.map((r, idx) =>
+              idx === index ? { ...r, status: "error" as const, error: error.message } : r
+            );
+            // Update progress
+            const completedCount = updated.filter(r => r.status === "complete" || r.status === "error").length;
+            setStage1Progress((completedCount / enabledKeywords.length) * 100);
+            return updated;
+          });
+          
+          return { success: false, keyword: keyword.text, error: error.message };
         });
+    });
 
-        // Update status to complete
-        setStage1Results((prev) =>
-          prev.map((r, idx) =>
-            idx === i ? { ...r, status: "complete", result } : r
-          )
-        );
-      } catch (error: any) {
-        // Update status to error
-        setStage1Results((prev) =>
-          prev.map((r, idx) =>
-            idx === i ? { ...r, status: "error", error: error.message } : r
-          )
-        );
-      }
-    }
+    // Wait for all keyword searches to complete
+    await Promise.all(keywordPromises);
+    
+    // Show completion animation
+    setShowCompletionAnimation(true);
+    setTimeout(() => setShowCompletionAnimation(false), 2000);
 
     // Stage 2: Aggregate and format
     setCurrentStage(2);
+    setStage2StartTime(Date.now());
 
     try {
       const aggregatedResults = completedResults
@@ -303,84 +349,156 @@ export default function NewsTab() {
       {/* Stage 1: Individual Keyword Results */}
       {stage1Results.length > 0 && (
         <div className="space-y-4">
-          <h3 className="text-xl font-semibold text-slate-900">
-            Stage 1: Individual Keyword Searches
-          </h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-xl font-semibold text-slate-900">
+              Stage 1: Individual Keyword Searches
+            </h3>
+            
+            {currentStage === 1 && (
+              <div className="flex items-center gap-4">
+                <div className="text-sm text-slate-600">
+                  {stage1Results.filter(r => r.status === "complete" || r.status === "error").length} / {stage1Results.length} complete
+                </div>
+                <div className="text-sm font-mono text-slate-600">
+                  {(stage1ElapsedTime / 1000).toFixed(1)}s
+                </div>
+              </div>
+            )}
+            
+            {showCompletionAnimation && (
+              <div className="flex items-center gap-2 text-green-600 animate-pulse">
+                <CheckCircle2 className="h-6 w-6" />
+                <span className="font-semibold">All keywords complete!</span>
+                <Sparkles className="h-5 w-5" />
+              </div>
+            )}
+          </div>
           
-          <div className="space-y-2">
-            {stage1Results.map((result) => (
+          {/* Progress Bar */}
+          {currentStage === 1 && (
+            <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
               <div
-                key={result.keyword}
-                className="border rounded-lg overflow-hidden bg-white"
+                className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-500 ease-out flex items-center justify-end px-2"
+                style={{ width: `${stage1Progress}%` }}
               >
-                <button
-                  onClick={() => toggleExpanded(result.keyword)}
-                  className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    {result.status === "pending" && (
-                      <Clock className="h-5 w-5 text-slate-400" />
-                    )}
-                    {result.status === "loading" && (
-                      <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
-                    )}
-                    {result.status === "complete" && (
-                      <Check className="h-5 w-5 text-green-600" />
-                    )}
-                    {result.status === "error" && (
-                      <X className="h-5 w-5 text-red-600" />
-                    )}
-                    
-                    <span className="font-medium text-slate-900">
-                      {result.keyword}
-                    </span>
-                    
-                    <span className="text-sm text-slate-500 capitalize">
-                      {result.status}
-                    </span>
-                  </div>
-
-                  {result.status === "complete" && (
-                    expandedResults.has(result.keyword) ? (
-                      <ChevronDown className="h-5 w-5 text-slate-400" />
-                    ) : (
-                      <ChevronRight className="h-5 w-5 text-slate-400" />
-                    )
-                  )}
-                </button>
-
-                {expandedResults.has(result.keyword) && result.result && (
-                  <div className="px-4 py-3 border-t bg-slate-50">
-                    <p className="text-sm text-slate-700 whitespace-pre-wrap">
-                      {result.result}
-                    </p>
-                  </div>
-                )}
-
-                {result.error && (
-                  <div className="px-4 py-3 border-t bg-red-50">
-                    <p className="text-sm text-red-600">Error: {result.error}</p>
-                  </div>
+                {stage1Progress > 10 && (
+                  <span className="text-xs font-bold text-white">
+                    {Math.round(stage1Progress)}%
+                  </span>
                 )}
               </div>
-            ))}
+            </div>
+          )}
+          
+          <div className="space-y-2">
+            {stage1Results.map((result) => {
+              const isComplete = result.status === "complete";
+              const isError = result.status === "error";
+              const isLoading = result.status === "loading";
+              
+              return (
+                <div
+                  key={result.keyword}
+                  className={`border rounded-lg overflow-hidden transition-all duration-300 ${
+                    isComplete ? "bg-green-50 border-green-200" : 
+                    isError ? "bg-red-50 border-red-200" :
+                    isLoading ? "bg-blue-50 border-blue-200 shadow-sm" :
+                    "bg-white"
+                  }`}
+                >
+                  <button
+                    onClick={() => toggleExpanded(result.keyword)}
+                    className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      {result.status === "pending" && (
+                        <Clock className="h-5 w-5 text-slate-400" />
+                      )}
+                      {result.status === "loading" && (
+                        <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+                      )}
+                      {result.status === "complete" && (
+                        <div className="relative">
+                          <Check className="h-5 w-5 text-green-600" />
+                          <div className="absolute inset-0 animate-ping opacity-75">
+                            <Check className="h-5 w-5 text-green-400" />
+                          </div>
+                        </div>
+                      )}
+                      {result.status === "error" && (
+                        <X className="h-5 w-5 text-red-600" />
+                      )}
+                      
+                      <span className="font-medium text-slate-900">
+                        {result.keyword}
+                      </span>
+                      
+                      <span className={`text-sm capitalize px-2 py-1 rounded-full ${
+                        isComplete ? "bg-green-100 text-green-700 font-medium" :
+                        isError ? "bg-red-100 text-red-700 font-medium" :
+                        isLoading ? "bg-blue-100 text-blue-700 font-medium animate-pulse" :
+                        "bg-slate-100 text-slate-500"
+                      }`}>
+                        {result.status}
+                      </span>
+                    </div>
+
+                    {result.status === "complete" && (
+                      expandedResults.has(result.keyword) ? (
+                        <ChevronDown className="h-5 w-5 text-slate-400" />
+                      ) : (
+                        <ChevronRight className="h-5 w-5 text-slate-400" />
+                      )
+                    )}
+                  </button>
+
+                  {expandedResults.has(result.keyword) && result.result && (
+                    <div className="px-4 py-3 border-t bg-white">
+                      <p className="text-sm text-slate-700 whitespace-pre-wrap">
+                        {result.result}
+                      </p>
+                    </div>
+                  )}
+
+                  {result.error && (
+                    <div className="px-4 py-3 border-t bg-red-100">
+                      <p className="text-sm text-red-600">Error: {result.error}</p>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
 
       {/* Stage 2: Loading Indicator */}
       {currentStage === 2 && (
-        <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
-          <div className="flex items-center gap-3">
-            <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-            <div>
-              <h3 className="text-lg font-semibold text-slate-900">
-                Stage 2: Aggregating and Formatting Results
-              </h3>
-              <p className="text-sm text-slate-600">
-                Combining all keyword searches into a final report...
-              </p>
+        <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-lg border border-purple-200 shadow-lg">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <Loader2 className="h-6 w-6 animate-spin text-purple-600" />
+                <div className="absolute inset-0 animate-ping opacity-20">
+                  <Sparkles className="h-6 w-6 text-purple-400" />
+                </div>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-slate-900">
+                  Stage 2: Aggregating and Formatting Results
+                </h3>
+                <p className="text-sm text-slate-600">
+                  Combining all keyword searches into a final report...
+                </p>
+              </div>
             </div>
+            <div className="text-sm font-mono text-slate-600">
+              {(stage2ElapsedTime / 1000).toFixed(1)}s
+            </div>
+          </div>
+          {/* Animated progress bar */}
+          <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+            <div className="h-full bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 animate-pulse" style={{ width: "100%" }} />
           </div>
         </div>
       )}
@@ -388,13 +506,20 @@ export default function NewsTab() {
       {/* Final Stories */}
       {stories.length > 0 && (
         <div className="space-y-4">
-          <h3 className="text-xl font-semibold text-slate-900">News Stories</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="text-xl font-semibold text-slate-900">News Stories</h3>
+            <div className="flex items-center gap-1 text-green-600">
+              <CheckCircle2 className="h-5 w-5" />
+              <span className="text-sm font-medium">Report Complete</span>
+            </div>
+          </div>
 
           <div className="space-y-3">
             {stories.map((story, index) => (
               <div
                 key={index}
-                className="border rounded-lg p-4 bg-white hover:shadow-md transition-shadow"
+                className="border rounded-lg p-4 bg-white hover:shadow-lg transition-all duration-300 hover:scale-[1.01]"
+                style={{ animation: `fadeIn 0.5s ease-out ${index * 0.1}s both` }}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
