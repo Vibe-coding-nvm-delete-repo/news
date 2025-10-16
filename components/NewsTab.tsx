@@ -201,6 +201,60 @@ export default function NewsTab() {
         const cutoffDateString = cutoffDate.toISOString().split('T')[0]; // YYYY-MM-DD format
         const todayDateString = new Date().toISOString().split('T')[0];
 
+        // Build request body
+        const requestBody = {
+          model: onlineModel,
+          messages: [
+            {
+              role: 'user',
+              content: `${settings.searchInstructions}\n\n"${keyword.text}"\n\nIMPORTANT: Today is ${todayDateString}. Only include articles published on or after ${cutoffDateString}.`,
+            },
+          ],
+          // ALWAYS force JSON output
+          response_format: { type: 'json_object' },
+          // Add model parameters for improved quality and consistency
+          ...(settings.modelParameters?.temperature !== undefined && {
+            temperature: settings.modelParameters.temperature,
+          }),
+          ...(settings.modelParameters?.max_tokens !== undefined && {
+            max_tokens: settings.modelParameters.max_tokens,
+          }),
+          ...(settings.modelParameters?.top_p !== undefined && {
+            top_p: settings.modelParameters.top_p,
+          }),
+          ...(settings.modelParameters?.frequency_penalty !== undefined && {
+            frequency_penalty: settings.modelParameters.frequency_penalty,
+          }),
+          ...(settings.modelParameters?.presence_penalty !== undefined && {
+            presence_penalty: settings.modelParameters.presence_penalty,
+          }),
+          ...(settings.modelParameters?.reasoning && {
+            reasoning: settings.modelParameters.reasoning,
+          }),
+          ...(settings.modelParameters?.include_reasoning !== undefined && {
+            include_reasoning: settings.modelParameters.include_reasoning,
+          }),
+          ...(settings.modelParameters?.stop &&
+            settings.modelParameters.stop.length > 0 && {
+              stop: settings.modelParameters.stop,
+            }),
+          ...(settings.modelParameters?.seed !== undefined && {
+            seed: settings.modelParameters.seed,
+          }),
+          ...(settings.modelParameters?.top_k !== undefined && {
+            top_k: settings.modelParameters.top_k,
+          }),
+          ...(settings.modelParameters?.min_p !== undefined && {
+            min_p: settings.modelParameters.min_p,
+          }),
+          ...(settings.modelParameters?.repetition_penalty !==
+            undefined && {
+            repetition_penalty: settings.modelParameters.repetition_penalty,
+          }),
+        };
+
+        console.log(`[${keyword.text}] 📤 Request body:`, JSON.stringify(requestBody, null, 2));
+
         // Race between fetch and timeout
         const fetchPromise = fetch(
           'https://openrouter.ai/api/v1/chat/completions',
@@ -215,60 +269,7 @@ export default function NewsTab() {
                   ? window.location.origin
                   : 'http://localhost:3000',
             },
-            body: JSON.stringify({
-              model: onlineModel,
-              messages: [
-                {
-                  role: 'user',
-                  content: `${settings.searchInstructions}\n\n"${keyword.text}"\n\nIMPORTANT: Today is ${todayDateString}. Only include articles published on or after ${cutoffDateString}.`,
-                },
-              ],
-              // Add model parameters for improved quality and consistency
-              ...(settings.modelParameters?.temperature !== undefined && {
-                temperature: settings.modelParameters.temperature,
-              }),
-              ...(settings.modelParameters?.max_tokens !== undefined && {
-                max_tokens: settings.modelParameters.max_tokens,
-              }),
-              ...(settings.modelParameters?.response_format &&
-                settings.modelParameters.response_format !== 'auto' && {
-                  response_format: {
-                    type: settings.modelParameters.response_format,
-                  },
-                }),
-              ...(settings.modelParameters?.top_p !== undefined && {
-                top_p: settings.modelParameters.top_p,
-              }),
-              ...(settings.modelParameters?.frequency_penalty !== undefined && {
-                frequency_penalty: settings.modelParameters.frequency_penalty,
-              }),
-              ...(settings.modelParameters?.presence_penalty !== undefined && {
-                presence_penalty: settings.modelParameters.presence_penalty,
-              }),
-              ...(settings.modelParameters?.reasoning && {
-                reasoning: settings.modelParameters.reasoning,
-              }),
-              ...(settings.modelParameters?.include_reasoning !== undefined && {
-                include_reasoning: settings.modelParameters.include_reasoning,
-              }),
-              ...(settings.modelParameters?.stop &&
-                settings.modelParameters.stop.length > 0 && {
-                  stop: settings.modelParameters.stop,
-                }),
-              ...(settings.modelParameters?.seed !== undefined && {
-                seed: settings.modelParameters.seed,
-              }),
-              ...(settings.modelParameters?.top_k !== undefined && {
-                top_k: settings.modelParameters.top_k,
-              }),
-              ...(settings.modelParameters?.min_p !== undefined && {
-                min_p: settings.modelParameters.min_p,
-              }),
-              ...(settings.modelParameters?.repetition_penalty !==
-                undefined && {
-                repetition_penalty: settings.modelParameters.repetition_penalty,
-              }),
-            }),
+            body: JSON.stringify(requestBody),
             signal: abortControllerRef.current?.signal,
           }
         );
@@ -295,12 +296,21 @@ export default function NewsTab() {
         }
 
         const result = data.choices[0].message.content;
-        console.log(
-          `[${keyword.text}] Response length: ${result.length} chars`
-        );
+        console.log(`[${keyword.text}] ✅ Received response`);
+        console.log(`[${keyword.text}] 📏 Length: ${result.length} chars`);
+        console.log(`[${keyword.text}] 🔍 First 200 chars:`, result.substring(0, 200));
+        console.log(`[${keyword.text}] 🔍 Last 200 chars:`, result.substring(Math.max(0, result.length - 200)));
 
         // Parse JSON from this keyword's search
-        const parsedResult = parseJSON(result);
+        let parsedResult;
+        try {
+          parsedResult = parseJSON(result);
+          console.log(`[${keyword.text}] ✅ JSON parsed successfully`);
+        } catch (parseError: any) {
+          console.error(`[${keyword.text}] ❌ JSON PARSE ERROR:`, parseError.message);
+          console.error(`[${keyword.text}] 📄 FULL RESPONSE:`, result);
+          throw new Error(`JSON Parse Error: ${parseError.message}`);
+        }
 
         if (!parsedResult.stories || !Array.isArray(parsedResult.stories)) {
           console.error(
