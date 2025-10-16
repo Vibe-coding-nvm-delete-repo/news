@@ -1,6 +1,7 @@
 /**
  * Utility functions for the News Report Generator application.
  * Provides helpers for styling, cost formatting, JSON parsing, and API key validation.
+ * Updated for deployment.
  */
 
 import { type ClassValue, clsx } from 'clsx';
