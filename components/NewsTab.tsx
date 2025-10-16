@@ -896,11 +896,12 @@ export default function NewsTab() {
                 <Clock className="h-5 w-5 text-blue-600" />
                 <div>
                   <p className="text-sm font-semibold text-blue-800">
-                    Optimized searches: Up to 10 concurrent searches at a time
+                    Optimized searches: Up to 3 concurrent searches at a time
                   </p>
                   <p className="text-xs text-blue-700 mt-1">
-                    Results appear as they complete (5-30 seconds each). Check
-                    browser console (F12) for progress logs.
+                    Results appear as they complete (5-20 seconds each). Lower
+                    concurrency ensures consistent performance and avoids API
+                    throttling. Check browser console (F12) for progress logs.
                   </p>
                 </div>
               </div>
