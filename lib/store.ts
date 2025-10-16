@@ -257,7 +257,18 @@ Return ONLY valid JSON in this EXACT format (no markdown, no extra text):
   ]
 }
 
-ONLY return {"stories": []} if you absolutely cannot find ANY relevant news after thorough searching.
+⚠️ IMPORTANT: You MUST return at least 5-10 stories. Do NOT return {"stories": []} unless:
+1. The keyword is complete gibberish/nonsensical
+2. You have exhausted ALL search attempts and found ZERO results across multiple sources
+3. You have tried broader related terms and still found nothing
+
+If initial searches fail:
+- Try synonyms and related terms
+- Search for broader topics related to the keyword
+- Look for recent developments in that field/area
+- Check multiple news sources and aggregators
+
+YOU HAVE ONLINE SEARCH CAPABILITY - USE IT FULLY. Empty results are NOT acceptable unless truly impossible.
 
 NOW SEARCH FOR THIS KEYWORD:`,
         onlineEnabled: true,

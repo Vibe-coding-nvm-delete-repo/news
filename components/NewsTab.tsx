@@ -31,6 +31,13 @@ interface Stage1Result {
   cost?: number;
   startTime?: number;
   duration?: number;
+  // Enhanced visibility fields
+  searchQuery?: string;
+  modelUsed?: string;
+  modelParameters?: any;
+  storiesFound?: number;
+  responseLength?: number;
+  apiResponse?: any;
 }
 
 export default function NewsTab() {
@@ -447,11 +454,24 @@ export default function NewsTab() {
         // Calculate duration
         const duration = Date.now() - keywordStartTime;
 
-        // Update status to complete with duration
+        // Update status to complete with duration AND visibility fields
         setStage1Results(prev => {
           const updated = prev.map((r, idx) =>
             idx === index
-              ? { ...r, status: 'complete' as const, result, cost, duration }
+              ? {
+                  ...r,
+                  status: 'complete' as const,
+                  result,
+                  cost,
+                  duration,
+                  // Enhanced visibility fields
+                  searchQuery: `${settings.searchInstructions}\n\n"${keyword.text}"`,
+                  modelUsed: onlineModel,
+                  modelParameters: settings.modelParameters,
+                  storiesFound: parsedResult.stories.length,
+                  responseLength: result.length,
+                  apiResponse: parsedResult,
+                }
               : r
           );
           // Update progress
@@ -1084,19 +1104,172 @@ export default function NewsTab() {
                           ))}
                       </button>
 
-                      {expandedResults.has(result.keyword) && result.result && (
-                        <div className="px-4 py-3 border-t bg-white">
-                          <p className="text-sm text-slate-700 whitespace-pre-wrap">
-                            {result.result}
-                          </p>
-                        </div>
-                      )}
+                      {expandedResults.has(result.keyword) && (
+                        <div className="border-t bg-white">
+                          {/* Enhanced Visibility Panel */}
+                          {result.status === 'complete' && (
+                            <div className="px-4 py-4 space-y-4">
+                              {/* Quick Stats */}
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                                  <p className="text-xs font-semibold text-blue-700 mb-1">
+                                    Stories Found
+                                  </p>
+                                  <p className="text-2xl font-bold text-blue-900">
+                                    {result.storiesFound || 0}
+                                  </p>
+                                </div>
+                                <div className="bg-purple-50 p-3 rounded-lg border border-purple-200">
+                                  <p className="text-xs font-semibold text-purple-700 mb-1">
+                                    Duration
+                                  </p>
+                                  <p className="text-2xl font-bold text-purple-900">
+                                    {result.duration
+                                      ? (result.duration / 1000).toFixed(1)
+                                      : 0}
+                                    s
+                                  </p>
+                                </div>
+                                <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+                                  <p className="text-xs font-semibold text-green-700 mb-1">
+                                    Cost
+                                  </p>
+                                  <p className="text-2xl font-bold text-green-900">
+                                    $
+                                    {result.cost
+                                      ? result.cost.toFixed(4)
+                                      : '0.0000'}
+                                  </p>
+                                </div>
+                                <div className="bg-orange-50 p-3 rounded-lg border border-orange-200">
+                                  <p className="text-xs font-semibold text-orange-700 mb-1">
+                                    Response Size
+                                  </p>
+                                  <p className="text-2xl font-bold text-orange-900">
+                                    {result.responseLength
+                                      ? (result.responseLength / 1000).toFixed(
+                                          1
+                                        )
+                                      : 0}
+                                    KB
+                                  </p>
+                                </div>
+                              </div>
 
-                      {result.error && (
-                        <div className="px-4 py-3 border-t bg-red-100">
-                          <p className="text-sm text-red-600">
-                            Error: {result.error}
-                          </p>
+                              {/* Model & Parameters */}
+                              <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                                <h4 className="text-sm font-bold text-slate-900 mb-2 flex items-center gap-2">
+                                  <Sparkles className="h-4 w-4 text-indigo-600" />
+                                  Model & Parameters
+                                </h4>
+                                <div className="space-y-2 text-sm">
+                                  <div className="flex items-start gap-2">
+                                    <span className="text-slate-600 font-medium min-w-[120px]">
+                                      Model:
+                                    </span>
+                                    <span className="text-slate-900 font-mono text-xs bg-white px-2 py-1 rounded border">
+                                      {result.modelUsed}
+                                    </span>
+                                  </div>
+                                  {result.modelParameters && (
+                                    <div className="grid grid-cols-2 gap-2 mt-2">
+                                      {Object.entries(
+                                        result.modelParameters
+                                      ).map(
+                                        ([key, value]) =>
+                                          value !== undefined && (
+                                            <div
+                                              key={key}
+                                              className="flex items-center gap-2"
+                                            >
+                                              <span className="text-slate-600 text-xs">
+                                                {key}:
+                                              </span>
+                                              <span className="text-slate-900 font-mono text-xs bg-white px-2 py-0.5 rounded border">
+                                                {typeof value === 'object'
+                                                  ? JSON.stringify(value)
+                                                  : String(value)}
+                                              </span>
+                                            </div>
+                                          )
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Search Query */}
+                              <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-200">
+                                <h4 className="text-sm font-bold text-indigo-900 mb-2 flex items-center gap-2">
+                                  <FileText className="h-4 w-4 text-indigo-600" />
+                                  Search Query Sent to AI
+                                </h4>
+                                <div className="bg-white p-3 rounded border border-indigo-200 max-h-64 overflow-y-auto">
+                                  <pre className="text-xs text-slate-700 whitespace-pre-wrap font-mono">
+                                    {result.searchQuery}
+                                  </pre>
+                                </div>
+                              </div>
+
+                              {/* API Response */}
+                              {result.apiResponse && (
+                                <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                                  <h4 className="text-sm font-bold text-yellow-900 mb-2 flex items-center gap-2">
+                                    <CheckCircle2 className="h-4 w-4 text-yellow-600" />
+                                    Parsed Stories ({result.storiesFound || 0})
+                                  </h4>
+                                  {result.storiesFound === 0 ? (
+                                    <div className="bg-red-100 border border-red-300 rounded p-3">
+                                      <p className="text-sm font-bold text-red-800 mb-1">
+                                        ⚠️ Empty Stories Array Returned
+                                      </p>
+                                      <p className="text-xs text-red-700">
+                                        The AI model returned{' '}
+                                        <code className="bg-red-200 px-1 py-0.5 rounded">
+                                          {JSON.stringify({ stories: [] })}
+                                        </code>{' '}
+                                        despite having online search enabled.
+                                        This should be investigated.
+                                      </p>
+                                    </div>
+                                  ) : (
+                                    <div className="bg-white p-3 rounded border border-yellow-200 max-h-96 overflow-y-auto">
+                                      <pre className="text-xs text-slate-700 whitespace-pre-wrap font-mono">
+                                        {JSON.stringify(
+                                          result.apiResponse,
+                                          null,
+                                          2
+                                        )}
+                                      </pre>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
+                              {/* Raw Response */}
+                              {result.result && (
+                                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                                  <h4 className="text-sm font-bold text-slate-900 mb-2">
+                                    Raw AI Response
+                                  </h4>
+                                  <div className="bg-white p-3 rounded border border-slate-200 max-h-64 overflow-y-auto">
+                                    <pre className="text-xs text-slate-700 whitespace-pre-wrap font-mono">
+                                      {result.result}
+                                    </pre>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Error Display */}
+                          {result.error && (
+                            <div className="px-4 py-3 bg-red-100">
+                              <p className="text-sm text-red-600">
+                                Error: {result.error}
+                              </p>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
