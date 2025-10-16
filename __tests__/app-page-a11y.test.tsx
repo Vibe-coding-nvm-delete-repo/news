@@ -6,12 +6,10 @@ describe('Home (app/page)', () => {
   it('renders tab navigation with accessible labels', () => {
     render(<Home />);
 
+    expect(screen.getByRole('tab', { name: /settings/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /news/i })).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: /settings/i })
-    ).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /news/i })).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: /agent policy/i })
+      screen.getByRole('tab', { name: /agent policy/i })
     ).toBeInTheDocument();
   });
 });

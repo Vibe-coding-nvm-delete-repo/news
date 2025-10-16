@@ -64,6 +64,8 @@ export default function Home() {
             role="tab"
             aria-selected={activeTab === 'settings'}
             aria-label="Settings"
+            id="tab-settings"
+            aria-controls="panel-settings"
           >
             Settings
           </button>
@@ -77,6 +79,8 @@ export default function Home() {
             role="tab"
             aria-selected={activeTab === 'news'}
             aria-label="News"
+            id="tab-news"
+            aria-controls="panel-news"
           >
             News
           </button>
@@ -90,6 +94,8 @@ export default function Home() {
             role="tab"
             aria-selected={activeTab === 'policy'}
             aria-label="Agent Policy"
+            id="tab-policy"
+            aria-controls="panel-policy"
           >
             🤖 Agent Policy
           </button>
@@ -97,11 +103,31 @@ export default function Home() {
 
         {/* Tab Content */}
         {activeTab === 'policy' ? (
-          <PolicyViewer />
+          <div
+            role="tabpanel"
+            id="panel-policy"
+            aria-labelledby="tab-policy"
+            className="bg-white rounded-lg shadow-lg p-6"
+          >
+            <PolicyViewer />
+          </div>
+        ) : activeTab === 'settings' ? (
+          <div
+            role="tabpanel"
+            id="panel-settings"
+            aria-labelledby="tab-settings"
+            className="bg-white rounded-lg shadow-lg p-6"
+          >
+            <SettingsTab />
+          </div>
         ) : (
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            {activeTab === 'settings' && <SettingsTab />}
-            {activeTab === 'news' && <NewsTab />}
+          <div
+            role="tabpanel"
+            id="panel-news"
+            aria-labelledby="tab-news"
+            className="bg-white rounded-lg shadow-lg p-6"
+          >
+            <NewsTab />
           </div>
         )}
       </div>
