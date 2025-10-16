@@ -28,6 +28,12 @@ const customJestConfig = {
       lines: 10,
       statements: 10,
     },
+    './app/**/*.{ts,tsx}': {
+      branches: 90,
+      functions: 90,
+      lines: 90,
+      statements: 90,
+    },
   },
 };
 
