@@ -1,5 +1,5 @@
 import { useStore } from '@/lib/store';
-import type { Keyword, Model } from '@/lib/store';
+import type { Keyword, Model, Card, ReportHistory } from '@/lib/store';
 
 describe('useStore - Settings Management', () => {
   beforeEach(() => {
@@ -266,6 +266,314 @@ describe('useStore - Settings Management', () => {
       expect(keywords.find(k => k.id === '1')?.enabled).toBe(true);
       expect(keywords.find(k => k.id === '2')?.enabled).toBe(false);
       expect(keywords.find(k => k.id === '3')).toBeUndefined();
+    });
+  });
+});
+
+describe('useStore - Card Management', () => {
+  beforeEach(() => {
+    // Reset store to initial state before each test
+    useStore.setState({
+      activeCards: [],
+      archivedCards: [],
+      reportHistory: [],
+      activeNewsTab: 'generate',
+    });
+  });
+
+  describe('Active Cards Management', () => {
+    test('adds cards to active cards', () => {
+      const { addCardsToActive } = useStore.getState();
+      const testCards: Card[] = [
+        {
+          id: '1',
+          reportId: 'report-1',
+          keyword: 'AI',
+          category: 'Technology',
+          title: 'AI News Story',
+          rating: 8,
+          summary: 'Summary of AI news',
+          source: 'TechNews',
+          url: 'https://example.com/ai-news',
+          date: '2025-01-15',
+          generatedAt: new Date().toISOString(),
+          status: 'active',
+        },
+      ];
+
+      addCardsToActive(testCards);
+
+      expect(useStore.getState().activeCards.length).toBe(1);
+      expect(useStore.getState().activeCards[0]).toEqual(testCards[0]);
+    });
+
+    test('adds multiple cards from different reports', () => {
+      const { addCardsToActive } = useStore.getState();
+      const batch1: Card[] = [
+        {
+          id: '1',
+          reportId: 'report-1',
+          keyword: 'AI',
+          category: 'Technology',
+          title: 'AI Story 1',
+          rating: 8,
+          summary: 'Summary 1',
+          source: null,
+          url: null,
+          date: null,
+          generatedAt: new Date().toISOString(),
+          status: 'active',
+        },
+      ];
+      const batch2: Card[] = [
+        {
+          id: '2',
+          reportId: 'report-2',
+          keyword: 'Crypto',
+          category: 'Finance',
+          title: 'Crypto Story',
+          rating: 7,
+          summary: 'Summary 2',
+          source: null,
+          url: null,
+          date: null,
+          generatedAt: new Date().toISOString(),
+          status: 'active',
+        },
+      ];
+
+      addCardsToActive(batch1);
+      addCardsToActive(batch2);
+
+      const activeCards = useStore.getState().activeCards;
+      expect(activeCards.length).toBe(2);
+      expect(activeCards[0].reportId).toBe('report-1');
+      expect(activeCards[1].reportId).toBe('report-2');
+    });
+  });
+
+  describe('Mark Card As Read', () => {
+    test('moves card from active to archived', () => {
+      const { addCardsToActive, markCardAsRead } = useStore.getState();
+      const testCard: Card = {
+        id: '1',
+        reportId: 'report-1',
+        keyword: 'AI',
+        category: 'Technology',
+        title: 'AI News',
+        rating: 8,
+        summary: 'Summary',
+        source: null,
+        url: null,
+        date: null,
+        generatedAt: new Date().toISOString(),
+        status: 'active',
+      };
+
+      addCardsToActive([testCard]);
+      expect(useStore.getState().activeCards.length).toBe(1);
+      expect(useStore.getState().archivedCards.length).toBe(0);
+
+      markCardAsRead('1');
+
+      expect(useStore.getState().activeCards.length).toBe(0);
+      expect(useStore.getState().archivedCards.length).toBe(1);
+      expect(useStore.getState().archivedCards[0].status).toBe('archived');
+      expect(useStore.getState().archivedCards[0].archivedAt).toBeTruthy();
+    });
+
+    test('handles marking non-existent card', () => {
+      const { markCardAsRead } = useStore.getState();
+
+      // Should not throw error
+      markCardAsRead('non-existent-id');
+
+      expect(useStore.getState().activeCards.length).toBe(0);
+      expect(useStore.getState().archivedCards.length).toBe(0);
+    });
+
+    test('marks multiple cards as read', () => {
+      const { addCardsToActive, markCardAsRead } = useStore.getState();
+      const testCards: Card[] = [
+        {
+          id: '1',
+          reportId: 'report-1',
+          keyword: 'AI',
+          category: 'Technology',
+          title: 'Story 1',
+          rating: 8,
+          summary: 'Summary 1',
+          source: null,
+          url: null,
+          date: null,
+          generatedAt: new Date().toISOString(),
+          status: 'active',
+        },
+        {
+          id: '2',
+          reportId: 'report-1',
+          keyword: 'AI',
+          category: 'Technology',
+          title: 'Story 2',
+          rating: 7,
+          summary: 'Summary 2',
+          source: null,
+          url: null,
+          date: null,
+          generatedAt: new Date().toISOString(),
+          status: 'active',
+        },
+      ];
+
+      addCardsToActive(testCards);
+      markCardAsRead('1');
+      markCardAsRead('2');
+
+      expect(useStore.getState().activeCards.length).toBe(0);
+      expect(useStore.getState().archivedCards.length).toBe(2);
+    });
+  });
+
+  describe('Report History Management', () => {
+    test('adds report to history', () => {
+      const { addReportHistory } = useStore.getState();
+      const testReport: ReportHistory = {
+        id: 'report-1',
+        generatedAt: new Date().toISOString(),
+        keywords: ['AI', 'Tech'],
+        totalCards: 5,
+        modelUsed: 'gpt-3.5-turbo',
+        costSpent: 0.0012,
+      };
+
+      addReportHistory(testReport);
+
+      expect(useStore.getState().reportHistory.length).toBe(1);
+      expect(useStore.getState().reportHistory[0]).toEqual(testReport);
+    });
+
+    test('adds multiple reports to history', () => {
+      const { addReportHistory } = useStore.getState();
+      const report1: ReportHistory = {
+        id: 'report-1',
+        generatedAt: new Date().toISOString(),
+        keywords: ['AI'],
+        totalCards: 3,
+        modelUsed: 'gpt-3.5-turbo',
+        costSpent: 0.001,
+      };
+      const report2: ReportHistory = {
+        id: 'report-2',
+        generatedAt: new Date().toISOString(),
+        keywords: ['Crypto'],
+        totalCards: 5,
+        modelUsed: 'gpt-4',
+        costSpent: 0.002,
+      };
+
+      addReportHistory(report1);
+      addReportHistory(report2);
+
+      const history = useStore.getState().reportHistory;
+      expect(history.length).toBe(2);
+      // Newest should be first
+      expect(history[0].id).toBe('report-2');
+      expect(history[1].id).toBe('report-1');
+    });
+  });
+
+  describe('Active News Tab Management', () => {
+    test('sets active news tab', () => {
+      const { setActiveNewsTab } = useStore.getState();
+
+      setActiveNewsTab('active');
+      expect(useStore.getState().activeNewsTab).toBe('active');
+
+      setActiveNewsTab('archived');
+      expect(useStore.getState().activeNewsTab).toBe('archived');
+
+      setActiveNewsTab('history');
+      expect(useStore.getState().activeNewsTab).toBe('history');
+
+      setActiveNewsTab('generate');
+      expect(useStore.getState().activeNewsTab).toBe('generate');
+    });
+  });
+
+  describe('Complete Card Management Workflow', () => {
+    test('full report generation and archival flow', () => {
+      const {
+        addCardsToActive,
+        markCardAsRead,
+        addReportHistory,
+        setActiveNewsTab,
+      } = useStore.getState();
+
+      // Generate report with cards
+      const reportId = 'report-' + Date.now();
+      const cards: Card[] = [
+        {
+          id: '1',
+          reportId,
+          keyword: 'AI',
+          category: 'Technology',
+          title: 'Story 1',
+          rating: 9,
+          summary: 'High priority story',
+          source: 'TechNews',
+          url: 'https://example.com/1',
+          date: '2025-01-15',
+          generatedAt: new Date().toISOString(),
+          status: 'active',
+        },
+        {
+          id: '2',
+          reportId,
+          keyword: 'AI',
+          category: 'Technology',
+          title: 'Story 2',
+          rating: 7,
+          summary: 'Medium priority story',
+          source: 'NewsSource',
+          url: 'https://example.com/2',
+          date: '2025-01-14',
+          generatedAt: new Date().toISOString(),
+          status: 'active',
+        },
+      ];
+
+      addCardsToActive(cards);
+
+      const report: ReportHistory = {
+        id: reportId,
+        generatedAt: new Date().toISOString(),
+        keywords: ['AI'],
+        totalCards: 2,
+        modelUsed: 'gpt-3.5-turbo',
+        costSpent: 0.0015,
+      };
+
+      addReportHistory(report);
+
+      // Navigate to active cards tab
+      setActiveNewsTab('active');
+
+      expect(useStore.getState().activeCards.length).toBe(2);
+      expect(useStore.getState().reportHistory.length).toBe(1);
+      expect(useStore.getState().activeNewsTab).toBe('active');
+
+      // Read first card
+      markCardAsRead('1');
+
+      expect(useStore.getState().activeCards.length).toBe(1);
+      expect(useStore.getState().archivedCards.length).toBe(1);
+
+      // Navigate to archived tab
+      setActiveNewsTab('archived');
+
+      expect(useStore.getState().activeNewsTab).toBe('archived');
+      expect(useStore.getState().archivedCards[0].id).toBe('1');
+      expect(useStore.getState().archivedCards[0].status).toBe('archived');
     });
   });
 });
