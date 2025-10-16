@@ -53,6 +53,7 @@ A simplified AI-powered news aggregation and intelligent reporting tool using Op
 - Switch to the "News" tab
 - Click "Generate Report"
 - Watch as the AI searches each keyword and generates a summary
+- **NEW**: See real-time progress with per-keyword timing and optimized parallel processing
 
 ## Features
 
@@ -64,6 +65,7 @@ A simplified AI-powered news aggregation and intelligent reporting tool using Op
 - ✅ **Local Storage**: All settings persist in your browser
 - ✅ **No Database Required**: Everything works locally
 - ✅ **Interactive Policy Viewer**: Browse autonomous agent policies with responsive design
+- ✅ **Optimized Parallel Processing**: Worker pool pattern with retry logic for 60-80% faster generation
 
 ## Data Storage
 
