@@ -224,63 +224,18 @@ export const useStore = create<StoreState>()(
         apiKey: null,
         selectedModel: null,
         keywords: [],
-        searchInstructions: `You are an expert news curator. Search comprehensively for recent news about this keyword and return 5-10 DIVERSE stories from the last 24 hours. Your goal is to provide a wide-ranging view of the topic from multiple angles, sources, and perspectives.
+        searchInstructions: `Search for recent news about this keyword.
 
-SEARCH BROADLY across:
-- Major mainstream outlets (CNN, BBC, Reuters, NYT, WSJ, etc.)
-- Tech/industry publications (TechCrunch, Ars Technica, Wired, etc.)
-- International sources (Al Jazeera, South China Morning Post, The Guardian, etc.)
-- Niche/specialist publications relevant to the keyword
-- Academic sources (Nature, Science, research institutions)
-- Business sources (Bloomberg, Financial Times, Business Insider)
-- Regional/local news when relevant
-- Independent media and investigative journalism
-
-Include MULTIPLE STORY TYPES (not just breaking news):
-- Breaking news and developing stories
-- In-depth analysis and explainers
-- Opinion pieces and editorials
-- Investigative reports
-- Feature stories and human interest angles
-- Expert interviews and commentary
-- Research announcements and studies
-- Market analysis and business impact
-- Policy/regulatory developments
-- Community impact stories
-
-Rate stories 1-10 based on TRUE SIGNIFICANCE:
-- 10: Unprecedented, game-changing global events (very rare)
-- 9: Major breaking news with widespread immediate impact
-- 8: Significant developments that will shape the field/industry
-- 7: Important news that professionals need to know
-- 6: Notable developments with moderate impact
-- 5: Interesting stories with niche or regional importance
-- 4: Minor updates or incremental developments
-- 3-2: Small mentions or very limited scope
-- 1: Trivial mentions (rarely use)
-
-Aim for RATING VARIETY - not everything is a 7-8. If you find 10 stories, perhaps distribute them like: one 9, two 7-8s, four 5-6s, two 3-4s, one 2. Use the full scale.
-
-CATEGORIES should be SPECIFIC and ACCURATE:
-Technology, Business, Finance, Politics, Science, Health, Medicine, Environment, Climate, Energy, Space, AI/ML, Cybersecurity, Entertainment, Sports, World News, US News, Opinion, Analysis, Research, Education, Transportation, Real Estate, Legal, Military, Social Issues, Culture, Food, Travel, etc.
-
-SUMMARIES should be INFORMATIVE (2-3 sentences):
-- Lead with the most important fact or development
-- Include key details (who, what, when, where, why)
-- Explain significance or impact
-- Avoid generic phrases like "this article discusses"
-- Be specific and factual
-
-Return ONLY valid JSON (no markdown, no extra text):
+Return ONLY this exact JSON format (no extra text or fields):
 {
   "stories": [
     {
-      "title": "Exact headline from the source article",
-      "category": "Specific category that fits the story",
+      "title": "Headline",
+      "category": "Technology",
       "rating": 7,
-      "summary": "Two to three sentences with key facts and context. Explain what happened and why it matters. Include specific details.",
-      "source": "Exact publication name",
-      "url": "https://direct-link-to-article",
+      "summary": "Brief summary",
+      "source": "Source name",
+      "url": "https://...",
       "date": "2025-10-16"
     }
   ]
