@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { useStore } from "@/lib/store";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { Loader2, Search, Plus, Trash2 } from "lucide-react";
-import { formatCost, isValidOpenRouterApiKey } from "@/lib/utils";
+import { useState, useEffect } from 'react';
+import { useStore } from '@/lib/store';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { Loader2, Search, Plus, Trash2 } from 'lucide-react';
+import { formatCost, isValidOpenRouterApiKey } from '@/lib/utils';
 
 export default function SettingsTab() {
   const {
@@ -27,42 +27,42 @@ export default function SettingsTab() {
   } = useStore();
 
   // OpenRouter API Key
-  const [apiKeyInput, setApiKeyInput] = useState(settings.apiKey || "");
+  const [apiKeyInput, setApiKeyInput] = useState(settings.apiKey || '');
   const [isValidating, setIsValidating] = useState(false);
   const [validationStatus, setValidationStatus] = useState<
-    "idle" | "success" | "error"
-  >("idle");
-  const [validationMessage, setValidationMessage] = useState("");
-  
-  const [keywordInput, setKeywordInput] = useState("");
-  const [modelSearch, setModelSearch] = useState("");
+    'idle' | 'success' | 'error'
+  >('idle');
+  const [validationMessage, setValidationMessage] = useState('');
+
+  const [keywordInput, setKeywordInput] = useState('');
+  const [modelSearch, setModelSearch] = useState('');
 
   const validateAndSaveApiKey = async () => {
     const trimmedKey = apiKeyInput.trim();
     if (!trimmedKey) return;
 
     setIsValidating(true);
-    setValidationStatus("idle");
+    setValidationStatus('idle');
 
     try {
       // Test API key by fetching models
       if (!isValidOpenRouterApiKey(trimmedKey)) {
-        setValidationStatus("error");
+        setValidationStatus('error');
         setValidationMessage(
-          "✗ Invalid API key format. It should look like sk-or-v1-<64 hex>"
+          '✗ Invalid API key format. It should look like sk-or-v1-<64 hex>'
         );
         return;
       }
 
-      const response = await fetch("https://openrouter.ai/api/v1/models", {
+      const response = await fetch('https://openrouter.ai/api/v1/models', {
         headers: {
           Authorization: `Bearer ${trimmedKey}`,
-          "X-Title": "News Report Generator",
+          'X-Title': 'News Report Generator',
         },
       });
 
       if (!response.ok) {
-        let apiErrorMessage = "Validation failed";
+        let apiErrorMessage = 'Validation failed';
         try {
           const err = await response.json();
           if (err?.error?.message) apiErrorMessage = err.error.message;
@@ -73,13 +73,19 @@ export default function SettingsTab() {
           } catch {}
         }
 
-        if (response.status === 401 || /invalid api key/i.test(apiErrorMessage)) {
-          throw new Error("✗ Invalid API key. Please check and try again.");
+        if (
+          response.status === 401 ||
+          /invalid api key/i.test(apiErrorMessage)
+        ) {
+          throw new Error('✗ Invalid API key. Please check and try again.');
         }
 
-        if (response.status === 403 || /referer|origin/i.test(apiErrorMessage)) {
+        if (
+          response.status === 403 ||
+          /referer|origin/i.test(apiErrorMessage)
+        ) {
           throw new Error(
-            "✗ Origin not allowed. Add your site (e.g., http://localhost:3000) to Allowed Origins in your OpenRouter dashboard."
+            '✗ Origin not allowed. Add your site (e.g., http://localhost:3000) to Allowed Origins in your OpenRouter dashboard.'
           );
         }
 
@@ -87,11 +93,16 @@ export default function SettingsTab() {
       }
 
       setApiKey(trimmedKey);
-      setValidationStatus("success");
-      setValidationMessage("✓ API key validated successfully! You can now fetch models.");
+      setValidationStatus('success');
+      setValidationMessage(
+        '✓ API key validated successfully! You can now fetch models.'
+      );
     } catch (error) {
-      setValidationStatus("error");
-      const message = error instanceof Error ? error.message : "✗ Unexpected error validating key.";
+      setValidationStatus('error');
+      const message =
+        error instanceof Error
+          ? error.message
+          : '✗ Unexpected error validating key.';
       setValidationMessage(message);
     } finally {
       setIsValidating(false);
@@ -100,21 +111,21 @@ export default function SettingsTab() {
 
   const fetchModels = async () => {
     if (!settings.apiKey) {
-      alert("Please enter and validate your API key first");
+      alert('Please enter and validate your API key first');
       return;
     }
 
     setIsLoadingModels(true);
     try {
-      const response = await fetch("https://openrouter.ai/api/v1/models", {
+      const response = await fetch('https://openrouter.ai/api/v1/models', {
         headers: {
           Authorization: `Bearer ${settings.apiKey}`,
-          "X-Title": "News Report Generator",
+          'X-Title': 'News Report Generator',
         },
       });
 
       if (!response.ok) {
-        let apiErrorMessage = "Failed to fetch models";
+        let apiErrorMessage = 'Failed to fetch models';
         try {
           const err = await response.json();
           if (err?.error?.message) apiErrorMessage = err.error.message;
@@ -123,7 +134,7 @@ export default function SettingsTab() {
       }
 
       const data = await response.json();
-      
+
       // Parse and sort models by price (lowest to highest for cost efficiency)
       const parsedModels = data.data
         .filter((model: any) => model.pricing) // Only models with pricing
@@ -134,7 +145,7 @@ export default function SettingsTab() {
             prompt: parseFloat(model.pricing.prompt) * 1000000 || 0,
             completion: parseFloat(model.pricing.completion) * 1000000 || 0,
           },
-          totalCostPer1M: 
+          totalCostPer1M:
             (parseFloat(model.pricing.prompt) * 1000000 || 0) +
             (parseFloat(model.pricing.completion) * 1000000 || 0),
         }))
@@ -142,8 +153,9 @@ export default function SettingsTab() {
 
       setModels(parsedModels);
     } catch (error) {
-      console.error("Error fetching models:", error);
-      const message = error instanceof Error ? error.message : "Failed to fetch models.";
+      console.error('Error fetching models:', error);
+      const message =
+        error instanceof Error ? error.message : 'Failed to fetch models.';
       alert(message);
     } finally {
       setIsLoadingModels(false);
@@ -156,9 +168,9 @@ export default function SettingsTab() {
 
   const createKeywords = () => {
     const keywordsToCreate = keywordInput
-      .split(",")
-      .map((k) => k.trim())
-      .filter((k) => k.length > 0);
+      .split(',')
+      .map(k => k.trim())
+      .filter(k => k.length > 0);
 
     if (keywordsToCreate.length === 0) return;
 
@@ -171,11 +183,11 @@ export default function SettingsTab() {
       addKeyword(newKeyword);
     }
 
-    setKeywordInput("");
+    setKeywordInput('');
   };
 
   const filteredModels = models.filter(
-    (model) =>
+    model =>
       model.name.toLowerCase().includes(modelSearch.toLowerCase()) ||
       model.id.toLowerCase().includes(modelSearch.toLowerCase())
   );
@@ -184,9 +196,11 @@ export default function SettingsTab() {
     <div className="space-y-8">
       {/* API Key Section */}
       <div className="space-y-4">
-        <h2 className="text-2xl font-semibold text-slate-900">Step 1: Add Your OpenRouter API Key</h2>
+        <h2 className="text-2xl font-semibold text-slate-900">
+          Step 1: Add Your OpenRouter API Key
+        </h2>
         <p className="text-sm text-slate-600">
-          Get your API key from{" "}
+          Get your API key from{' '}
           <a
             href="https://openrouter.ai/keys"
             target="_blank"
@@ -196,7 +210,7 @@ export default function SettingsTab() {
             openrouter.ai/keys
           </a>
         </p>
-        
+
         <div className="space-y-2">
           <div className="flex gap-2">
             <div className="relative flex-1">
@@ -204,8 +218,8 @@ export default function SettingsTab() {
                 type="password"
                 placeholder="sk-or-v1-..."
                 value={apiKeyInput}
-                onChange={(e) => setApiKeyInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && validateAndSaveApiKey()}
+                onChange={e => setApiKeyInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && validateAndSaveApiKey()}
                 className="pr-10"
               />
               {isValidating && (
@@ -214,8 +228,8 @@ export default function SettingsTab() {
                 </div>
               )}
             </div>
-            <Button 
-              onClick={validateAndSaveApiKey} 
+            <Button
+              onClick={validateAndSaveApiKey}
               disabled={isValidating || !apiKeyInput.trim()}
             >
               {isValidating ? (
@@ -224,17 +238,17 @@ export default function SettingsTab() {
                   Validating...
                 </>
               ) : (
-                "Validate & Save"
+                'Validate & Save'
               )}
             </Button>
           </div>
-          
-          {validationStatus !== "idle" && (
+
+          {validationStatus !== 'idle' && (
             <p
               className={`text-sm ${
-                validationStatus === "success"
-                  ? "text-green-600"
-                  : "text-red-600"
+                validationStatus === 'success'
+                  ? 'text-green-600'
+                  : 'text-red-600'
               }`}
             >
               {validationMessage}
@@ -246,7 +260,9 @@ export default function SettingsTab() {
       {/* Model Selection Section */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-semibold text-slate-900">Step 2: Fetch & Select a Model</h2>
+          <h2 className="text-2xl font-semibold text-slate-900">
+            Step 2: Fetch & Select a Model
+          </h2>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-md">
               <Switch
@@ -254,9 +270,14 @@ export default function SettingsTab() {
                 onCheckedChange={setOnlineEnabled}
                 disabled={true}
               />
-              <span className="text-sm font-medium text-green-700">Online (OpenRouter)</span>
+              <span className="text-sm font-medium text-green-700">
+                Online (OpenRouter)
+              </span>
             </div>
-            <Button onClick={fetchModels} disabled={isLoadingModels || !settings.apiKey}>
+            <Button
+              onClick={fetchModels}
+              disabled={isLoadingModels || !settings.apiKey}
+            >
               {isLoadingModels ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
               ) : null}
@@ -265,7 +286,10 @@ export default function SettingsTab() {
           </div>
         </div>
         <p className="text-sm text-slate-600">
-          All OpenRouter models have online search enabled by default for keyword searches.
+          <strong>Note:</strong> For best results with online search, use models
+          with built-in web search capabilities (e.g., Perplexity Sonar,
+          Perplexity Sonar Pro). Other models may not provide real-time web
+          search results.
         </p>
 
         {models.length > 0 && (
@@ -275,24 +299,26 @@ export default function SettingsTab() {
               <Input
                 placeholder="Search models..."
                 value={modelSearch}
-                onChange={(e) => setModelSearch(e.target.value)}
+                onChange={e => setModelSearch(e.target.value)}
                 className="pl-9"
               />
             </div>
 
             <div className="border rounded-md max-h-96 overflow-y-auto">
-              {filteredModels.map((model) => (
+              {filteredModels.map(model => (
                 <button
                   key={model.id}
                   onClick={() => handleModelSelect(model.id)}
                   className={`w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50 transition-colors border-b last:border-b-0 ${
                     settings.selectedModel === model.id
-                      ? "bg-blue-50 border-l-4 border-l-blue-600"
-                      : ""
+                      ? 'bg-blue-50 border-l-4 border-l-blue-600'
+                      : ''
                   }`}
                 >
                   <div className="text-left">
-                    <div className="font-medium text-slate-900">{model.name}</div>
+                    <div className="font-medium text-slate-900">
+                      {model.name}
+                    </div>
                     <div className="text-xs text-slate-500">{model.id}</div>
                   </div>
                   <div className="text-sm font-mono text-slate-600">
@@ -307,17 +333,19 @@ export default function SettingsTab() {
 
       {/* Keywords Section */}
       <div className="space-y-4">
-        <h2 className="text-2xl font-semibold text-slate-900">Step 3: Add Keywords</h2>
+        <h2 className="text-2xl font-semibold text-slate-900">
+          Step 3: Add Keywords
+        </h2>
         <p className="text-sm text-slate-600">
           Add keywords to search for (comma-separated for multiple)
         </p>
-        
+
         <div className="flex gap-2">
           <Input
             placeholder="e.g., AI, Crypto, Tech News"
             value={keywordInput}
-            onChange={(e) => setKeywordInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && createKeywords()}
+            onChange={e => setKeywordInput(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && createKeywords()}
             className="flex-1"
           />
           <Button onClick={createKeywords} disabled={!keywordInput.trim()}>
@@ -328,7 +356,7 @@ export default function SettingsTab() {
 
         {settings.keywords.length > 0 && (
           <div className="space-y-2">
-            {settings.keywords.map((keyword) => (
+            {settings.keywords.map(keyword => (
               <div
                 key={keyword.id}
                 className="flex items-center justify-between p-3 border rounded-md bg-white"
@@ -338,7 +366,11 @@ export default function SettingsTab() {
                     checked={keyword.enabled}
                     onCheckedChange={() => toggleKeyword(keyword.id)}
                   />
-                  <span className={keyword.enabled ? "text-slate-900" : "text-slate-400"}>
+                  <span
+                    className={
+                      keyword.enabled ? 'text-slate-900' : 'text-slate-400'
+                    }
+                  >
                     {keyword.text}
                   </span>
                 </div>
@@ -357,13 +389,15 @@ export default function SettingsTab() {
 
       {/* Search Instructions Section */}
       <div className="space-y-4">
-        <h2 className="text-2xl font-semibold text-slate-900">Search Instructions (Optional)</h2>
+        <h2 className="text-2xl font-semibold text-slate-900">
+          Search Instructions (Optional)
+        </h2>
         <p className="text-sm text-slate-600">
           Customize how the AI searches for each keyword
         </p>
         <Textarea
           value={settings.searchInstructions}
-          onChange={(e) => setSearchInstructions(e.target.value)}
+          onChange={e => setSearchInstructions(e.target.value)}
           rows={6}
           placeholder="Enter search instructions..."
           className="font-mono text-sm"
@@ -372,13 +406,15 @@ export default function SettingsTab() {
 
       {/* Format Prompt Section */}
       <div className="space-y-4">
-        <h2 className="text-2xl font-semibold text-slate-900">Format Prompt (Optional)</h2>
+        <h2 className="text-2xl font-semibold text-slate-900">
+          Format Prompt (Optional)
+        </h2>
         <p className="text-sm text-slate-600">
           Customize how the AI formats the final report
         </p>
         <Textarea
           value={settings.formatPrompt}
-          onChange={(e) => setFormatPrompt(e.target.value)}
+          onChange={e => setFormatPrompt(e.target.value)}
           rows={12}
           placeholder="Enter format prompt..."
           className="font-mono text-sm"
