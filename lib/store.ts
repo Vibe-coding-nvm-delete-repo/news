@@ -40,6 +40,10 @@ export interface ReportHistory {
   totalCards: number;
   modelUsed: string;
   costSpent: number;
+  categories: string[];
+  avgRating: number;
+  ratingDistribution: { [key: number]: number };
+  summary?: string;
 }
 
 export interface Settings {
@@ -47,7 +51,6 @@ export interface Settings {
   selectedModel: string | null;
   keywords: Keyword[];
   searchInstructions: string;
-  formatPrompt: string;
   onlineEnabled: boolean;
 }
 
@@ -59,6 +62,8 @@ interface StoreState {
   archivedCards: Card[];
   reportHistory: ReportHistory[];
   activeNewsTab: 'generate' | 'active' | 'archived' | 'history';
+  totalCostSpent: number;
+  totalReportsGenerated: number;
   setApiKey: (key: string | null) => void;
   setSelectedModel: (model: string | null) => void;
   setModels: (models: Model[]) => void;
@@ -67,7 +72,6 @@ interface StoreState {
   removeKeyword: (id: string) => void;
   toggleKeyword: (id: string) => void;
   setSearchInstructions: (instructions: string) => void;
-  setFormatPrompt: (prompt: string) => void;
   setOnlineEnabled: (enabled: boolean) => void;
   addCardsToActive: (cards: Card[]) => void;
   markCardAsRead: (cardId: string) => void;
@@ -111,7 +115,6 @@ REQUIREMENTS:
 7. Do NOT include explanatory text, code blocks, or apologies - ONLY the JSON object
 
 Keyword to search:`,
-        formatPrompt: `DEPRECATED - Not used anymore. JSON is returned directly from keyword searches.`,
         onlineEnabled: true,
       },
       models: [],
@@ -120,6 +123,8 @@ Keyword to search:`,
       archivedCards: [],
       reportHistory: [],
       activeNewsTab: 'generate',
+      totalCostSpent: 0,
+      totalReportsGenerated: 0,
       setApiKey: key =>
         set(state => ({
           settings: { ...state.settings, apiKey: key },
@@ -157,10 +162,6 @@ Keyword to search:`,
         set(state => ({
           settings: { ...state.settings, searchInstructions: instructions },
         })),
-      setFormatPrompt: prompt =>
-        set(state => ({
-          settings: { ...state.settings, formatPrompt: prompt },
-        })),
       setOnlineEnabled: enabled =>
         set(state => ({
           settings: { ...state.settings, onlineEnabled: enabled },
@@ -188,6 +189,8 @@ Keyword to search:`,
       addReportHistory: report =>
         set(state => ({
           reportHistory: [report, ...state.reportHistory],
+          totalCostSpent: state.totalCostSpent + report.costSpent,
+          totalReportsGenerated: state.totalReportsGenerated + 1,
         })),
       setActiveNewsTab: tab => set({ activeNewsTab: tab }),
     }),

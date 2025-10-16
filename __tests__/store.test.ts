@@ -11,7 +11,6 @@ describe('useStore - Settings Management', () => {
         selectedModel: null,
         keywords: [],
         searchInstructions: settings.searchInstructions,
-        formatPrompt: settings.formatPrompt,
         onlineEnabled: true,
       },
       models: [],
@@ -153,7 +152,7 @@ describe('useStore - Settings Management', () => {
     });
   });
 
-  describe('Search Instructions & Format Prompt', () => {
+  describe('Search Instructions', () => {
     test('sets search instructions', () => {
       const { setSearchInstructions } = useStore.getState();
       const instructions = 'Search for news about AI';
@@ -165,25 +164,14 @@ describe('useStore - Settings Management', () => {
       );
     });
 
-    test('sets format prompt', () => {
-      const { setFormatPrompt } = useStore.getState();
-      const prompt = 'Format as markdown';
-
-      setFormatPrompt(prompt);
-
-      expect(useStore.getState().settings.formatPrompt).toBe(prompt);
-    });
-
-    test('updates search instructions independently', () => {
-      const { setSearchInstructions, setFormatPrompt } = useStore.getState();
+    test('updates search instructions', () => {
+      const { setSearchInstructions } = useStore.getState();
 
       setSearchInstructions('New search');
-      setFormatPrompt('New format');
 
       expect(useStore.getState().settings.searchInstructions).toBe(
         'New search'
       );
-      expect(useStore.getState().settings.formatPrompt).toBe('New format');
     });
   });
 
@@ -208,7 +196,6 @@ describe('useStore - Settings Management', () => {
       expect(settings.keywords).toEqual([]);
       expect(settings.onlineEnabled).toBe(true);
       expect(settings.searchInstructions).toBeTruthy();
-      expect(settings.formatPrompt).toBeTruthy();
     });
 
     test('has empty models array initially', () => {
@@ -444,6 +431,9 @@ describe('useStore - Card Management', () => {
         totalCards: 5,
         modelUsed: 'gpt-3.5-turbo',
         costSpent: 0.0012,
+        categories: ['Technology'],
+        avgRating: 7.5,
+        ratingDistribution: { 7: 2, 8: 3 },
       };
 
       addReportHistory(testReport);
@@ -461,6 +451,9 @@ describe('useStore - Card Management', () => {
         totalCards: 3,
         modelUsed: 'gpt-3.5-turbo',
         costSpent: 0.001,
+        categories: ['Technology'],
+        avgRating: 7.0,
+        ratingDistribution: { 7: 3 },
       };
       const report2: ReportHistory = {
         id: 'report-2',
@@ -469,6 +462,9 @@ describe('useStore - Card Management', () => {
         totalCards: 5,
         modelUsed: 'gpt-4',
         costSpent: 0.002,
+        categories: ['Finance'],
+        avgRating: 8.0,
+        ratingDistribution: { 8: 5 },
       };
 
       addReportHistory(report1);
@@ -551,6 +547,9 @@ describe('useStore - Card Management', () => {
         totalCards: 2,
         modelUsed: 'gpt-3.5-turbo',
         costSpent: 0.0015,
+        categories: ['Technology'],
+        avgRating: 8.0,
+        ratingDistribution: { 7: 1, 9: 1 },
       };
 
       addReportHistory(report);
