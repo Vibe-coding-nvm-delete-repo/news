@@ -246,6 +246,10 @@ export default function NewsTab() {
           `[${keyword.text}] 📤 Request body:`,
           JSON.stringify(requestBody, null, 2)
         );
+        console.log(
+          `[${keyword.text}] 🔍 Full prompt being sent:`,
+          `${settings.searchInstructions}\n\n"${keyword.text}"`
+        );
 
         // Race between fetch and timeout
         const fetchPromise = fetch(
@@ -298,12 +302,14 @@ export default function NewsTab() {
           `[${keyword.text}] 🔍 Last 200 chars:`,
           result.substring(Math.max(0, result.length - 200))
         );
+        console.log(`[${keyword.text}] 📄 FULL RESPONSE:`, result);
 
         // Parse JSON from this keyword's search
         let parsedResult;
         try {
           parsedResult = parseJSON(result);
           console.log(`[${keyword.text}] ✅ JSON parsed successfully`);
+          console.log(`[${keyword.text}] 📊 Parsed result:`, parsedResult);
 
           // Validate stories array exists
           if (!parsedResult.stories || !Array.isArray(parsedResult.stories)) {
@@ -311,6 +317,7 @@ export default function NewsTab() {
               `[${keyword.text}] Invalid JSON format. Response:`,
               result.substring(0, 500)
             );
+            console.error(`[${keyword.text}] Parsed result:`, parsedResult);
             throw new Error("Invalid JSON format: missing 'stories' array");
           }
         } catch (parseError: any) {
