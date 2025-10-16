@@ -175,29 +175,29 @@ export const useStore = create<StoreState>()(
         apiKey: null,
         selectedModel: null,
         keywords: [],
-        searchInstructions: `Search the web for news published in the LAST 24 HOURS about the keyword below. ONLY include stories from the past day.
+        searchInstructions: `Search for TODAY'S NEWS about the keyword below. ONLY return stories published in the last 24 hours.
 
-Return a JSON object with this schema:
+Output valid JSON ONLY (no explanatory text):
 {
   "stories": [
     {
-      "title": "Headline",
+      "title": "Headline text",
       "category": "Technology|Politics|Business|Health|Sports|Entertainment|Science|Other",
       "rating": 7,
-      "summary": "2-3 sentence summary",
+      "summary": "2-3 sentences",
       "source": "Source name or null",
-      "url": "Article URL or null",
-      "date": "YYYY-MM-DD (REQUIRED - must be within last 24 hours)"
+      "url": "Full URL or null",
+      "date": "YYYY-MM-DD"
     }
   ]
 }
 
-CRITICAL RULES:
-1. Return ONLY valid JSON - no text before or after
-2. ONLY include news from the last 24 hours
-3. Date field is REQUIRED for every story
-4. If no recent news exists, return: {"stories": []}
-5. Do NOT include old articles, archives, or background information
+RULES:
+1. ONLY recent news (last 24 hours)
+2. Every story MUST have a date field
+3. If no recent news exists, return {"stories": []}
+4. Return ONLY JSON (no markdown, no explanations)
+5. Skip old articles completely
 
 Keyword:`,
         onlineEnabled: true,
