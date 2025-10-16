@@ -224,30 +224,31 @@ export const useStore = create<StoreState>()(
         apiKey: null,
         selectedModel: null,
         keywords: [],
-        searchInstructions: `You are a news research assistant. Search the web ONLY for news published within the LAST 24 HOURS about the given keyword.
+        searchInstructions: `You are a news research assistant. Search for RECENT news about the keyword below.
 
-CRITICAL: Only include stories published in the last 24 hours (since ${new Date(Date.now() - 24*60*60*1000).toISOString().split('T')[0]}). Reject any older content.
+PRIORITY: Find news from the last 24-48 hours. If nothing that recent exists, include news from the last 3-7 days.
 
 RETURN YOUR RESPONSE AS A JSON OBJECT with this exact schema:
 {
   "stories": [
     {
       "title": "Clear, concise headline",
-      "category": "Auto-categorize (Technology, Politics, etc.)",
-      "rating": 1-10 (significance rating),
+      "category": "Technology|Politics|Business|Health|Sports|Entertainment|Science|Other",
+      "rating": 1-10,
       "summary": "2-3 sentence summary",
       "source": "Source name or null",
       "url": "Full URL or null",
-      "date": "YYYY-MM-DD (REQUIRED - must be within last 24 hours)"
+      "date": "YYYY-MM-DD"
     }
   ]
 }
 
 REQUIREMENTS:
-1. ONLY include news from the last 24 hours
-2. Date field is REQUIRED (not optional)
-3. If you can't find recent news, return empty array
-4. Do NOT include old archived articles
+1. PREFER recent news (last 24-48 hours) but allow up to 7 days if needed
+2. Every story MUST have a date field
+3. Return {"stories": []} ONLY if absolutely no news exists
+4. Focus on finding newsworthy content rather than being overly restrictive
+5. Return valid JSON only (no markdown, no extra text)
 
 Keyword:`,
         onlineEnabled: true,

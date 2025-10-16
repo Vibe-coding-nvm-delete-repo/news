@@ -196,9 +196,7 @@ export default function NewsTab() {
           );
         });
 
-        // Calculate 24-hour cutoff date dynamically
-        const cutoffDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
-        const cutoffDateString = cutoffDate.toISOString().split('T')[0]; // YYYY-MM-DD format
+        // Get today's date for context
         const todayDateString = new Date().toISOString().split('T')[0];
 
         // Race between fetch and timeout
@@ -220,7 +218,7 @@ export default function NewsTab() {
               messages: [
                 {
                   role: 'user',
-                  content: `${settings.searchInstructions}\n\n"${keyword.text}"\n\nIMPORTANT: Today is ${todayDateString}. Only include articles published on or after ${cutoffDateString}.`,
+                  content: `${settings.searchInstructions}\n\n"${keyword.text}"\n\nToday's date: ${todayDateString}`,
                 },
               ],
               // Add model parameters for improved quality and consistency
@@ -314,11 +312,9 @@ export default function NewsTab() {
           `[${keyword.text}] Successfully parsed ${parsedResult.stories.length} stories`
         );
 
-        // Filter stories to ONLY include those from the last 24 hours
+        // Filter stories - allow recent news (up to 7 days, prefer 24-48 hours)
         const now = new Date();
-        const twentyFourHoursAgo = new Date(
-          now.getTime() - 24 * 60 * 60 * 1000
-        );
+        const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
         const validStories = parsedResult.stories.filter((story: any) => {
           // Reject stories without dates
@@ -338,8 +334,8 @@ export default function NewsTab() {
             return false;
           }
 
-          // Reject stories older than 24 hours
-          if (storyDate < twentyFourHoursAgo) {
+          // Reject stories older than 7 days
+          if (storyDate < sevenDaysAgo) {
             console.warn(
               `[${keyword.text}] ❌ Rejected (too old - ${story.date}): "${story.title?.substring(0, 50)}..."`
             );
@@ -362,7 +358,7 @@ export default function NewsTab() {
 
         const rejectedCount = parsedResult.stories.length - validStories.length;
         console.log(
-          `[${keyword.text}] Filtered: ${validStories.length}/${parsedResult.stories.length} stories passed 24-hour validation${rejectedCount > 0 ? ` (${rejectedCount} rejected)` : ''}`
+          `[${keyword.text}] Filtered: ${validStories.length}/${parsedResult.stories.length} stories passed date validation${rejectedCount > 0 ? ` (${rejectedCount} rejected as too old)` : ''}`
         );
 
         // Add keyword and reportId to each story, convert to Card
@@ -489,7 +485,7 @@ export default function NewsTab() {
       `Generated ${allCards.length} cards with total cost $${totalCost.toFixed(4)}`
     );
     console.log(
-      `📊 Date filtering stats: ${totalStoriesReceived} stories received, ${totalStoriesRejected} rejected (${((totalStoriesRejected / Math.max(totalStoriesReceived, 1)) * 100).toFixed(1)}% filtered out)`
+      `📊 Date filtering stats: ${totalStoriesReceived} stories received, ${totalStoriesRejected} rejected as too old (${((totalStoriesRejected / Math.max(totalStoriesReceived, 1)) * 100).toFixed(1)}% filtered out)`
     );
 
     // Update total cost and filter stats
@@ -666,11 +662,11 @@ export default function NewsTab() {
                     <span className="font-semibold">
                       {dateFilterStats.totalStories}
                     </span>{' '}
-                    stories were filtered out because they were older than 24
-                    hours.
+                    stories were filtered out because they were older than 7
+                    days.
                     <br />
                     <span className="text-xs text-yellow-700 mt-1 inline-block">
-                      ✅ Only showing news from the last 24 hours (
+                      ✅ Only showing recent news from the last week (
                       {dateFilterStats.filteredStories} recent stories)
                     </span>
                   </p>
