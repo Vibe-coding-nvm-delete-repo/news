@@ -171,17 +171,20 @@ export default function NewsTab() {
       ? settings.selectedModel
       : `${settings.selectedModel}:online`;
 
-    // Stage 1: Search for each keyword IN PARALLEL
-    const searchPromises = enabledKeywords.map(async (keyword, index) => {
+    // Stage 1: Search for each keyword WITH CONTROLLED CONCURRENCY
+    // Run searches with a concurrency limit to avoid overwhelming the API
+    const CONCURRENT_LIMIT = 3; // Process 3 searches at a time for better performance
+
+    const searchKeyword = async (keyword: any, index: number) => {
       try {
         console.log(`[${keyword.text}] Starting search...`);
         const startTime = Date.now();
 
-        // Create a timeout promise (120 seconds for online searches)
+        // Create a timeout promise (60 seconds - reduced from 120 for faster failures)
         const timeoutPromise = new Promise((_, reject) => {
           setTimeout(
-            () => reject(new Error('Search timeout after 120 seconds')),
-            120000
+            () => reject(new Error('Search timeout after 60 seconds')),
+            60000
           );
         });
 
@@ -234,7 +237,9 @@ export default function NewsTab() {
         }
 
         const result = data.choices[0].message.content;
-        console.log(`[${keyword.text}] Response length: ${result.length} chars`);
+        console.log(
+          `[${keyword.text}] Response length: ${result.length} chars`
+        );
 
         // Parse JSON from this keyword's search
         const parsedResult = parseJSON(result);
@@ -301,12 +306,17 @@ export default function NewsTab() {
           return updated;
         });
 
+        // Immediately add completed cards to the active list (don't wait for all to finish)
+        if (cardsFromStories.length > 0) {
+          addCardsToActive(cardsFromStories);
+        }
+
         return { success: true, cards: cardsFromStories, cost };
       } catch (error: any) {
         // Check if the error is due to abort
         if (error.name === 'AbortError') {
           console.log(`[${keyword.text}] Search aborted by user`);
-          return { success: false, cards: [], cost: 0 }; // Return error object instead of undefined
+          return { success: false, cards: [], cost: 0 };
         }
 
         console.error(`[${keyword.text}] Error:`, error.message);
@@ -326,16 +336,29 @@ export default function NewsTab() {
           return updated;
         });
 
-        return { success: false, cards: [], cost: 0 }; // Return error object instead of undefined
+        return { success: false, cards: [], cost: 0 };
       }
-    });
+    };
 
-    // Wait for all searches to complete (TRUE PARALLEL PROCESSING)
-    console.log('Waiting for all keyword searches to complete...');
-    const results = await Promise.all(searchPromises);
+    // Process searches with controlled concurrency
+    console.log(
+      `Starting searches with concurrency limit of ${CONCURRENT_LIMIT}...`
+    );
+    const results: Awaited<ReturnType<typeof searchKeyword>>[] = [];
+
+    for (let i = 0; i < enabledKeywords.length; i += CONCURRENT_LIMIT) {
+      const batch = enabledKeywords.slice(i, i + CONCURRENT_LIMIT);
+      const batchPromises = batch.map((keyword, batchIndex) =>
+        searchKeyword(keyword, i + batchIndex)
+      );
+      const batchResults = await Promise.all(batchPromises);
+      results.push(...batchResults);
+      console.log(`Batch ${Math.floor(i / CONCURRENT_LIMIT) + 1} completed`);
+    }
+
     console.log('All searches completed!');
 
-    // Aggregate all cards from successful searches
+    // Aggregate results (cards were already added incrementally)
     results.forEach(result => {
       if (result && result.success && result.cards) {
         allCards.push(...result.cards);
@@ -356,10 +379,8 @@ export default function NewsTab() {
     setShowCompletionAnimation(true);
     setTimeout(() => setShowCompletionAnimation(false), 2000);
 
-    // Save cards to active cards
+    // Cards were already added incrementally, just need to create history entry
     if (allCards.length > 0) {
-      addCardsToActive(allCards);
-
       // Calculate report metadata
       const categories = Array.from(
         new Set(allCards.map(card => card.category))
@@ -609,16 +630,16 @@ export default function NewsTab() {
           {/* Generate Report Section */}
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-200">
             {/* Timing Warning */}
-            <div className="mb-4 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+            <div className="mb-4 bg-blue-50 border-l-4 border-blue-400 p-4 rounded">
               <div className="flex items-center gap-2">
-                <Clock className="h-5 w-5 text-yellow-600" />
+                <Clock className="h-5 w-5 text-blue-600" />
                 <div>
-                  <p className="text-sm font-semibold text-yellow-800">
-                    Web searches can take 30-120 seconds per keyword
+                  <p className="text-sm font-semibold text-blue-800">
+                    Optimized searches: 3 concurrent searches at a time
                   </p>
-                  <p className="text-xs text-yellow-700 mt-1">
-                    The AI performs real-time web searches. Check browser console
-                    (F12) for progress logs.
+                  <p className="text-xs text-blue-700 mt-1">
+                    Results appear as they complete (10-60 seconds each). Check
+                    browser console (F12) for progress logs.
                   </p>
                 </div>
               </div>
