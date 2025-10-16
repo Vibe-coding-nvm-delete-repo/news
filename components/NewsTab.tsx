@@ -38,7 +38,7 @@ export default function NewsTab() {
   const { settings, models } = useStore();
 
   const [isGenerating, setIsGenerating] = useState(false);
-  const [currentStage, setCurrentStage] = useState<1 | 2 | null>(null);
+  const [currentStage, setCurrentStage] = useState<1 | null>(null);
   const [stage1Results, setStage1Results] = useState<Stage1Result[]>([]);
   const [expandedResults, setExpandedResults] = useState<Set<string>>(
     new Set()
