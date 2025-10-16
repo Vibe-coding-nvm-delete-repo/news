@@ -175,33 +175,31 @@ export const useStore = create<StoreState>()(
         apiKey: null,
         selectedModel: null,
         keywords: [],
-        searchInstructions: `You are a news research assistant. Search the web for the latest news and developments about the given keyword/topic. Focus ONLY on events from the past 24 hours.
+        searchInstructions: `Search for TODAY'S NEWS about the keyword below. ONLY return stories published in the last 24 hours.
 
-RETURN YOUR RESPONSE AS A JSON OBJECT with this exact schema:
+Output valid JSON ONLY (no explanatory text):
 {
   "stories": [
     {
-      "title": "Clear, concise headline",
-      "category": "Auto-categorize this story (e.g., Technology, Politics, Business, Health, etc.)",
-      "rating": 1-10 (numeric value only - rate based on significance, novelty, and relevance),
-      "summary": "2-3 sentence summary of the story",
-      "source": "Source name or null if not available",
-      "url": "Full article URL or null if not available",
-      "date": "YYYY-MM-DD format or null if not available"
+      "title": "Headline text",
+      "category": "Technology|Politics|Business|Health|Sports|Entertainment|Science|Other",
+      "rating": 7,
+      "summary": "2-3 sentences",
+      "source": "Source name or null",
+      "url": "Full URL or null",
+      "date": "YYYY-MM-DD"
     }
   ]
 }
 
-REQUIREMENTS:
-1. Return ONLY the JSON object starting with { and ending with }
-2. Include ALL news stories you find for this keyword
-3. Each story must have all fields (use null for missing data)
-4. Category should be auto-determined based on the content
-5. Rating should reflect significance, novelty, and relevance (1-10)
-6. Ensure all JSON is properly formatted and valid
-7. Do NOT include explanatory text, code blocks, or apologies - ONLY the JSON object
+RULES:
+1. ONLY recent news (last 24 hours)
+2. Every story MUST have a date field
+3. If no recent news exists, return {"stories": []}
+4. Return ONLY JSON (no markdown, no explanations)
+5. Skip old articles completely
 
-Keyword to search:`,
+Keyword:`,
         onlineEnabled: true,
       },
       models: [],
