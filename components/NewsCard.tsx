@@ -29,7 +29,7 @@ export default function NewsCard({
           <div className="flex items-center gap-1 bg-yellow-100 px-2 py-1 rounded">
             <Star className="h-4 w-4 text-yellow-600 fill-yellow-600" />
             <span className="font-bold text-yellow-900">
-              {card.rating.toFixed(1)}
+              {(card.rating ?? 0).toFixed(1)}
             </span>
           </div>
           <div className="flex items-center gap-1 bg-blue-100 px-2 py-1 rounded text-xs">
