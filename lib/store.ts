@@ -1,5 +1,5 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 export interface Keyword {
   id: string;
@@ -44,12 +44,20 @@ interface StoreState {
 
 export const useStore = create<StoreState>()(
   persist(
-    (set) => ({
+    set => ({
       settings: {
         apiKey: null,
         selectedModel: null,
         keywords: [],
-        searchInstructions: `Search for the latest news and developments about this topic. Focus on events from the past 7 days. Include important updates, trends, and notable discussions.`,
+        searchInstructions: `You are a news research assistant. Search the web for the latest news and developments about the given keyword/topic. Focus on events from the past 7 days.
+
+Provide a comprehensive summary that includes:
+- Recent news articles and updates
+- Important developments and trends  
+- Key discussions and notable events
+- Sources and dates when available
+
+Do NOT provide code, commands, or apologies. Provide actual news content and information.`,
         formatPrompt: `Analyze all the news results and create a JSON response with this schema:
 {
   "stories": [
@@ -69,54 +77,54 @@ Rate each story based on significance, novelty, and relevance. Sort by rating (h
       },
       models: [],
       isLoadingModels: false,
-      setApiKey: (key) =>
-        set((state) => ({
+      setApiKey: key =>
+        set(state => ({
           settings: { ...state.settings, apiKey: key },
         })),
-      setSelectedModel: (model) =>
-        set((state) => ({
+      setSelectedModel: model =>
+        set(state => ({
           settings: { ...state.settings, selectedModel: model },
         })),
-      setModels: (models) => set({ models }),
-      setIsLoadingModels: (loading) => set({ isLoadingModels: loading }),
-      addKeyword: (keyword) =>
-        set((state) => ({
+      setModels: models => set({ models }),
+      setIsLoadingModels: loading => set({ isLoadingModels: loading }),
+      addKeyword: keyword =>
+        set(state => ({
           settings: {
             ...state.settings,
             keywords: [...state.settings.keywords, keyword],
           },
         })),
-      removeKeyword: (id) =>
-        set((state) => ({
+      removeKeyword: id =>
+        set(state => ({
           settings: {
             ...state.settings,
-            keywords: state.settings.keywords.filter((k) => k.id !== id),
+            keywords: state.settings.keywords.filter(k => k.id !== id),
           },
         })),
-      toggleKeyword: (id) =>
-        set((state) => ({
+      toggleKeyword: id =>
+        set(state => ({
           settings: {
             ...state.settings,
-            keywords: state.settings.keywords.map((k) =>
+            keywords: state.settings.keywords.map(k =>
               k.id === id ? { ...k, enabled: !k.enabled } : k
             ),
           },
         })),
-      setSearchInstructions: (instructions) =>
-        set((state) => ({
+      setSearchInstructions: instructions =>
+        set(state => ({
           settings: { ...state.settings, searchInstructions: instructions },
         })),
-      setFormatPrompt: (prompt) =>
-        set((state) => ({
+      setFormatPrompt: prompt =>
+        set(state => ({
           settings: { ...state.settings, formatPrompt: prompt },
         })),
-      setOnlineEnabled: (enabled) =>
-        set((state) => ({
+      setOnlineEnabled: enabled =>
+        set(state => ({
           settings: { ...state.settings, onlineEnabled: enabled },
         })),
     }),
     {
-      name: "news-report-generator-storage",
+      name: 'news-report-generator-storage',
     }
   )
 );
