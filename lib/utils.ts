@@ -56,29 +56,22 @@ export function formatCost(cost: number): string {
  * @throws {Error} If JSON cannot be extracted or parsed (includes full response for debugging)
  */
 export function parseJSON(text: string): any {
-  // Log the raw response for debugging
-  console.log('🔍 RAW RESPONSE:', text.substring(0, 500));
-  console.log('📏 RESPONSE LENGTH:', text.length);
-
   // Check for empty or invalid input
   if (!text || typeof text !== 'string') {
-    console.error('❌ INVALID INPUT:', text);
     throw new Error(`Invalid input to parseJSON: ${typeof text} - "${text}"`);
   }
 
   const trimmed = text.trim();
   if (trimmed.length === 0) {
-    console.error('❌ EMPTY RESPONSE');
     throw new Error('Empty response from AI model');
   }
 
   // Strategy 1: Direct parse (handles clean JSON responses)
   try {
     const parsed = JSON.parse(trimmed);
-    console.log('✅ PARSED SUCCESSFULLY (Strategy 1: Direct)');
     return parsed;
   } catch (e1) {
-    console.log('❌ Strategy 1 failed:', (e1 as Error).message);
+    // Continue to next strategy
   }
 
   // Strategy 2: Strip markdown code blocks
@@ -88,10 +81,9 @@ export function parseJSON(text: string): any {
       .replace(/```\s*/g, '')
       .trim();
     const parsed = JSON.parse(stripped);
-    console.log('✅ PARSED SUCCESSFULLY (Strategy 2: Strip markdown)');
     return parsed;
   } catch (e2) {
-    console.log('❌ Strategy 2 failed:', (e2 as Error).message);
+    // Continue to next strategy
   }
 
   // Strategy 3: Extract JSON object from surrounding text
@@ -99,11 +91,10 @@ export function parseJSON(text: string): any {
     const jsonMatch = trimmed.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       const parsed = JSON.parse(jsonMatch[0]);
-      console.log('✅ PARSED SUCCESSFULLY (Strategy 3: Extract object)');
       return parsed;
     }
   } catch (e3) {
-    console.log('❌ Strategy 3 failed:', (e3 as Error).message);
+    // Continue to next strategy
   }
 
   // Strategy 4: Try to find and extract array instead of object
@@ -111,7 +102,6 @@ export function parseJSON(text: string): any {
     const arrayMatch = trimmed.match(/\[[\s\S]*\]/);
     if (arrayMatch) {
       const parsed = JSON.parse(arrayMatch[0]);
-      console.log('✅ PARSED SUCCESSFULLY (Strategy 4: Extract array)');
       // Wrap in stories if it's a bare array
       if (Array.isArray(parsed)) {
         return { stories: parsed };
@@ -119,7 +109,7 @@ export function parseJSON(text: string): any {
       return parsed;
     }
   } catch (e4) {
-    console.log('❌ Strategy 4 failed:', (e4 as Error).message);
+    // Continue to next strategy
   }
 
   // Strategy 5: Try to fix common JSON issues
@@ -130,10 +120,9 @@ export function parseJSON(text: string): any {
     // Try to convert single quotes to double quotes (risky but might work)
     fixed = fixed.replace(/'/g, '"');
     const parsed = JSON.parse(fixed);
-    console.log('✅ PARSED SUCCESSFULLY (Strategy 5: Fixed common issues)');
     return parsed;
   } catch (e5) {
-    console.log('❌ Strategy 5 failed:', (e5 as Error).message);
+    // Continue to next strategy
   }
 
   // Strategy 6: Extract JSON from text with stronger pattern matching
@@ -142,13 +131,10 @@ export function parseJSON(text: string): any {
     const storiesMatch = trimmed.match(/\{[\s\S]*"stories"[\s\S]*\}/);
     if (storiesMatch) {
       const parsed = JSON.parse(storiesMatch[0]);
-      console.log(
-        '✅ PARSED SUCCESSFULLY (Strategy 6: Extract stories object)'
-      );
       return parsed;
     }
   } catch (e6) {
-    console.log('❌ Strategy 6 failed:', (e6 as Error).message);
+    // Continue to next strategy
   }
 
   // Strategy 7: Last resort - try to find any valid JSON structure
@@ -163,9 +149,6 @@ export function parseJSON(text: string): any {
       ) {
         try {
           const parsed = JSON.parse(trimmedLine);
-          console.log(
-            '✅ PARSED SUCCESSFULLY (Strategy 7: Line-by-line search)'
-          );
           if (Array.isArray(parsed)) {
             return { stories: parsed };
           }
@@ -176,12 +159,10 @@ export function parseJSON(text: string): any {
       }
     }
   } catch (e7) {
-    console.log('❌ Strategy 7 failed:', (e7 as Error).message);
+    // Continue to next strategy
   }
 
   // All strategies failed - provide detailed error
-  console.error('❌ ALL PARSING STRATEGIES FAILED');
-  console.error('Full response:', text);
   throw new Error(
     `Failed to parse JSON response after trying all strategies.\n\n` +
       `Response length: ${text.length} characters\n` +
