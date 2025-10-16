@@ -42,22 +42,14 @@ export function formatCost(cost: number): string {
 }
 
 /**
- * Robustly parses JSON from AI model responses with multiple fallback strategies.
- * Handles various response formats including clean JSON, markdown-wrapped, and text-embedded JSON.
+ * Simple JSON parsing for AI model responses.
+ * Extracts stories array from model output with minimal processing.
  *
- * Strategy sequence:
- * 1. Check for empty/invalid input
- * 2. Direct JSON.parse (for clean responses)
- * 3. Strip markdown code blocks (```json ... ```)
- * 4. Extract JSON object from surrounding text (finds {...})
- * 5. Try to fix common JSON issues (trailing commas, single quotes, etc.)
- *
- * @param text - The text response potentially containing JSON
- * @returns Parsed JSON object
- * @throws {Error} If JSON cannot be extracted or parsed (includes full response for debugging)
+ * @param text - The text response from the AI model
+ * @returns Parsed JSON object with stories array
+ * @throws {Error} If JSON cannot be parsed
  */
 export function parseJSON(text: string): any {
-  // Check for empty or invalid input
   if (!text || typeof text !== 'string') {
     throw new Error(`Invalid input to parseJSON: ${typeof text} - "${text}"`);
   }
@@ -67,108 +59,43 @@ export function parseJSON(text: string): any {
     throw new Error('Empty response from AI model');
   }
 
-  // Strategy 1: Direct parse (handles clean JSON responses)
+  // Try direct JSON parse first
   try {
     const parsed = JSON.parse(trimmed);
     return parsed;
   } catch (e1) {
-    // Continue to next strategy
+    // Continue to extraction
   }
 
-  // Strategy 2: Strip markdown code blocks
-  try {
-    const stripped = trimmed
-      .replace(/```(?:json)?\s*/g, '')
-      .replace(/```\s*/g, '')
-      .trim();
-    const parsed = JSON.parse(stripped);
-    return parsed;
-  } catch (e2) {
-    // Continue to next strategy
-  }
-
-  // Strategy 3: Extract JSON object from surrounding text
+  // Extract JSON object from text (look for {...})
   try {
     const jsonMatch = trimmed.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       const parsed = JSON.parse(jsonMatch[0]);
       return parsed;
     }
-  } catch (e3) {
-    // Continue to next strategy
+  } catch (e2) {
+    // Continue to array extraction
   }
 
-  // Strategy 4: Try to find and extract array instead of object
+  // Try to extract array and wrap in stories
   try {
     const arrayMatch = trimmed.match(/\[[\s\S]*\]/);
     if (arrayMatch) {
       const parsed = JSON.parse(arrayMatch[0]);
-      // Wrap in stories if it's a bare array
       if (Array.isArray(parsed)) {
         return { stories: parsed };
       }
       return parsed;
     }
-  } catch (e4) {
-    // Continue to next strategy
+  } catch (e3) {
+    // Continue to error
   }
 
-  // Strategy 5: Try to fix common JSON issues
-  try {
-    let fixed = trimmed;
-    // Remove trailing commas
-    fixed = fixed.replace(/,(\s*[}\]])/g, '$1');
-    // Try to convert single quotes to double quotes (risky but might work)
-    fixed = fixed.replace(/'/g, '"');
-    const parsed = JSON.parse(fixed);
-    return parsed;
-  } catch (e5) {
-    // Continue to next strategy
-  }
-
-  // Strategy 6: Extract JSON from text with stronger pattern matching
-  try {
-    // Look for JSON with "stories" key specifically
-    const storiesMatch = trimmed.match(/\{[\s\S]*"stories"[\s\S]*\}/);
-    if (storiesMatch) {
-      const parsed = JSON.parse(storiesMatch[0]);
-      return parsed;
-    }
-  } catch (e6) {
-    // Continue to next strategy
-  }
-
-  // Strategy 7: Last resort - try to find any valid JSON structure
-  try {
-    // Split by newlines and look for lines that start with { or [
-    const lines = trimmed.split('\n');
-    for (const line of lines) {
-      const trimmedLine = line.trim();
-      if (
-        (trimmedLine.startsWith('{') || trimmedLine.startsWith('[')) &&
-        trimmedLine.length > 2
-      ) {
-        try {
-          const parsed = JSON.parse(trimmedLine);
-          if (Array.isArray(parsed)) {
-            return { stories: parsed };
-          }
-          return parsed;
-        } catch {
-          // Continue to next line
-        }
-      }
-    }
-  } catch (e7) {
-    // Continue to next strategy
-  }
-
-  // All strategies failed - provide detailed error
+  // If all else fails, throw error with response
   throw new Error(
-    `Failed to parse JSON response after trying all strategies.\n\n` +
-      `Response length: ${text.length} characters\n` +
-      `First 500 chars: "${text.substring(0, 500)}"\n\n` +
-      `FULL RESPONSE:\n${text}`
+    `Failed to parse JSON response.\n\n` +
+      `Response: "${text.substring(0, 500)}${text.length > 500 ? '...' : ''}"`
   );
 }
 

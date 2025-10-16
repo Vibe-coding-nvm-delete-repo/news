@@ -194,7 +194,7 @@ export default function NewsTab() {
     // Stage 1: Search for each keyword WITH CONTROLLED CONCURRENCY
     // OpenRouter's :online models require web searches which are slow and rate-limited
     // Lower concurrency (3) prevents API throttling and improves consistency
-    const CONCURRENT_LIMIT = 3; // Optimal for :online models to prevent rate limiting
+    const CONCURRENT_LIMIT = 10; // Increased for better parallelization
 
     /**
      * Worker pool helper: processes items with controlled concurrency
@@ -288,51 +288,8 @@ export default function NewsTab() {
               content: `${settings.searchInstructions}\n\n"${keyword.text}"`, // Pure user instructions + keyword only
             },
           ],
-          // Only add response_format if user configured it in model parameters
-          ...(settings.modelParameters?.response_format && {
-            response_format:
-              settings.modelParameters.response_format === 'json_object'
-                ? { type: 'json_object' }
-                : settings.modelParameters.response_format,
-          }),
-          // Add model parameters for improved quality and consistency
-          ...(settings.modelParameters?.temperature !== undefined && {
-            temperature: settings.modelParameters.temperature,
-          }),
-          ...(settings.modelParameters?.max_tokens !== undefined && {
-            max_tokens: settings.modelParameters.max_tokens,
-          }),
-          ...(settings.modelParameters?.top_p !== undefined && {
-            top_p: settings.modelParameters.top_p,
-          }),
-          ...(settings.modelParameters?.frequency_penalty !== undefined && {
-            frequency_penalty: settings.modelParameters.frequency_penalty,
-          }),
-          ...(settings.modelParameters?.presence_penalty !== undefined && {
-            presence_penalty: settings.modelParameters.presence_penalty,
-          }),
-          ...(settings.modelParameters?.reasoning && {
-            reasoning: settings.modelParameters.reasoning,
-          }),
-          ...(settings.modelParameters?.include_reasoning !== undefined && {
-            include_reasoning: settings.modelParameters.include_reasoning,
-          }),
-          ...(settings.modelParameters?.stop &&
-            settings.modelParameters.stop.length > 0 && {
-              stop: settings.modelParameters.stop,
-            }),
-          ...(settings.modelParameters?.seed !== undefined && {
-            seed: settings.modelParameters.seed,
-          }),
-          ...(settings.modelParameters?.top_k !== undefined && {
-            top_k: settings.modelParameters.top_k,
-          }),
-          ...(settings.modelParameters?.min_p !== undefined && {
-            min_p: settings.modelParameters.min_p,
-          }),
-          ...(settings.modelParameters?.repetition_penalty !== undefined && {
-            repetition_penalty: settings.modelParameters.repetition_penalty,
-          }),
+          // Send ALL user model parameters directly
+          ...settings.modelParameters,
         };
 
         log(
@@ -921,12 +878,11 @@ export default function NewsTab() {
                 <Clock className="h-5 w-5 text-blue-600" />
                 <div>
                   <p className="text-sm font-semibold text-blue-800">
-                    Optimized searches: Up to 3 concurrent searches at a time
+                    Optimized searches: Up to 10 concurrent searches at a time
                   </p>
                   <p className="text-xs text-blue-700 mt-1">
-                    Results appear as they complete (5-20 seconds each). Lower
-                    concurrency ensures consistent performance and avoids API
-                    throttling. Check browser console (F12) for progress logs.
+                    Results appear as they complete (5-20 seconds each). Higher
+                    concurrency for faster parallel processing. Check browser console (F12) for progress logs.
                   </p>
                 </div>
               </div>
