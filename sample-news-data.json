@@ -1,0 +1,31 @@
+{
+  "stories": [
+    {
+      "title": "Sample Technology News Article",
+      "category": "Technology",
+      "rating": 7,
+      "summary": "This is a sample news story about technology. It demonstrates the expected JSON format for the news report generator application.",
+      "source": "Tech News Daily",
+      "url": "https://example.com/tech-news",
+      "date": "2025-10-16"
+    },
+    {
+      "title": "Sample Business News Article",
+      "category": "Business",
+      "rating": 6,
+      "summary": "This is a sample business news story. It shows how business articles should be formatted in the JSON response.",
+      "source": "Business Weekly",
+      "url": "https://example.com/business-news",
+      "date": "2025-10-16"
+    },
+    {
+      "title": "Sample Politics News Article",
+      "category": "Politics",
+      "rating": 8,
+      "summary": "This is a sample politics news story. It demonstrates the correct structure and fields required for each news item.",
+      "source": "Political Times",
+      "url": "https://example.com/politics-news",
+      "date": "2025-10-16"
+    }
+  ]
+}
