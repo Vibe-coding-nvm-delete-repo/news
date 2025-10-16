@@ -258,6 +258,7 @@ export default function NewsTab() {
           },
           body: JSON.stringify({
             model: settings.selectedModel,
+            online: settings.onlineEnabled,
             messages: [
               {
                 role: 'user',
@@ -289,7 +290,7 @@ export default function NewsTab() {
       }
 
       setStage2Cost(stage2CostValue);
-      setActualCost((prev) => prev + stage2CostValue);
+      setActualCost(prev => prev + stage2CostValue);
 
       // Parse JSON response
       const result = data.choices[0].message.content;
@@ -337,8 +338,12 @@ export default function NewsTab() {
                 <Sparkles className="h-6 w-6" />
               </div>
               <div>
-                <p className="text-sm font-medium text-green-800">Total Cost Spent</p>
-                <p className="text-xs text-green-600">Cumulative across all API calls</p>
+                <p className="text-sm font-medium text-green-800">
+                  Total Cost Spent
+                </p>
+                <p className="text-xs text-green-600">
+                  Cumulative across all API calls
+                </p>
               </div>
             </div>
             <div className="text-right">
@@ -349,7 +354,7 @@ export default function NewsTab() {
           </div>
         </div>
       )}
-      
+
       {/* Generate Report Section */}
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-200">
         <div className="flex items-center justify-between mb-4">
