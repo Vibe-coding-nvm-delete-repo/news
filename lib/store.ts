@@ -62,17 +62,24 @@ Do NOT provide code, commands, or apologies. Provide actual news content and inf
 {
   "stories": [
     {
-      "title": "Clear headline",
-      "rating": 1-10 (how interesting/important),
-      "summary": "2-3 sentence summary",
-      "source": "Source name",
-      "url": "Article URL if available",
-      "date": "YYYY-MM-DD"
+      "title": "Clear, concise headline",
+      "rating": 1-10 (numeric value only - rate based on significance, novelty, and relevance),
+      "summary": "2-3 sentence summary of the story",
+      "source": "Source name or null if not available",
+      "url": "Full article URL or null if not available",
+      "date": "YYYY-MM-DD format or null if not available"
     }
   ]
 }
 
-Rate each story based on significance, novelty, and relevance. Sort by rating (highest to lowest).`,
+REQUIREMENTS:
+1. Return ONLY the JSON object starting with { and ending with }
+2. Include ALL stories found across all keyword searches
+3. Sort stories by rating (highest to lowest)
+4. Use null for any missing fields (source, url, date)
+5. Ensure all JSON is properly formatted and valid
+
+Now analyze all the search results below and return the JSON response:`,
         onlineEnabled: true,
       },
       models: [],
