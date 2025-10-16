@@ -34,12 +34,10 @@ export function cn(...inputs: ClassValue[]) {
  * ```ts
  * formatCost(0.015) // Returns: "$0.0150 / 1M tokens"
  * formatCost(1.5)   // Returns: "$1.5000 / 1M tokens"
- * formatCost(undefined) // Returns: "$0.0000 / 1M tokens"
  * ```
  */
-export function formatCost(cost?: number): string {
-  const safeCost = cost ?? 0;
-  return `$${safeCost.toFixed(4)} / 1M tokens`;
+export function formatCost(cost: number): string {
+  return `$${cost.toFixed(4)} / 1M tokens`;
 }
 
 /**

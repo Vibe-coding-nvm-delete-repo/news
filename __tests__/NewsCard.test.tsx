@@ -17,7 +17,6 @@ describe('NewsCard', () => {
     url: 'https://example.com/article',
     date: '2025-10-15',
     generatedAt: '2025-10-16T10:00:00Z',
-    status: 'active',
   };
 
   const mockCardWithoutOptionalFields: CardType = {
@@ -32,14 +31,12 @@ describe('NewsCard', () => {
     url: null,
     date: null,
     generatedAt: '2025-10-16T11:00:00Z',
-    status: 'active',
   };
 
   const mockArchivedCard: CardType = {
     ...mockCard,
     id: 'card-3',
     archivedAt: '2025-10-15T10:00:00Z',
-    status: 'archived',
   };
 
   it('renders card with all information', () => {
@@ -90,7 +87,6 @@ describe('NewsCard', () => {
     const cardWithPreciseRating: CardType = {
       ...mockCard,
       rating: 7.666666,
-      status: 'active',
     };
 
     render(<NewsCard card={cardWithPreciseRating} />);
