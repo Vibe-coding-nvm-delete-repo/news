@@ -62,6 +62,10 @@ export function parseJSON(text: string): any {
   // Try direct JSON parse first
   try {
     const parsed = JSON.parse(trimmed);
+    // If it's an array, wrap in stories
+    if (Array.isArray(parsed)) {
+      return { stories: parsed };
+    }
     return parsed;
   } catch (e1) {
     // Continue to extraction
@@ -69,7 +73,7 @@ export function parseJSON(text: string): any {
 
   // Extract JSON object from text (look for {...})
   try {
-    const jsonMatch = trimmed.match(/\{[\s\S]*\}/);
+    const jsonMatch = trimmed.match(/\{[\s\S]*?\}/);
     if (jsonMatch) {
       const parsed = JSON.parse(jsonMatch[0]);
       return parsed;

@@ -64,12 +64,12 @@ describe('parseJSON', () => {
     expect(parseJSON(input)).toEqual({ key: 'value' });
   });
 
-  test('parses JSON with markdown code blocks', () => {
+  test('extracts JSON from markdown code blocks', () => {
     const input = '```json\n{"key": "value"}\n```';
     expect(parseJSON(input)).toEqual({ key: 'value' });
   });
 
-  test('parses JSON without language specifier in code blocks', () => {
+  test('extracts JSON without language specifier in code blocks', () => {
     const input = '```\n{"key": "value"}\n```';
     expect(parseJSON(input)).toEqual({ key: 'value' });
   });
@@ -84,7 +84,12 @@ describe('parseJSON', () => {
     expect(parseJSON(input)).toEqual({ outer: { inner: 'value' } });
   });
 
-  test('handles arrays', () => {
+  test('handles arrays and wraps in stories', () => {
+    const input = '[1, 2, 3]';
+    expect(parseJSON(input)).toEqual({ stories: [1, 2, 3] });
+  });
+
+  test('handles arrays in objects', () => {
     const input = '{"items": [1, 2, 3]}';
     expect(parseJSON(input)).toEqual({ items: [1, 2, 3] });
   });
@@ -104,11 +109,9 @@ describe('parseJSON', () => {
     expect(parseJSON(input)).toEqual({ key: 'value' });
   });
 
-  test('extracts JSON object with regex greedy matching', () => {
-    // The regex /{[\s\S]*}/ is greedy and will match the entire string from first { to last }
+  test('extracts first JSON object from multiple objects', () => {
     const input = '{"first": 1} and {"second": 2}';
-    // This will actually capture both objects due to greedy matching
-    expect(() => parseJSON(input)).toThrow();
+    expect(parseJSON(input)).toEqual({ first: 1 });
   });
 });
 
