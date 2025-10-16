@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useStore } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,6 +13,7 @@ import {
   Star,
   Sparkles,
   CheckCircle2,
+  XCircle,
 } from 'lucide-react';
 import { parseJSON } from '@/lib/utils';
 
@@ -52,6 +53,7 @@ export default function NewsTab() {
   const [stage2StartTime, setStage2StartTime] = useState<number | null>(null);
   const [stage2ElapsedTime, setStage2ElapsedTime] = useState(0);
   const [showCompletionAnimation, setShowCompletionAnimation] = useState(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Calculate estimated cost whenever keywords or model changes
   useEffect(() => {
@@ -108,6 +110,29 @@ export default function NewsTab() {
     setEstimatedCost(estimatedCostValue);
   };
 
+  const stopAndReset = () => {
+    // Abort any ongoing API requests
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+
+    // Reset all state
+    setIsGenerating(false);
+    setCurrentStage(null);
+    setStage1Results([]);
+    setExpandedResults(new Set());
+    setStories([]);
+    setActualCost(0);
+    setStage2Cost(0);
+    setStage1Progress(0);
+    setStage1StartTime(null);
+    setStage1ElapsedTime(0);
+    setStage2StartTime(null);
+    setStage2ElapsedTime(0);
+    setShowCompletionAnimation(false);
+  };
+
   const generateReport = async () => {
     const enabledKeywords = settings.keywords.filter(k => k.enabled);
 
@@ -120,6 +145,9 @@ export default function NewsTab() {
       alert('Please configure your API key and select a model');
       return;
     }
+
+    // Create new abort controller for this generation
+    abortControllerRef.current = new AbortController();
 
     setIsGenerating(true);
     setCurrentStage(1);
@@ -178,6 +206,7 @@ export default function NewsTab() {
                 tools: [{ type: 'web_search' }],
               }),
             }),
+            signal: abortControllerRef.current?.signal,
           }
         );
 
@@ -224,6 +253,10 @@ export default function NewsTab() {
           return updated;
         });
       } catch (error: any) {
+        // Check if the error is due to abort
+        if (error.name === 'AbortError') {
+          return; // Stop processing
+        }
         // Update status to error
         setStage1Results(prev => {
           const updated = prev.map((r, idx) =>
@@ -276,6 +309,7 @@ export default function NewsTab() {
               },
             ],
           }),
+          signal: abortControllerRef.current?.signal,
         }
       );
 
@@ -318,11 +352,16 @@ export default function NewsTab() {
 
       setStories(sortedStories);
     } catch (error: any) {
+      // Check if the error is due to abort
+      if (error.name === 'AbortError') {
+        return; // Stop processing
+      }
       console.error('Stage 2 error:', error);
       alert(`Failed to generate final report: ${error.message}`);
     } finally {
       setIsGenerating(false);
       setCurrentStage(null);
+      abortControllerRef.current = null;
     }
   };
 
@@ -377,25 +416,33 @@ export default function NewsTab() {
               {settings.keywords.filter(k => k.enabled).length} keywords enabled
             </p>
           </div>
-          <Button
-            onClick={generateReport}
-            disabled={
-              isGenerating ||
-              settings.keywords.filter(k => k.enabled).length === 0 ||
-              !settings.apiKey ||
-              !settings.selectedModel
-            }
-            size="lg"
-          >
-            {isGenerating ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                Generating...
-              </>
-            ) : (
-              'Generate Report'
+          <div className="flex gap-2">
+            <Button
+              onClick={generateReport}
+              disabled={
+                isGenerating ||
+                settings.keywords.filter(k => k.enabled).length === 0 ||
+                !settings.apiKey ||
+                !settings.selectedModel
+              }
+              size="lg"
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Generating...
+                </>
+              ) : (
+                'Generate Report'
+              )}
+            </Button>
+            {isGenerating && (
+              <Button onClick={stopAndReset} variant="destructive" size="lg">
+                <XCircle className="h-4 w-4 mr-2" />
+                Stop & Reset
+              </Button>
             )}
-          </Button>
+          </div>
         </div>
 
         {/* Cost Estimation */}
