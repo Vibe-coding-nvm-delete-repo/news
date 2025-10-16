@@ -108,12 +108,9 @@ export default function NewsTab() {
     setExpandedResults(new Set());
     setStories([]);
     setActualCost(0);
-    setStage2Cost(0);
     setStage1Progress(0);
     setStage1StartTime(null);
     setStage1ElapsedTime(0);
-    setStage2StartTime(null);
-    setStage2ElapsedTime(0);
     setShowCompletionAnimation(false);
   };
 
@@ -253,50 +250,6 @@ export default function NewsTab() {
           setStage1Progress((completedCount / enabledKeywords.length) * 100);
           return updated;
         });
-      }
-    }
-
-    // Show completion animation
-    setShowCompletionAnimation(true);
-    setTimeout(() => setShowCompletionAnimation(false), 2000);
-
-    // Stage 2: Aggregate and format
-    setCurrentStage(2);
-    setStage2StartTime(Date.now());
-
-    try {
-      const aggregatedResults = completedResults
-        .map(r => `Keyword: ${r.keyword}\n\n${r.result}`)
-        .join('\n\n---\n\n');
-
-      const response = await fetch(
-        'https://openrouter.ai/api/v1/chat/completions',
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${settings.apiKey}`,
-            'Content-Type': 'application/json',
-            'X-Title': 'News Report Generator',
-            'HTTP-Referer':
-              typeof window !== 'undefined'
-                ? window.location.origin
-                : 'http://localhost:3000',
-          },
-          body: JSON.stringify({
-            model: settings.selectedModel,
-            messages: [
-              {
-                role: 'user',
-                content: `${settings.formatPrompt}\n\nAll search results:\n\n${aggregatedResults}`,
-              },
-            ],
-          }),
-          signal: abortControllerRef.current?.signal,
-        }
-      );
-
-      const data = await response.json();
-
         return { success: false, error: error.message, cost: 0 };
       }
     });
@@ -306,10 +259,12 @@ export default function NewsTab() {
 
     // Aggregate all stories from successful searches
     results.forEach(result => {
-      if (result.success && result.stories) {
+      if (result && result.success && result.stories) {
         allStories.push(...result.stories);
       }
-      totalCost += result.cost;
+      if (result && result.cost) {
+        totalCost += result.cost;
+      }
     });
 
     // Update total cost
@@ -324,24 +279,10 @@ export default function NewsTab() {
       (a: Story, b: Story) => b.rating - a.rating
     );
 
-      // Sort by rating (highest to lowest)
-      const sortedStories = parsedResult.stories.sort(
-        (a: Story, b: Story) => b.rating - a.rating
-      );
-
-      setStories(sortedStories);
-    } catch (error: any) {
-      // Check if the error is due to abort
-      if (error.name === 'AbortError') {
-        return; // Stop processing
-      }
-      console.error('Stage 2 error:', error);
-      alert(`Failed to generate final report: ${error.message}`);
-    } finally {
-      setIsGenerating(false);
-      setCurrentStage(null);
-      abortControllerRef.current = null;
-    }
+    setStories(sortedStories);
+    setIsGenerating(false);
+    setCurrentStage(null);
+    abortControllerRef.current = null;
   };
 
   const toggleExpanded = (keyword: string) => {
