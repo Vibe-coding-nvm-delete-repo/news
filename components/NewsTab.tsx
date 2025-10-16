@@ -504,9 +504,10 @@ export default function NewsTab() {
     setShowCompletionAnimation(true);
     setTimeout(() => setShowCompletionAnimation(false), 2000);
 
-    // Cards were already added incrementally, just need to create history entry
+    // Always show summary banner and create history entry, regardless of card count
+    // Calculate report metadata
+    let metadata = null;
     if (allCards.length > 0) {
-      // Calculate report metadata
       const categories = Array.from(
         new Set(allCards.map(card => card.category))
       );
@@ -518,26 +519,27 @@ export default function NewsTab() {
           card => Math.round(card.rating) === i
         ).length;
       }
-
-      // Create history entry
-      addReportHistory({
-        id: reportId,
-        generatedAt: new Date().toISOString(),
-        keywords: enabledKeywords.map(k => k.text),
-        totalCards: allCards.length,
-        modelUsed: settings.selectedModel || 'unknown',
-        costSpent: totalCost,
-        categories,
-        avgRating,
-        ratingDistribution,
-      });
-
-      // Show success banner
-      setLastReportCost(totalCost);
-      setLastReportCardCount(allCards.length);
-      setLastReportMetadata({ categories, avgRating, ratingDistribution });
-      setShowSuccessBanner(true);
+      metadata = { categories, avgRating, ratingDistribution };
     }
+
+    // Create history entry
+    addReportHistory({
+      id: reportId,
+      generatedAt: new Date().toISOString(),
+      keywords: enabledKeywords.map(k => k.text),
+      totalCards: allCards.length,
+      modelUsed: settings.selectedModel || 'unknown',
+      costSpent: totalCost,
+      categories: metadata?.categories || [],
+      avgRating: metadata?.avgRating || 0,
+      ratingDistribution: metadata?.ratingDistribution || {},
+    });
+
+    // Always show success banner (will display appropriate message based on card count)
+    setLastReportCost(totalCost);
+    setLastReportCardCount(allCards.length);
+    setLastReportMetadata(metadata);
+    setShowSuccessBanner(true);
 
     setIsGenerating(false);
     setCurrentStage(null);
@@ -680,106 +682,149 @@ export default function NewsTab() {
           )}
 
           {/* Success Banner */}
-          {showSuccessBanner && lastReportMetadata && (
-            <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-xl border-2 border-green-400 shadow-2xl">
+          {showSuccessBanner && (
+            <div className={`bg-gradient-to-r p-6 rounded-xl border-2 shadow-2xl ${
+              lastReportCardCount > 0
+                ? 'from-green-50 to-emerald-50 border-green-400'
+                : 'from-yellow-50 to-orange-50 border-yellow-400'
+            }`}>
               <div className="space-y-4">
                 {/* Header with prominent CTA */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <div className="bg-green-500 text-white rounded-full p-3">
-                      <CheckCircle2 className="h-8 w-8" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold text-green-900">
-                        Report Generated Successfully!
-                      </p>
-                      <p className="text-sm text-green-700 mt-1">
-                        {lastReportCardCount} cards created • Cost: $
-                        {lastReportCost.toFixed(4)}
-                      </p>
-                    </div>
-                  </div>
-                  <Button
-                    onClick={() => setActiveNewsTab('active')}
-                    className="bg-green-600 hover:bg-green-700 text-lg px-8 py-6 shadow-lg hover:shadow-xl transition-all"
-                    size="lg"
-                  >
-                    <span className="font-bold">View Active Cards</span>
-                    <ArrowRight className="h-5 w-5 ml-2" />
-                  </Button>
-                </div>
-
-                {/* Report Metadata */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-green-200">
-                  {/* Categories */}
-                  <div className="bg-white rounded-lg p-4 border border-green-200">
-                    <p className="text-xs font-semibold text-slate-600 mb-2">
-                      CATEGORIES
-                    </p>
-                    <p className="text-2xl font-bold text-slate-900">
-                      {lastReportMetadata.categories.length}
-                    </p>
-                    <p className="text-xs text-slate-500 mt-1 truncate">
-                      {lastReportMetadata.categories.join(', ')}
-                    </p>
-                  </div>
-
-                  {/* Average Rating */}
-                  <div className="bg-white rounded-lg p-4 border border-green-200">
-                    <p className="text-xs font-semibold text-slate-600 mb-2">
-                      AVERAGE RATING
-                    </p>
-                    <p className="text-2xl font-bold text-yellow-600">
-                      {lastReportMetadata.avgRating.toFixed(1)}/10
-                    </p>
-                    <div className="flex gap-1 mt-2">
-                      {[...Array(10)].map((_, i) => (
-                        <div
-                          key={i}
-                          className={`h-1.5 flex-1 rounded ${
-                            i < Math.round(lastReportMetadata.avgRating)
-                              ? 'bg-yellow-500'
-                              : 'bg-slate-200'
-                          }`}
-                        />
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Rating Distribution */}
-                  <div className="bg-white rounded-lg p-4 border border-green-200">
-                    <p className="text-xs font-semibold text-slate-600 mb-2">
-                      RATING DISTRIBUTION
-                    </p>
-                    <div className="grid grid-cols-5 gap-1 text-xs">
-                      {Object.entries(
-                        lastReportMetadata.ratingDistribution
-                      ).map(
-                        ([rating, count]) =>
-                          count > 0 && (
-                            <div key={rating} className="text-center">
-                              <div className="font-bold text-slate-900">
-                                {count}
-                              </div>
-                              <div className="text-slate-500">★{rating}</div>
-                            </div>
-                          )
+                    <div className={`text-white rounded-full p-3 ${
+                      lastReportCardCount > 0 ? 'bg-green-500' : 'bg-yellow-500'
+                    }`}>
+                      {lastReportCardCount > 0 ? (
+                        <CheckCircle2 className="h-8 w-8" />
+                      ) : (
+                        <XCircle className="h-8 w-8" />
                       )}
                     </div>
+                    <div>
+                      <p className={`text-2xl font-bold ${
+                        lastReportCardCount > 0 ? 'text-green-900' : 'text-yellow-900'
+                      }`}>
+                        {lastReportCardCount > 0
+                          ? 'Report Generated Successfully!'
+                          : 'Report Generation Complete'}
+                      </p>
+                      <p className={`text-sm mt-1 ${
+                        lastReportCardCount > 0 ? 'text-green-700' : 'text-yellow-700'
+                      }`}>
+                        {lastReportCardCount > 0
+                          ? `${lastReportCardCount} cards created • Cost: $${lastReportCost.toFixed(4)}`
+                          : `No cards generated • Cost: $${lastReportCost.toFixed(4)}`}
+                      </p>
+                    </div>
                   </div>
+                  {lastReportCardCount > 0 && (
+                    <Button
+                      onClick={() => setActiveNewsTab('active')}
+                      className="bg-green-600 hover:bg-green-700 text-lg px-8 py-6 shadow-lg hover:shadow-xl transition-all"
+                      size="lg"
+                    >
+                      <span className="font-bold">View Active Cards</span>
+                      <ArrowRight className="h-5 w-5 ml-2" />
+                    </Button>
+                  )}
                 </div>
 
-                {/* Next Steps Call-to-Action */}
-                <div className="bg-green-100 border-2 border-green-500 rounded-lg p-4 text-center">
-                  <p className="text-green-900 font-bold text-lg mb-2">
-                    📊 Ready to review your cards?
-                  </p>
-                  <p className="text-green-700 text-sm mb-3">
-                    Click &quot;View Active Cards&quot; above to see all{' '}
-                    {lastReportCardCount} news stories organized by rating and
-                    category!
-                  </p>
-                </div>
+                {/* Report Metadata - Only show if cards were generated */}
+                {lastReportCardCount > 0 && lastReportMetadata && (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-green-200">
+                      {/* Categories */}
+                      <div className="bg-white rounded-lg p-4 border border-green-200">
+                        <p className="text-xs font-semibold text-slate-600 mb-2">
+                          CATEGORIES
+                        </p>
+                        <p className="text-2xl font-bold text-slate-900">
+                          {lastReportMetadata.categories.length}
+                        </p>
+                        <p className="text-xs text-slate-500 mt-1 truncate">
+                          {lastReportMetadata.categories.join(', ')}
+                        </p>
+                      </div>
+
+                      {/* Average Rating */}
+                      <div className="bg-white rounded-lg p-4 border border-green-200">
+                        <p className="text-xs font-semibold text-slate-600 mb-2">
+                          AVERAGE RATING
+                        </p>
+                        <p className="text-2xl font-bold text-yellow-600">
+                          {lastReportMetadata.avgRating.toFixed(1)}/10
+                        </p>
+                        <div className="flex gap-1 mt-2">
+                          {[...Array(10)].map((_, i) => (
+                            <div
+                              key={i}
+                              className={`h-1.5 flex-1 rounded ${
+                                i < Math.round(lastReportMetadata.avgRating)
+                                  ? 'bg-yellow-500'
+                                  : 'bg-slate-200'
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Rating Distribution */}
+                      <div className="bg-white rounded-lg p-4 border border-green-200">
+                        <p className="text-xs font-semibold text-slate-600 mb-2">
+                          RATING DISTRIBUTION
+                        </p>
+                        <div className="grid grid-cols-5 gap-1 text-xs">
+                          {Object.entries(
+                            lastReportMetadata.ratingDistribution
+                          ).map(
+                            ([rating, count]) =>
+                              count > 0 && (
+                                <div key={rating} className="text-center">
+                                  <div className="font-bold text-slate-900">
+                                    {count}
+                                  </div>
+                                  <div className="text-slate-500">★{rating}</div>
+                                </div>
+                              )
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Next Steps Call-to-Action */}
+                    <div className="bg-green-100 border-2 border-green-500 rounded-lg p-4 text-center">
+                      <p className="text-green-900 font-bold text-lg mb-2">
+                        📊 Ready to review your cards?
+                      </p>
+                      <p className="text-green-700 text-sm mb-3">
+                        Click &quot;View Active Cards&quot; above to see all{' '}
+                        {lastReportCardCount} news stories organized by rating and
+                        category!
+                      </p>
+                    </div>
+                  </>
+                )}
+
+                {/* No Cards Generated Warning */}
+                {lastReportCardCount === 0 && (
+                  <div className="bg-yellow-100 border-2 border-yellow-500 rounded-lg p-4">
+                    <p className="text-yellow-900 font-bold text-lg mb-2">
+                      ⚠️ No Cards Generated
+                    </p>
+                    <p className="text-yellow-800 text-sm mb-3">
+                      All keyword searches completed, but no valid news stories were found. This could be because:
+                    </p>
+                    <ul className="text-yellow-800 text-sm space-y-1 ml-6 list-disc">
+                      <li>All keywords failed or encountered errors</li>
+                      <li>No recent stories (last 24 hours) matched your keywords</li>
+                      <li>The AI model couldn&apos;t find relevant news articles</li>
+                    </ul>
+                    <p className="text-yellow-800 text-sm mt-3 font-medium">
+                      Try adjusting your keywords or checking the individual keyword results above for more details.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           )}
