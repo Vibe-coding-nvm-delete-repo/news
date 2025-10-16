@@ -197,19 +197,35 @@ export default function SettingsTab() {
         </p>
         
         <div className="space-y-2">
-          <div className="relative">
-            <Input
-              type="password"
-              placeholder="sk-or-v1-..."
-              value={apiKeyInput}
-              onChange={(e) => setApiKeyInput(e.target.value)}
-              className="flex-1 pr-10"
-            />
-            {isValidating && (
-              <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
-              </div>
-            )}
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Input
+                type="password"
+                placeholder="sk-or-v1-..."
+                value={apiKeyInput}
+                onChange={(e) => setApiKeyInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && validateAndSaveApiKey()}
+                className="pr-10"
+              />
+              {isValidating && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+                </div>
+              )}
+            </div>
+            <Button 
+              onClick={validateAndSaveApiKey} 
+              disabled={isValidating || !apiKeyInput.trim()}
+            >
+              {isValidating ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Validating...
+                </>
+              ) : (
+                "Validate & Save"
+              )}
+            </Button>
           </div>
           
           {validationStatus !== "idle" && (
