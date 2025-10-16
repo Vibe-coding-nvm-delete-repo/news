@@ -505,9 +505,7 @@ export default function SettingsTab() {
                 Response Format
               </label>
               <select
-                value={
-                  settings.modelParameters?.response_format ?? 'json_object'
-                }
+                value={settings.modelParameters?.response_format ?? 'auto'}
                 onChange={e =>
                   setModelParameters({
                     response_format: e.target.value as
@@ -518,13 +516,12 @@ export default function SettingsTab() {
                 }
                 className="w-full px-3 py-2 border rounded-md"
               >
-                <option value="json_object">JSON Object (Recommended)</option>
                 <option value="auto">Auto</option>
+                <option value="json_object">JSON Object</option>
                 <option value="text">Text</option>
               </select>
               <p className="text-xs text-slate-500">
-                <strong>json_object</strong> enforces valid JSON output. Highly
-                recommended for this app.
+                Choose the output format that works best for your prompts.
               </p>
             </div>
 
@@ -624,17 +621,17 @@ export default function SettingsTab() {
             <Button
               onClick={() =>
                 setModelParameters({
-                  temperature: 0.5,
-                  max_tokens: 8000,
-                  response_format: 'json_object',
+                  temperature: 0.7,
+                  max_tokens: 4000,
+                  // response_format: removed - let user choose
                   top_p: 0.9,
-                  frequency_penalty: 0.5,
-                  presence_penalty: 0.3,
+                  frequency_penalty: 0.0,
+                  presence_penalty: 0.0,
                 })
               }
               variant="outline"
             >
-              Reset to Recommended Defaults
+              Reset to Neutral Defaults
             </Button>
           </div>
         </div>

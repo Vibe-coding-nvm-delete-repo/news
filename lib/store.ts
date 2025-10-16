@@ -207,14 +207,15 @@ interface StoreState {
 
 /**
  * Default model parameters for backward compatibility and new users
+ * IMPORTANT: No forced settings - these are just suggested defaults that users can change
  */
 const DEFAULT_MODEL_PARAMETERS: ModelParameters = {
-  temperature: 0.5,
-  max_tokens: 8000, // Increased from 2000 to prevent JSON truncation when generating multiple stories
-  response_format: 'json_object',
+  temperature: 0.7,
+  max_tokens: 4000,
+  // response_format: removed - let user choose their own output format
   top_p: 0.9,
-  frequency_penalty: 0.5,
-  presence_penalty: 0.3,
+  frequency_penalty: 0.0,
+  presence_penalty: 0.0,
 };
 
 export const useStore = create<StoreState>()(
@@ -224,53 +225,7 @@ export const useStore = create<StoreState>()(
         apiKey: null,
         selectedModel: null,
         keywords: [],
-        searchInstructions: `YOU ARE A PROFESSIONAL NEWS RESEARCHER. Your job is to SEARCH THE WEB THOROUGHLY for recent breaking news.
-
-SEARCH INSTRUCTIONS:
-1. SEARCH multiple reputable news sources for the keyword provided below
-2. Find AT LEAST 5-10 recent news stories (more is better)
-3. Prioritize stories from the LAST 48 HOURS when possible
-4. Include the EXACT publication date in YYYY-MM-DD format
-5. Include the actual article URL (not the homepage)
-
-CRITICAL REQUIREMENTS FOR EACH STORY:
-- "title": Full headline exactly as it appears in the article
-- "category": Must be one of: Technology, Politics, Business, Science, World, Sports, Entertainment, Health
-- "rating": Rate the news significance from 1-10 (1=trivial mention, 5=notable news, 8=major story, 10=breaking global event)
-- "summary": Write 2-3 sentences explaining the key facts and why it matters
-- "source": The publication name (e.g., "Reuters", "TechCrunch", "BBC News")
-- "url": The complete article URL starting with https://
-- "date": Publication date in YYYY-MM-DD format (REQUIRED - do not guess, find the actual date)
-
-Return ONLY valid JSON in this EXACT format (no markdown, no extra text):
-{
-  "stories": [
-    {
-      "title": "Full article headline",
-      "category": "Technology",
-      "rating": 7,
-      "summary": "Detailed 2-3 sentence summary of the key facts and implications.",
-      "source": "Publication Name",
-      "url": "https://actual-article-url.com/article",
-      "date": "2025-10-16"
-    }
-  ]
-}
-
-⚠️ IMPORTANT: You MUST return at least 5-10 stories. Do NOT return {"stories": []} unless:
-1. The keyword is complete gibberish/nonsensical
-2. You have exhausted ALL search attempts and found ZERO results across multiple sources
-3. You have tried broader related terms and still found nothing
-
-If initial searches fail:
-- Try synonyms and related terms
-- Search for broader topics related to the keyword
-- Look for recent developments in that field/area
-- Check multiple news sources and aggregators
-
-YOU HAVE ONLINE SEARCH CAPABILITY - USE IT FULLY. Empty results are NOT acceptable unless truly impossible.
-
-NOW SEARCH FOR THIS KEYWORD:`,
+        searchInstructions: `Search for news about the following keyword and provide your findings:`,
         onlineEnabled: true,
         modelParameters: DEFAULT_MODEL_PARAMETERS,
       },
