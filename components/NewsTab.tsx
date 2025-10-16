@@ -174,7 +174,19 @@ export default function NewsTab() {
     // Stage 1: Search for each keyword IN PARALLEL
     const searchPromises = enabledKeywords.map(async (keyword, index) => {
       try {
-        const response = await fetch(
+        console.log(`[${keyword.text}] Starting search...`);
+        const startTime = Date.now();
+
+        // Create a timeout promise (120 seconds for online searches)
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(
+            () => reject(new Error('Search timeout after 120 seconds')),
+            120000
+          );
+        });
+
+        // Race between fetch and timeout
+        const fetchPromise = fetch(
           'https://openrouter.ai/api/v1/chat/completions',
           {
             method: 'POST',
@@ -200,20 +212,44 @@ export default function NewsTab() {
           }
         );
 
+        const response = (await Promise.race([
+          fetchPromise,
+          timeoutPromise,
+        ])) as Response;
+
+        console.log(
+          `[${keyword.text}] Response received in ${((Date.now() - startTime) / 1000).toFixed(1)}s`
+        );
+
         const data = await response.json();
 
         if (data.error) {
+          console.error(`[${keyword.text}] API Error:`, data.error);
           throw new Error(data.error.message || 'API Error');
         }
 
+        if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+          console.error(`[${keyword.text}] Invalid API response:`, data);
+          throw new Error('Invalid API response format');
+        }
+
         const result = data.choices[0].message.content;
+        console.log(`[${keyword.text}] Response length: ${result.length} chars`);
 
         // Parse JSON from this keyword's search
         const parsedResult = parseJSON(result);
 
         if (!parsedResult.stories || !Array.isArray(parsedResult.stories)) {
+          console.error(
+            `[${keyword.text}] Invalid JSON format. Response:`,
+            result.substring(0, 500)
+          );
           throw new Error("Invalid JSON format: missing 'stories' array");
         }
+
+        console.log(
+          `[${keyword.text}] Successfully parsed ${parsedResult.stories.length} stories`
+        );
 
         // Add keyword and reportId to each story, convert to Card
         const cardsFromStories: Card[] = parsedResult.stories.map(
@@ -269,8 +305,12 @@ export default function NewsTab() {
       } catch (error: any) {
         // Check if the error is due to abort
         if (error.name === 'AbortError') {
-          return; // Stop processing
+          console.log(`[${keyword.text}] Search aborted by user`);
+          return { success: false, cards: [], cost: 0 }; // Return error object instead of undefined
         }
+
+        console.error(`[${keyword.text}] Error:`, error.message);
+
         // Update status to error
         setStage1Results(prev => {
           const updated = prev.map((r, idx) =>
@@ -285,11 +325,15 @@ export default function NewsTab() {
           setStage1Progress((completedCount / enabledKeywords.length) * 100);
           return updated;
         });
+
+        return { success: false, cards: [], cost: 0 }; // Return error object instead of undefined
       }
     });
 
     // Wait for all searches to complete (TRUE PARALLEL PROCESSING)
+    console.log('Waiting for all keyword searches to complete...');
     const results = await Promise.all(searchPromises);
+    console.log('All searches completed!');
 
     // Aggregate all cards from successful searches
     results.forEach(result => {
@@ -300,6 +344,10 @@ export default function NewsTab() {
         totalCost += result.cost;
       }
     });
+
+    console.log(
+      `Generated ${allCards.length} cards with total cost $${totalCost.toFixed(4)}`
+    );
 
     // Update total cost
     setActualCost(totalCost);
@@ -560,6 +608,22 @@ export default function NewsTab() {
 
           {/* Generate Report Section */}
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-200">
+            {/* Timing Warning */}
+            <div className="mb-4 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+              <div className="flex items-center gap-2">
+                <Clock className="h-5 w-5 text-yellow-600" />
+                <div>
+                  <p className="text-sm font-semibold text-yellow-800">
+                    Web searches can take 30-120 seconds per keyword
+                  </p>
+                  <p className="text-xs text-yellow-700 mt-1">
+                    The AI performs real-time web searches. Check browser console
+                    (F12) for progress logs.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="text-2xl font-semibold text-slate-900">
