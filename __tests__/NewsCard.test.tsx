@@ -17,6 +17,7 @@ describe('NewsCard', () => {
     url: 'https://example.com/article',
     date: '2025-10-15',
     generatedAt: '2025-10-16T10:00:00Z',
+    status: 'active',
   };
 
   const mockCardWithoutOptionalFields: CardType = {
@@ -31,6 +32,7 @@ describe('NewsCard', () => {
     url: null,
     date: null,
     generatedAt: '2025-10-16T11:00:00Z',
+    status: 'active',
   };
 
   const mockArchivedCard: CardType = {
@@ -91,6 +93,24 @@ describe('NewsCard', () => {
 
     render(<NewsCard card={cardWithPreciseRating} />);
     expect(screen.getByText('7.7')).toBeInTheDocument();
+  });
+
+  it('renders when rating is a string by coercing to number', () => {
+    const cardWithStringRating = {
+      ...mockCard,
+      rating: '8.5' as unknown as number,
+    };
+    render(<NewsCard card={cardWithStringRating} />);
+    expect(screen.getByText('8.5')).toBeInTheDocument();
+  });
+
+  it('falls back to 0.0 when rating is invalid', () => {
+    const cardWithInvalidRating = {
+      ...mockCard,
+      rating: 'not-a-number' as unknown as number,
+    };
+    render(<NewsCard card={cardWithInvalidRating} />);
+    expect(screen.getByText('0.0')).toBeInTheDocument();
   });
 
   it('displays archived date when card is archived', () => {

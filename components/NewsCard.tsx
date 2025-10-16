@@ -22,6 +22,12 @@ export default function NewsCard({
   showReadButton = false,
   onMarkAsRead,
 }: NewsCardProps) {
+  // Runtime guard: ensure rating is a number to prevent toFixed errors
+  const ratingNumber =
+    typeof card.rating === 'number'
+      ? card.rating
+      : parseFloat((card as any).rating) || 0;
+
   return (
     <div className="border rounded-lg p-5 bg-white hover:shadow-lg transition-all duration-300 hover:scale-[1.01]">
       <div className="flex items-start justify-between gap-4 mb-3">
@@ -29,7 +35,7 @@ export default function NewsCard({
           <div className="flex items-center gap-1 bg-yellow-100 px-2 py-1 rounded">
             <Star className="h-4 w-4 text-yellow-600 fill-yellow-600" />
             <span className="font-bold text-yellow-900">
-              {card.rating.toFixed(1)}
+              {ratingNumber.toFixed(1)}
             </span>
           </div>
           <div className="flex items-center gap-1 bg-blue-100 px-2 py-1 rounded text-xs">

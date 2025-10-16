@@ -37,9 +37,9 @@ describe('Large Components Export', () => {
   it('exports layout metadata', () => {
     const { metadata } = require('@/app/layout');
     expect(metadata).toBeDefined();
-    expect(metadata.title).toBe('News Report Generator');
+    expect(metadata.title).toBe('NewsForge AI');
     expect(metadata.description).toBe(
-      'AI-powered news aggregation and analysis'
+      'AI-powered news aggregation and intelligent reporting'
     );
   });
 });
