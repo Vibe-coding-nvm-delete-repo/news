@@ -52,6 +52,7 @@ A simplified AI-powered news aggregation tool using OpenRouter.
 - ✅ **Cost Tracking**: See estimated and actual costs
 - ✅ **Local Storage**: All settings persist in your browser
 - ✅ **No Database Required**: Everything works locally
+- ✅ **Interactive Policy Viewer**: Browse autonomous agent policies with responsive design
 
 ## Data Storage
 
@@ -82,6 +83,7 @@ Comprehensive documentation is available in the `docs/` folder:
 ### For Users
 
 - **[README.md](README.md)** - This file - Quick start and user guide
+- **[Policy Viewer Guide](docs/POLICY_VIEWER_GUIDE.md)** - Interactive policy documentation guide
 
 ### For Developers
 
@@ -90,6 +92,11 @@ Comprehensive documentation is available in the `docs/` folder:
 - **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** - Application architecture and design decisions
 - **[docs/API.md](docs/API.md)** - OpenRouter API integration documentation
 - **[docs/CODE_STYLE.md](docs/CODE_STYLE.md)** - Code style guide and best practices
+
+### For Autonomous Agents
+
+- **[Agent Policies Hub](docs/agent-policies/README.md)** - Complete documentation suite for agent governance
+- **Interactive Policy Viewer** - Access via the 🤖 Agent Policy tab in the application
 
 ### For Deployment
 
