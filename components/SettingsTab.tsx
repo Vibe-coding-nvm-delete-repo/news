@@ -266,11 +266,12 @@ export default function SettingsTab() {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-md">
               <Switch
-                checked={settings.onlineEnabled}
-                onCheckedChange={setOnlineEnabled}
+                checked={true}
+                onCheckedChange={() => {}}
+                disabled={true}
               />
               <span className="text-sm font-medium text-green-700">
-                Enable Web Search
+                Online Mode (Always Enabled)
               </span>
             </div>
             <Button
@@ -285,10 +286,9 @@ export default function SettingsTab() {
           </div>
         </div>
         <p className="text-sm text-slate-600">
-          <strong>Note:</strong> For best results with online search, use models
-          with built-in web search capabilities (e.g., Perplexity Sonar,
-          Perplexity Sonar Pro). Other models may not provide real-time web
-          search results.
+          <strong>Note:</strong> All searches automatically use the{' '}
+          <code>:online</code> variant of your selected model for real-time web
+          search capabilities. Models are sorted by cost (cheapest first).
         </p>
 
         {models.length > 0 && (
