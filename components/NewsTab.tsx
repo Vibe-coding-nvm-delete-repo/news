@@ -310,13 +310,17 @@ export default function NewsTab() {
         );
 
         // Parse JSON from this keyword's search
-        let parsedResult;
+        let parsedResult: any;
         try {
           parsedResult = parseJSON(result);
           console.log(`[${keyword.text}] ✅ JSON parsed successfully`);
 
           // Validate stories array exists
-          if (!parsedResult.stories || !Array.isArray(parsedResult.stories)) {
+          if (
+            !parsedResult ||
+            !parsedResult.stories ||
+            !Array.isArray(parsedResult.stories)
+          ) {
             console.error(
               `[${keyword.text}] Invalid JSON format. Response:`,
               result.substring(0, 500)
@@ -329,7 +333,7 @@ export default function NewsTab() {
             parseError.message
           );
           console.error(`[${keyword.text}] 📄 FULL RESPONSE:`, result);
-          // Return empty array instead of throwing - don't break the entire generation
+          // Return empty result instead of throwing - don't break the entire generation
           return {
             success: false,
             cards: [],
@@ -340,6 +344,7 @@ export default function NewsTab() {
           };
         }
 
+        // At this point, parsedResult is guaranteed to be valid with a stories array
         console.log(
           `[${keyword.text}] Successfully parsed ${parsedResult.stories.length} stories`
         );
