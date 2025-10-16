@@ -154,6 +154,11 @@ The application supports 13+ model parameters to improve accuracy and consistenc
 **Implementation:**
 
 ```typescript
+const normalizedParameters = normalizeModelParameters(
+  settings.modelParameters,
+  modelId + ':online'
+);
+
 const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
   method: 'POST',
   headers: {
@@ -171,16 +176,7 @@ const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       },
     ],
     // Model parameters (all optional)
-    temperature: settings.modelParameters.temperature,
-    max_tokens: settings.modelParameters.max_tokens,
-    response_format:
-      settings.modelParameters.response_format === 'json_object'
-        ? { type: 'json_object' }
-        : undefined,
-    top_p: settings.modelParameters.top_p,
-    frequency_penalty: settings.modelParameters.frequency_penalty,
-    presence_penalty: settings.modelParameters.presence_penalty,
-    // ... other parameters as configured
+    ...normalizedParameters,
   }),
 });
 ```
