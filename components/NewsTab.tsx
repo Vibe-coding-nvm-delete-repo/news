@@ -137,30 +137,42 @@ export default function NewsTab() {
     let totalCost = 0;
     const completedResults: any[] = [];
 
-    // Stage 1: Search for ALL keywords in PARALLEL
-    const keywordPromises = enabledKeywords.map((keyword, index) => {
-      return fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${settings.apiKey}`,
-          "Content-Type": "application/json",
-          "X-Title": "News Report Generator",
-        },
-        body: JSON.stringify({
-          model: settings.selectedModel,
-          messages: [
-            {
-              role: "user",
-              content: `${settings.searchInstructions}\n\nKeyword: ${keyword.text}`,
-            },
-          ],
-        }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.error) {
-            throw new Error(data.error.message || "API Error");
-          }
+    // Stage 1: Search for each keyword
+    for (let i = 0; i < enabledKeywords.length; i++) {
+      const keyword = enabledKeywords[i];
+      
+      // Update status to loading
+      setStage1Results((prev) =>
+        prev.map((r, idx) =>
+          idx === i ? { ...r, status: "loading" } : r
+        )
+      );
+
+      try {
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${settings.apiKey}`,
+            "Content-Type": "application/json",
+            "X-Title": "News Report Generator",
+          },
+          body: JSON.stringify({
+            model: settings.selectedModel,
+            online: settings.onlineEnabled,
+            messages: [
+              {
+                role: "user",
+                content: `${settings.searchInstructions}\n\nKeyword: ${keyword.text}`,
+              },
+            ],
+          }),
+        });
+
+        const data = await response.json();
+        
+        if (data.error) {
+          throw new Error(data.error.message || "API Error");
+        }
 
           const result = data.choices[0].message.content;
           

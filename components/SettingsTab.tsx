@@ -23,6 +23,7 @@ export default function SettingsTab() {
     toggleKeyword,
     setSearchInstructions,
     setFormatPrompt,
+    setOnlineEnabled,
   } = useStore();
 
   // OpenRouter API Key
@@ -246,13 +247,26 @@ export default function SettingsTab() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-semibold text-slate-900">Step 2: Fetch & Select a Model</h2>
-          <Button onClick={fetchModels} disabled={isLoadingModels || !settings.apiKey}>
-            {isLoadingModels ? (
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            ) : null}
-            Fetch Models
-          </Button>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-md">
+              <Switch
+                checked={settings.onlineEnabled}
+                onCheckedChange={setOnlineEnabled}
+                disabled={true}
+              />
+              <span className="text-sm font-medium text-green-700">Online (OpenRouter)</span>
+            </div>
+            <Button onClick={fetchModels} disabled={isLoadingModels || !settings.apiKey}>
+              {isLoadingModels ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : null}
+              Fetch Models
+            </Button>
+          </div>
         </div>
+        <p className="text-sm text-slate-600">
+          All OpenRouter models have online search enabled by default for keyword searches.
+        </p>
 
         {models.length > 0 && (
           <div className="space-y-2">
