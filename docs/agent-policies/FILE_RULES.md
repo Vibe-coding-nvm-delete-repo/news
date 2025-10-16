@@ -8,39 +8,42 @@
 
 ## 🎯 Quick Reference Matrix
 
-| File/Directory | Mode 0 | Mode 0.5 | Mode 1 | Mode 2 | Mode 3 | Read |
-|----------------|--------|----------|--------|--------|--------|------|
-| `app/**` | ✅ | ✅ | ✅ | ❌ | ✅* | ✅ |
-| `src/**` | ✅ | ✅ | ✅ | ❌ | ✅* | ✅ |
-| `tests/**` | ✅ | ✅ | ✅ | ❌ | ✅* | ✅ |
-| `docs/**` | ✅ | ❌ | ✅ | ❌ | ✅* | ✅ |
-| `jest.config.*` | ❌ | ❌ | ✅ | ❌ | ✅* | ✅ |
-| `tsconfig*.json` | ❌ | ❌ | ✅ | ❌ | ✅* | ✅ |
-| `tests/setup*.ts` | ✅ | ✅ | ✅ | ❌ | ✅* | ✅ |
-| `package.json` | ❌ | ❌ | ✅** | ❌ | ✅* | ✅ |
-| Lockfiles | ❌ | ❌ | ✅*** | ❌ | ✅* | ✅ |
-| `.github/**` | ❌ | ❌ | ❌ | ✅ | ✅* | ✅ |
-| Root configs | ❌ | ❌ | ❌ | ❌ | ✅* | ✅ |
-| Non-text assets | ❌ | ❌ | ❌ | ❌ | ✅* | ✅ |
+| File/Directory    | Mode 0 | Mode 0.5 | Mode 1   | Mode 2 | Mode 3 | Read |
+| ----------------- | ------ | -------- | -------- | ------ | ------ | ---- |
+| `app/**`          | ✅     | ✅       | ✅       | ❌     | ✅\*   | ✅   |
+| `src/**`          | ✅     | ✅       | ✅       | ❌     | ✅\*   | ✅   |
+| `tests/**`        | ✅     | ✅       | ✅       | ❌     | ✅\*   | ✅   |
+| `docs/**`         | ✅     | ❌       | ✅       | ❌     | ✅\*   | ✅   |
+| `jest.config.*`   | ❌     | ❌       | ✅       | ❌     | ✅\*   | ✅   |
+| `tsconfig*.json`  | ❌     | ❌       | ✅       | ❌     | ✅\*   | ✅   |
+| `tests/setup*.ts` | ✅     | ✅       | ✅       | ❌     | ✅\*   | ✅   |
+| `package.json`    | ❌     | ❌       | ✅\*\*   | ❌     | ✅\*   | ✅   |
+| Lockfiles         | ❌     | ❌       | ✅\*\*\* | ❌     | ✅\*   | ✅   |
+| `.github/**`      | ❌     | ❌       | ❌       | ✅     | ✅\*   | ✅   |
+| Root configs      | ❌     | ❌       | ❌       | ❌     | ✅\*   | ✅   |
+| Non-text assets   | ❌     | ❌       | ❌       | ❌     | ✅\*   | ✅   |
 
 **Legend:**
+
 - ✅ = Write allowed
 - ❌ = Write denied (read-only)
-- ✅* = Write allowed ONLY if explicitly approved in Mode 3 request
-- ✅** = Mode 1: Only `scripts` and `devDependencies` sections
-- ✅*** = Mode 1: Only if devDependency was added
+- ✅\* = Write allowed ONLY if explicitly approved in Mode 3 request
+- ✅\*\* = Mode 1: Only `scripts` and `devDependencies` sections
+- ✅\*\*\* = Mode 1: Only if devDependency was added
 
 ---
 
 ## 📂 Mode 0 (Normal) - Allowlist
 
 ### Application Code ✅
+
 ```
 app/**
 src/**
 ```
 
 **Examples:**
+
 - `app/page.tsx`
 - `app/api/route.ts`
 - `src/components/Button.tsx`
@@ -52,6 +55,7 @@ src/**
 ---
 
 ### Test Code ✅
+
 ```
 tests/**
 test/**
@@ -63,6 +67,7 @@ __tests__/**
 ```
 
 **Examples:**
+
 - `tests/unit/auth.test.ts`
 - `src/components/__tests__/Button.test.tsx`
 - `app/api/__tests__/route.test.ts`
@@ -72,17 +77,20 @@ __tests__/**
 ---
 
 ### Documentation ✅
+
 ```
 docs/**
 *.md (in allowed directories)
 ```
 
 **Examples:**
+
 - `docs/api/authentication.md`
 - `src/components/README.md`
 - `app/README.md`
 
 **Exceptions:**
+
 - Root `README.md` → ❌ Denied (use Mode 3)
 - `.github/**/*.md` → ❌ Denied (use Mode 2 or 3)
 
@@ -95,6 +103,7 @@ docs/**
 ### Root Configuration Files ❌
 
 **ESLint:**
+
 ```
 eslint.config.js
 eslint.config.mjs
@@ -103,6 +112,7 @@ eslint.config.cjs
 ```
 
 **Prettier:**
+
 ```
 prettier.config.js
 prettier.config.mjs
@@ -110,12 +120,14 @@ prettier.config.mjs
 ```
 
 **TypeScript:**
+
 ```
 tsconfig.json
 tsconfig.*.json
 ```
 
 **Bundlers/Build Tools:**
+
 ```
 next.config.js
 next.config.ts
@@ -126,6 +138,7 @@ rollup.config.js
 ```
 
 **Testing:**
+
 ```
 jest.config.js
 jest.config.ts
@@ -133,6 +146,7 @@ vitest.config.ts
 ```
 
 **Git:**
+
 ```
 .gitignore
 .gitattributes
@@ -157,6 +171,7 @@ pnpm-workspace.yaml
 **Rationale:** Dependency changes have security/stability implications
 
 **Exceptions:**
+
 - Mode 1 (LTRM): `package.json` devDependencies only
 - Mode 3: With approval
 
@@ -174,6 +189,7 @@ pnpm-workspace.yaml
 **Rationale:** CI changes affect entire team's workflow
 
 **Exceptions:**
+
 - Mode 2 (CI_REPAIR): `.github/**` only, for repairs
 - Mode 3: With approval, for additions
 
@@ -230,6 +246,7 @@ scripts/**
 ### Non-Text Assets ❌
 
 **Images:**
+
 ```
 *.png
 *.jpg
@@ -241,6 +258,7 @@ scripts/**
 ```
 
 **Fonts:**
+
 ```
 *.woff
 *.woff2
@@ -250,6 +268,7 @@ scripts/**
 ```
 
 **Other Binaries:**
+
 ```
 *.pdf
 *.zip
@@ -267,6 +286,7 @@ scripts/**
 **Same as Mode 0 EXCEPT:**
 
 ### Denied in 0.5 (Even if Allowed in Mode 0) ❌
+
 ```
 docs/**   (Documentation changes not allowed)
 ```
@@ -280,6 +300,7 @@ docs/**   (Documentation changes not allowed)
 **All Mode 0 files PLUS:**
 
 ### Test Configuration ✅
+
 ```
 jest.config.js
 jest.config.ts
@@ -292,6 +313,7 @@ vitest.config.ts
 ---
 
 ### TypeScript Configuration ✅
+
 ```
 tsconfig.json
 tsconfig.*.json
@@ -303,6 +325,7 @@ tsconfig.base.json
 ---
 
 ### Test Setup Files ✅
+
 ```
 tests/setup.ts
 tests/setupTests.ts
@@ -317,18 +340,20 @@ __tests__/setup.ts
 ### Package.json (LIMITED) ✅
 
 **Allowed Sections:**
+
 ```json
 {
   "scripts": {
-    "test": "..."    // ✅ Can modify
+    "test": "..." // ✅ Can modify
   },
   "devDependencies": {
-    "ts-jest": "..."   // ✅ Can add/modify (ONE only)
+    "ts-jest": "..." // ✅ Can add/modify (ONE only)
   }
 }
 ```
 
 **Denied Sections:**
+
 ```json
 {
   "dependencies": { ... },     // ❌ Still denied
@@ -359,9 +384,10 @@ yarn.lock
 
 ## 🔄 Mode 2 (CI_REPAIR) - Allowlist
 
-**ONLY `.github/**` (Highly Restrictive!)**
+**ONLY `.github/**` (Highly Restrictive!)\*\*
 
 ### Allowed ✅
+
 ```
 .github/workflows/**
 .github/actions/**
@@ -371,6 +397,7 @@ yarn.lock
 ```
 
 **Examples:**
+
 - `.github/workflows/test.yml`
 - `.github/workflows/deploy.yml`
 - `.github/actions/custom-action/action.yml`
@@ -378,6 +405,7 @@ yarn.lock
 ### Still Denied ❌
 
 **Even in Mode 2:**
+
 - Application code (`app/**`, `src/**`) → ❌ Denied
 - Tests (`tests/**`) → ❌ Denied
 - Configs (root `*.config.js`) → ❌ Denied
@@ -394,6 +422,7 @@ yarn.lock
 
 1. Submit Mode 3 Override Request
 2. Receive approval with explicit file list:
+
    ```
    APPROVED_OVERRIDE: Mode 3 (Option 1)
    Approved files:
@@ -436,6 +465,7 @@ done
 ### Generated Files
 
 **Auto-Generated (Always Allowed if source is allowed):**
+
 ```
 *.map            (Source maps - auto-generated from build)
 *.d.ts           (Type declarations - auto-generated from TS)
@@ -448,11 +478,13 @@ done
 ### Monorepo Package.json
 
 **Workspace Root:**
+
 ```
 /package.json     → ❌ Denied (Mode 3 required)
 ```
 
 **Package-Specific:**
+
 ```
 /packages/app/package.json     → Follow mode rules per package
 ```
@@ -466,6 +498,7 @@ done
 **Treatment:** Follow the link target's rules
 
 **Example:**
+
 ```
 src/lib/utils.ts  → ✅ Allowed (Mode 0)
 ln -s src/lib/utils.ts app/utils.ts
@@ -477,6 +510,7 @@ app/utils.ts      → ✅ Allowed (symlink to allowed file)
 ### Submodules
 
 **Git Submodules:**
+
 ```
 .gitmodules       → ❌ Denied (Mode 3 required)
 <submodule>/**    → ❌ Denied (modify in submodule repo directly)
@@ -511,6 +545,7 @@ See [DECISION_TREES.md > File Modification Decision Tree](./DECISION_TREES.md#fi
 ### If Uncertain
 
 **Default to Mode 4 (Freeze) and ask:**
+
 ```markdown
 🧊 EMERGENCY FREEZE (Mode 4)
 
@@ -533,12 +568,14 @@ Trigger: Uncertain file access permissions
 ### Mistake 1: Modifying `package.json` in Mode 0
 
 ❌ **Wrong:**
+
 ```bash
 # In Mode 0
 npm install express  # Modifies package.json → VIOLATION
 ```
 
 ✅ **Correct:**
+
 ```markdown
 → Submit Mode 3 Override Request
 → Justify: "Need Express for API endpoints"
@@ -551,12 +588,14 @@ npm install express  # Modifies package.json → VIOLATION
 ### Mistake 2: Changing `tsconfig.json` without LTRM Need
 
 ❌ **Wrong:**
+
 ```bash
 # Baseline tests pass, but want to add path alias
 # Edit tsconfig.json → VIOLATION (not LTRM eligible)
 ```
 
 ✅ **Correct:**
+
 ```markdown
 → Submit Mode 3 Override Request
 → Justify: "Path aliases improve import clarity"
@@ -568,12 +607,14 @@ npm install express  # Modifies package.json → VIOLATION
 ### Mistake 3: Adding Image in Mode 0
 
 ❌ **Wrong:**
+
 ```bash
 # In Mode 0
 git add public/logo.png  # Non-text asset → VIOLATION
 ```
 
 ✅ **Correct:**
+
 ```markdown
 → Submit Mode 3 Override Request
 → Include: File size, license, justification
@@ -585,12 +626,14 @@ git add public/logo.png  # Non-text asset → VIOLATION
 ### Mistake 4: Modifying Docs in Mode 0.5
 
 ❌ **Wrong:**
+
 ```bash
 # In Mode 0.5 (Refactor)
 git add docs/api.md  # Docs not allowed in 0.5 → VIOLATION
 ```
 
 ✅ **Correct:**
+
 ```bash
 # Use Mode 0 instead (requires issue)
 # OR remove doc changes from Mode 0.5 commit

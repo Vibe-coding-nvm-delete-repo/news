@@ -15,38 +15,42 @@ npm run dev
 
 ## Available Scripts
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start development server on http://localhost:3000 |
-| `npm run build` | Build production bundle |
-| `npm run start` | Start production server |
-| `npm run lint` | Run ESLint |
-| `npm run lint:fix` | Fix ESLint errors automatically |
-| `npm run format` | Format code with Prettier |
-| `npm run format:check` | Check code formatting |
-| `npm run type-check` | Run TypeScript compiler checks |
-| `npm test` | Run tests in watch mode |
-| `npm run test:ci` | Run tests with coverage for CI |
-| `npm run validate` | Run all checks (type, lint, format, test) |
+| Command                | Description                                       |
+| ---------------------- | ------------------------------------------------- |
+| `npm run dev`          | Start development server on http://localhost:3000 |
+| `npm run build`        | Build production bundle                           |
+| `npm run start`        | Start production server                           |
+| `npm run lint`         | Run ESLint                                        |
+| `npm run lint:fix`     | Fix ESLint errors automatically                   |
+| `npm run format`       | Format code with Prettier                         |
+| `npm run format:check` | Check code formatting                             |
+| `npm run type-check`   | Run TypeScript compiler checks                    |
+| `npm test`             | Run tests in watch mode                           |
+| `npm run test:ci`      | Run tests with coverage for CI                    |
+| `npm run validate`     | Run all checks (type, lint, format, test)         |
 
 ## Code Quality Tools
 
 ### ESLint
+
 - Enforces code consistency and catches bugs
 - Configuration: `.eslintrc.json`
 - Rules include TypeScript best practices and Next.js optimizations
 
 ### Prettier
+
 - Auto-formats code for consistent style
 - Configuration: `.prettierrc`
 - Runs on save and pre-commit
 
 ### TypeScript
+
 - Strict mode enabled for maximum type safety
 - Configuration: `tsconfig.json`
 - Path aliases: `@/*` maps to project root
 
 ### Husky + lint-staged
+
 - Automatically runs linting and formatting on commit
 - Only processes staged files for speed
 - Prevents bad code from entering the repository
@@ -54,11 +58,13 @@ npm run dev
 ## Testing
 
 ### Jest + React Testing Library
+
 - Configuration: `jest.config.js`
 - Setup: `jest.setup.js`
 - Coverage thresholds: 70% (branches, functions, lines, statements)
 
 ### Writing Tests
+
 ```typescript
 // __tests__/Component.test.tsx
 import { render, screen } from '@testing-library/react';
@@ -75,19 +81,24 @@ describe('Component', () => {
 ## CI/CD Pipeline
 
 ### GitHub Actions Workflow
+
 Located: `.github/workflows/ci.yml`
 
 #### Jobs:
+
 1. **Lint & Type Check**: Runs ESLint, Prettier, and TypeScript checks
 2. **Test**: Runs Jest with coverage reporting
 3. **Build**: Validates production build succeeds
 
 #### Triggers:
+
 - Push to `main` or `develop` branches
 - Pull requests to `main` or `develop` branches
 
 ### Pre-commit Checks
+
 Automatically run on `git commit`:
+
 - ESLint fixes
 - Prettier formatting
 - Only on staged files
@@ -107,18 +118,21 @@ Automatically run on `git commit`:
 ## Best Practices
 
 ### Code Quality
+
 - Write TypeScript, avoid `any` types
 - Use functional components with hooks
 - Keep components small and focused
 - Write tests for critical functionality
 
 ### Performance
+
 - Use Next.js Image component for images
 - Implement code splitting with dynamic imports
 - Optimize bundle size (check with `npm run build`)
 - Use React Server Components when possible
 
 ### Git Workflow
+
 1. Create feature branch from `develop`
 2. Make changes and commit (pre-commit hooks run automatically)
 3. Push and create PR
@@ -128,6 +142,7 @@ Automatically run on `git commit`:
 ## Debugging
 
 ### Development
+
 - Use React DevTools browser extension
 - Check Next.js build output for optimization hints
 - Monitor bundle size in build output
@@ -135,17 +150,20 @@ Automatically run on `git commit`:
 ### Common Issues
 
 **Husky hooks not running?**
+
 ```bash
 npm run prepare
 chmod +x .husky/pre-commit
 ```
 
 **Type errors after installing packages?**
+
 ```bash
 npm run type-check
 ```
 
 **Tests failing?**
+
 ```bash
 npm test -- --clearCache
 npm test

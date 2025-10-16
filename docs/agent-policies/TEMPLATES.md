@@ -15,14 +15,17 @@ Issue: #<NUM> — <TITLE>
 Base ref: <ref/branch>
 
 Why override is needed (≤5 lines):
+
 - [What's blocked, by what constraint, and why lesser modes are insufficient]
 
 Options considered:
-1) <Option A: minimal scope> — Pros/Cons, Est lines/files, Risk
-2) <Option B: alt> — Pros/Cons, Est lines/files, Risk
-3) <Option C: do nothing> — Impact
+
+1. <Option A: minimal scope> — Pros/Cons, Est lines/files, Risk
+2. <Option B: alt> — Pros/Cons, Est lines/files, Risk
+3. <Option C: do nothing> — Impact
 
 Proposed plan (chosen option):
+
 - Paths touched (exact, must be saved to PROPOSED_FILES.txt): [files]
 - Est diff: ~<lines>, <files> (Note: Diff budget applies to code/text; non-text assets are reviewed case-by-case)
 - **Dependency change:** [npm install/update/remove, or N/A]
@@ -33,6 +36,7 @@ Proposed plan (chosen option):
 - Timebox: <N> hours
 
 Evidence pack:
+
 - Repro commands + outputs (tsc/test/build)
 - Exact failing lines (file:line)
 - Links (logs/builds)
@@ -50,17 +54,20 @@ Issue: #456 — Add image optimization for product gallery
 Base ref: main
 
 Why override is needed (≤5 lines):
+
 - Product gallery requires WebP conversion and CDN integration
 - Needs `next-image-optimizer` runtime dependency
 - Must modify `next.config.ts` to configure image domains
 - Cannot be solved with Mode 0 (root config restriction)
 
 Options considered:
-1) Add next-image-optimizer + modify next.config.ts — Fast, proven solution. ~85 lines, 3 files. Low risk (well-documented).
-2) Build custom image pipeline — More control but ~400 lines, 8 files. High complexity, weeks of work.
-3) Use external service (Cloudinary) — Zero code but monthly cost + vendor lock-in.
+
+1. Add next-image-optimizer + modify next.config.ts — Fast, proven solution. ~85 lines, 3 files. Low risk (well-documented).
+2. Build custom image pipeline — More control but ~400 lines, 8 files. High complexity, weeks of work.
+3. Use external service (Cloudinary) — Zero code but monthly cost + vendor lock-in.
 
 Proposed plan (chosen option #1):
+
 - Paths touched (exact, must be saved to PROPOSED_FILES.txt):
   - next.config.ts
   - package.json
@@ -75,6 +82,7 @@ Proposed plan (chosen option #1):
 - Timebox: 3 hours
 
 Evidence pack:
+
 - Repro: Current images load as raw PNG (3.2MB each), lighthouse score 45/100
 - Current ProductGallery.tsx:142-156 uses <img> instead of <Image>
 - Build logs: https://vercel.com/build/abc123
@@ -100,6 +108,7 @@ Tests: <test file path>
 ```
 
 **Example:**
+
 ```
 fix: login validation bypass (Fixes #789)
 
@@ -123,6 +132,7 @@ Impact: <affected files/functions>
 ```
 
 **Example:**
+
 ```
 refactor: remove unused utility functions
 
@@ -144,6 +154,7 @@ Tests: <test file path>
 ```
 
 **Example:**
+
 ```
 fix: jest unable to parse TypeScript (Fixes #234)
 
@@ -168,6 +179,7 @@ Protocol: <canary/pinned versions/etc>
 ```
 
 **Example:**
+
 ```
 fix: test workflow broken (Fixes #345)
 
@@ -194,6 +206,7 @@ Tests: <test file path>
 ```
 
 **Example:**
+
 ```
 feat: add product image optimization (Fixes #456)
 
@@ -216,35 +229,43 @@ Tests: tests/components/ProductGallery.test.tsx
 
 ```markdown
 ## Summary
+
 Fixes #<ISSUE_NUMBER> — <Brief description>
 
 ## Changes
+
 - <Change 1>
 - <Change 2>
 - <Change 3>
 
 ## Root Cause Analysis
+
 <3-5 lines explaining why the bug occurred or why the feature was needed>
 
 ## How to Verify
+
 1. <Step 1>
 2. <Step 2>
 3. Expected result: <outcome>
 
 ## Tests Added/Modified
+
 - `<test-file-path>`: <what it tests>
 
 ## Risks & Limitations
+
 - <Risk 1 or "None identified">
 - <Limitation 1 or "None">
 
 ## 🧩 Conformance
+
 - **Policy Mode:** Mode <0|0.5|1|2|3>
 - **Reason:** <why this mode was used>
 - **Diff:** <X> lines, <Y> files (Budget: 300L/4F)
 - **Standards:** Verified per ENGINEERING_STANDARDS.md (if exists)
 
 ## Acceptance Criteria
+
 - ✅ `npm run lint -- --max-warnings=0`
 - ✅ `npx tsc --noEmit`
 - ✅ `npm test -- --runInBand`
@@ -257,11 +278,13 @@ Fixes #<ISSUE_NUMBER> — <Brief description>
 
 ```markdown
 ## Summary
+
 Fixes #<ISSUE_NUMBER> — <Brief description>
 
 <... standard sections ...>
 
 ## 🧩 Conformance
+
 <... standard conformance ...>
 
 ## 💡 New Issue Proposals (Technical Debt Identified)
@@ -269,6 +292,7 @@ Fixes #<ISSUE_NUMBER> — <Brief description>
 While implementing this fix, the following improvement opportunities were identified:
 
 ### Proposal 1: <Short Title>
+
 **Scope:** <1-2 lines describing the change>
 **Justification:** <Why this matters - performance, maintainability, etc.>
 **Estimated Complexity:** <Low/Medium/High> (<X> lines, <Y> files)
@@ -276,6 +300,7 @@ While implementing this fix, the following improvement opportunities were identi
 **Suggested Priority:** <P1/P2/P3>
 
 ### Proposal 2: <Short Title>
+
 <... same structure ...>
 
 **Note:** These were NOT implemented in this PR to maintain scope. Requesting review/triage.
@@ -291,32 +316,37 @@ While implementing this fix, the following improvement opportunities were identi
 ✅ VERIFICATION STATUS: [PASS or FAIL]
 
 ---
+
 ### 🧪 Fix Audit for Issue #[ISSUE_NUMBER]
 
 **Original Goal:** [Copy the original acceptance criteria or PQA summary]
 
 **1. Core Fix Status:**
-* Issue Resolved: [PASS/FAIL] — [Evidence/Confirmation]
-* New Test Added: [YES/NO] — [File reference]
-* Docs Updated: [YES/NO] — [List files, e.g., README.md, API.ts]
-* Error Paths Validated: [PASS/FAIL]
+
+- Issue Resolved: [PASS/FAIL] — [Evidence/Confirmation]
+- New Test Added: [YES/NO] — [File reference]
+- Docs Updated: [YES/NO] — [List files, e.g., README.md, API.ts]
+- Error Paths Validated: [PASS/FAIL]
 
 **2. Policy & Regression Status:**
-* Policy Mode Used: [Mode N] — Files Touched: [List]
-* Linter/TS Check: [PASS/FAIL] — (Zero new warnings)
-* Full Test Suite: [PASS/FAIL] — (Zero regressions)
-* Deployment Build: [PASS/FAIL] — (Successful build)
-* **Operational Readiness:** [PASS/FAIL] — (Config/Secrets flagged: [list names or N/A])
+
+- Policy Mode Used: [Mode N] — Files Touched: [List]
+- Linter/TS Check: [PASS/FAIL] — (Zero new warnings)
+- Full Test Suite: [PASS/FAIL] — (Zero regressions)
+- Deployment Build: [PASS/FAIL] — (Successful build)
+- **Operational Readiness:** [PASS/FAIL] — (Config/Secrets flagged: [list names or N/A])
 
 **3. Architectural & Clean-Up Status:**
-* Clean Artifacts Left?: [NO/YES] — (Zero console.logs or temp files)
-* Dependency Audit: [PASS/FAIL] — (No unnecessary installs)
-* Architectural Adherence: [PASS/N/A]
-* Simplicity Audit: [PASS/FLAGGED] — (No new complexity added, Major issues flagged)
+
+- Clean Artifacts Left?: [NO/YES] — (Zero console.logs or temp files)
+- Dependency Audit: [PASS/FAIL] — (No unnecessary installs)
+- Architectural Adherence: [PASS/N/A]
+- Simplicity Audit: [PASS/FLAGGED] — (No new complexity added, Major issues flagged)
 
 **4. Next Step:**
-* If PASS: The PR is ready for human review. Setting status to "Ready for Review".
-* If FAIL: Creating follow-up commit to address: [list issues]
+
+- If PASS: The PR is ready for human review. Setting status to "Ready for Review".
+- If FAIL: Creating follow-up commit to address: [list issues]
 ```
 
 ---
@@ -328,6 +358,7 @@ ai/<ISSUE_NUMBER>-<kebab-case-description>-<YYYYMMDDHHmm>
 ```
 
 **Examples:**
+
 - `ai/123-fix-login-validation-202510151430`
 - `ai/456-add-image-optimization-202510151445`
 - `ai/789-refactor-auth-module-202510151500`
@@ -344,6 +375,7 @@ ai/<ISSUE_NUMBER>-<kebab-case-description>-<YYYYMMDDHHmm>
 **Selected Mode:** Mode <N>
 **Rationale:** <1-2 lines explaining why this mode is appropriate>
 **Files to Modify:**
+
 - <file1>
 - <file2>
 - <file3>
@@ -365,26 +397,31 @@ Issue: #<NUM> — <TITLE>
 Trigger: <What caused Mode 4 activation>
 
 **Current Status:**
+
 - Work completed: <% or description>
 - Blocked by: <specific blocker>
 - Risk level: <Low/Medium/High>
 
 **What's Been Tried:**
+
 1. <Attempt 1> — Result: <outcome>
 2. <Attempt 2> — Result: <outcome>
 3. <Attempt 3> — Result: <outcome>
 
 **Information Needed:**
+
 - <Question 1>
 - <Question 2>
 - <Decision needed: A vs B>
 
 **Risk Assessment:**
+
 - If we proceed with approach A: <risks>
 - If we proceed with approach B: <risks>
 - If we do nothing: <impact>
 
 **Recommended Next Steps:**
+
 1. <Recommendation 1>
 2. <Recommendation 2>
 
@@ -406,6 +443,7 @@ Trigger: <What caused Mode 4 activation>
 ## 🔄 Template Maintenance
 
 When updating templates:
+
 - Update version number and date in this file
 - Notify all active agents
 - Update related examples in [EXAMPLES.md](./EXAMPLES.md)

@@ -3,10 +3,12 @@
 ## Executive Summary
 
 The application currently uses **ONLY 2 parameters**:
+
 - `model` (with :online suffix)
 - `messages`
 
 OpenRouter supports **20+ additional parameters** that can dramatically improve:
+
 - ✅ Response quality and accuracy
 - ✅ Output consistency and format adherence
 - ✅ Reasoning depth and transparency
@@ -18,6 +20,7 @@ OpenRouter supports **20+ additional parameters** that can dramatically improve:
 ## 🎯 CRITICAL PARAMETERS TO ADD
 
 ### 1. **Temperature** (0.0 - 2.0)
+
 **Current Status:** ❌ NOT USED  
 **Impact:** 🔥 HIGH - Controls creativity vs accuracy
 
@@ -30,12 +33,14 @@ OpenRouter supports **20+ additional parameters** that can dramatically improve:
 - **1.0-2.0**: Creative, diverse outputs
 
 **Recommendation for News App:**
+
 - Use `0.3-0.5` for factual news searches
 - Use `0.7` for summary generation
 
 ---
 
 ### 2. **Max Tokens** (max_tokens)
+
 **Current Status:** ❌ NOT USED  
 **Impact:** 🔥 HIGH - Controls response length and cost
 
@@ -44,18 +49,21 @@ OpenRouter supports **20+ additional parameters** that can dramatically improve:
 ```
 
 **Benefits:**
+
 - Prevents excessively long responses
 - Reduces API costs
 - Ensures consistent output lengths
 - Prevents timeout issues
 
 **Recommendation:**
+
 - News searches: `1500-2500` tokens
 - Quick queries: `500-1000` tokens
 
 ---
 
 ### 3. **Top P** (Nucleus Sampling, 0.0-1.0)
+
 **Current Status:** ❌ NOT USED  
 **Impact:** 🔥 HIGH - Alternative to temperature
 
@@ -72,6 +80,7 @@ OpenRouter supports **20+ additional parameters** that can dramatically improve:
 ---
 
 ### 4. **Frequency Penalty** (-2.0 to 2.0)
+
 **Current Status:** ❌ NOT USED  
 **Impact:** 🔥 MEDIUM-HIGH - Reduces repetition
 
@@ -88,6 +97,7 @@ OpenRouter supports **20+ additional parameters** that can dramatically improve:
 ---
 
 ### 5. **Presence Penalty** (-2.0 to 2.0)
+
 **Current Status:** ❌ NOT USED  
 **Impact:** 🔥 MEDIUM - Encourages topic diversity
 
@@ -103,6 +113,7 @@ OpenRouter supports **20+ additional parameters** that can dramatically improve:
 ---
 
 ### 6. **Response Format** (JSON Mode)
+
 **Current Status:** ❌ NOT USED (but needed!)  
 **Impact:** 🔥 CRITICAL - Ensures valid JSON
 
@@ -111,6 +122,7 @@ OpenRouter supports **20+ additional parameters** that can dramatically improve:
 ```
 
 **Why CRITICAL:**
+
 - Your app expects JSON but doesn't enforce it!
 - Current code uses complex JSON parsing fallbacks
 - This parameter **guarantees** valid JSON responses
@@ -119,6 +131,7 @@ OpenRouter supports **20+ additional parameters** that can dramatically improve:
 ---
 
 ### 7. **Stop Sequences** (stop)
+
 **Current Status:** ❌ NOT USED  
 **Impact:** 🔥 MEDIUM - Prevents unwanted content
 
@@ -127,6 +140,7 @@ OpenRouter supports **20+ additional parameters** that can dramatically improve:
 ```
 
 **Use Cases:**
+
 - Stop at specific markers
 - Prevent model from adding explanations after JSON
 - Control output boundaries
@@ -134,6 +148,7 @@ OpenRouter supports **20+ additional parameters** that can dramatically improve:
 ---
 
 ### 8. **Seed** (Reproducibility)
+
 **Current Status:** ❌ NOT USED  
 **Impact:** 🔥 MEDIUM - Makes results reproducible
 
@@ -142,6 +157,7 @@ OpenRouter supports **20+ additional parameters** that can dramatically improve:
 ```
 
 **Benefits:**
+
 - Reproducible results for testing
 - Consistent output for same inputs
 - Better debugging
@@ -151,6 +167,7 @@ OpenRouter supports **20+ additional parameters** that can dramatically improve:
 ## 🧠 REASONING MODELS ONLY
 
 ### 9. **Reasoning Level** (reasoning)
+
 **Current Status:** ❌ NOT USED  
 **Impact:** 🔥 CRITICAL for O1/O3/reasoning models
 
@@ -159,11 +176,13 @@ OpenRouter supports **20+ additional parameters** that can dramatically improve:
 ```
 
 **Values:**
+
 - `low`: Fast, basic reasoning
 - `medium`: Balanced (default)
 - `high`: Deep, thorough reasoning (more expensive)
 
 **Models Supporting This:**
+
 - OpenAI O1/O3 series
 - Claude with extended thinking
 - DeepSeek R1
@@ -172,6 +191,7 @@ OpenRouter supports **20+ additional parameters** that can dramatically improve:
 ---
 
 ### 10. **Include Reasoning** (include_reasoning)
+
 **Current Status:** ❌ NOT USED  
 **Impact:** 🔥 HIGH - Shows model's thinking process
 
@@ -180,12 +200,14 @@ OpenRouter supports **20+ additional parameters** that can dramatically improve:
 ```
 
 **Benefits:**
+
 - See how model arrived at conclusions
 - Verify factual accuracy
 - Debug poor responses
 - Understand reasoning depth
 
 **Use Cases:**
+
 - Quality control
 - Fact verification
 - Model comparison
@@ -195,6 +217,7 @@ OpenRouter supports **20+ additional parameters** that can dramatically improve:
 ## 📊 ADVANCED PARAMETERS
 
 ### 11. **Top K** (top_k)
+
 **Current Status:** ❌ NOT USED  
 **Impact:** 🔥 LOW-MEDIUM - Limits token sampling
 
@@ -209,6 +232,7 @@ OpenRouter supports **20+ additional parameters** that can dramatically improve:
 ---
 
 ### 12. **Min P** (min_p)
+
 **Current Status:** ❌ NOT USED  
 **Impact:** 🔥 LOW-MEDIUM - Minimum probability threshold
 
@@ -223,6 +247,7 @@ OpenRouter supports **20+ additional parameters** that can dramatically improve:
 ---
 
 ### 13. **Repetition Penalty** (repetition_penalty)
+
 **Current Status:** ❌ NOT USED  
 **Impact:** 🔥 MEDIUM - Similar to frequency penalty
 
@@ -237,6 +262,7 @@ OpenRouter supports **20+ additional parameters** that can dramatically improve:
 ---
 
 ### 14. **Logit Bias** (logit_bias)
+
 **Current Status:** ❌ NOT USED  
 **Impact:** 🔥 LOW - Fine-grained token control
 
@@ -248,6 +274,7 @@ OpenRouter supports **20+ additional parameters** that can dramatically improve:
 ```
 
 **Advanced Use Cases:**
+
 - Ban profanity tokens
 - Encourage specific terminology
 - Control output style
@@ -255,6 +282,7 @@ OpenRouter supports **20+ additional parameters** that can dramatically improve:
 ---
 
 ### 15. **Logprobs & Top Logprobs**
+
 **Current Status:** ❌ NOT USED  
 **Impact:** 🔥 LOW - Model confidence analysis
 
@@ -264,6 +292,7 @@ OpenRouter supports **20+ additional parameters** that can dramatically improve:
 ```
 
 **Benefits:**
+
 - Understand model confidence
 - Analyze uncertainty
 - Quality assessment
@@ -271,6 +300,7 @@ OpenRouter supports **20+ additional parameters** that can dramatically improve:
 ---
 
 ### 16. **Structured Outputs** (structured_outputs)
+
 **Current Status:** ❌ NOT USED  
 **Impact:** 🔥 HIGH - Enforces JSON schema
 
@@ -279,6 +309,7 @@ OpenRouter supports **20+ additional parameters** that can dramatically improve:
 ```
 
 **Benefits:**
+
 - Enforces specific JSON structure
 - Better than response_format alone
 - Guarantees schema compliance
@@ -286,6 +317,7 @@ OpenRouter supports **20+ additional parameters** that can dramatically improve:
 ---
 
 ### 17. **Tool Choice & Tools**
+
 **Current Status:** ❌ NOT USED  
 **Impact:** 🔥 MEDIUM - Function calling
 
@@ -295,6 +327,7 @@ OpenRouter supports **20+ additional parameters** that can dramatically improve:
 ```
 
 **Potential Use:**
+
 - Could enable web search as explicit tool
 - Better control over search behavior
 
@@ -303,6 +336,7 @@ OpenRouter supports **20+ additional parameters** that can dramatically improve:
 ## 🌐 OPENROUTER-SPECIFIC FEATURES
 
 ### 18. **Provider Preferences**
+
 **Current Status:** ❌ NOT USED  
 **Impact:** 🔥 MEDIUM - Control which provider serves request
 
@@ -314,6 +348,7 @@ OpenRouter supports **20+ additional parameters** that can dramatically improve:
 ```
 
 **Benefits:**
+
 - Choose specific providers
 - Control latency vs cost
 - Fallback options
@@ -321,6 +356,7 @@ OpenRouter supports **20+ additional parameters** that can dramatically improve:
 ---
 
 ### 19. **Transforms**
+
 **Current Status:** ❌ NOT USED  
 **Impact:** 🔥 LOW - Modify prompts automatically
 
@@ -329,12 +365,14 @@ OpenRouter supports **20+ additional parameters** that can dramatically improve:
 ```
 
 **Use Cases:**
+
 - Automatic prompt engineering
 - Context window optimization
 
 ---
 
 ### 20. **Models Override** (for testing)
+
 **Current Status:** ❌ NOT USED  
 **Impact:** 🔥 LOW - A/B testing
 
@@ -347,10 +385,12 @@ OpenRouter supports **20+ additional parameters** that can dramatically improve:
 ## 💰 COST OPTIMIZATION PARAMETERS
 
 ### Web Search Pricing
+
 **Current Status:** ⚠️ AWARE but not controllable  
 **Impact:** The `:online` suffix adds $0.01 per search (for many models)
 
 **What's Missing:**
+
 - No way to see web search costs separately
 - No option to disable web search per keyword
 - No control over search depth
@@ -358,7 +398,9 @@ OpenRouter supports **20+ additional parameters** that can dramatically improve:
 ---
 
 ### Internal Reasoning Costs
+
 Some models charge extra for reasoning tokens:
+
 ```
 "internal_reasoning": "0.00001"  // per token
 ```
@@ -372,20 +414,24 @@ Some models charge extra for reasoning tokens:
 ### NEW SETTINGS TAB: "Model Parameters"
 
 #### Section 1: Basic Parameters
+
 - **Temperature** (slider 0.0-2.0, default 0.5)
 - **Max Tokens** (input field, default 2000)
 - **Response Format** (dropdown: Auto, JSON, Text)
 
 #### Section 2: Quality Controls
+
 - **Top P** (slider 0.0-1.0, default 0.9)
 - **Frequency Penalty** (slider 0.0-2.0, default 0.5)
 - **Presence Penalty** (slider 0.0-2.0, default 0.3)
 
 #### Section 3: Reasoning (for compatible models)
+
 - **Reasoning Level** (dropdown: Low, Medium, High)
 - **Include Reasoning Output** (toggle)
 
 #### Section 4: Advanced (collapsible)
+
 - **Top K** (input field, optional)
 - **Min P** (slider, optional)
 - **Repetition Penalty** (slider 1.0-2.0)
@@ -393,6 +439,7 @@ Some models charge extra for reasoning tokens:
 - **Seed** (input field for reproducibility)
 
 #### Section 5: Cost Controls
+
 - **Max Tokens per Keyword** (input field)
 - **Enable Web Search** (toggle - currently always on)
 - **Provider Preferences** (dropdown)
@@ -402,24 +449,28 @@ Some models charge extra for reasoning tokens:
 ## 📈 PRIORITY IMPLEMENTATION ORDER
 
 ### Phase 1: CRITICAL (Do First) 🔥
+
 1. **response_format: json_object** - Fixes JSON parsing issues
 2. **temperature** - Major quality impact
 3. **max_tokens** - Cost control + performance
 4. **structured_outputs** - Schema enforcement
 
 ### Phase 2: HIGH PRIORITY 🔥
+
 5. **frequency_penalty** - Reduces repetition
 6. **presence_penalty** - Better diversity
 7. **top_p** - Alternative temperature control
 8. **reasoning + include_reasoning** - For reasoning models
 
 ### Phase 3: MEDIUM PRIORITY
+
 9. **stop** sequences
 10. **seed** for reproducibility
 11. **top_k** / **min_p**
 12. **repetition_penalty**
 
 ### Phase 4: ADVANCED (Later)
+
 13. **logit_bias**
 14. **logprobs**
 15. **provider preferences**
@@ -432,21 +483,22 @@ Some models charge extra for reasoning tokens:
 ### 1. Update Store Interface (`lib/store.ts`)
 
 Add new settings:
+
 ```typescript
 export interface ModelParameters {
-  temperature?: number;           // 0.0-2.0
-  max_tokens?: number;            // e.g., 2000
-  top_p?: number;                 // 0.0-1.0
-  frequency_penalty?: number;     // 0.0-2.0
-  presence_penalty?: number;      // 0.0-2.0
+  temperature?: number; // 0.0-2.0
+  max_tokens?: number; // e.g., 2000
+  top_p?: number; // 0.0-1.0
+  frequency_penalty?: number; // 0.0-2.0
+  presence_penalty?: number; // 0.0-2.0
   response_format?: 'auto' | 'json_object' | 'text';
-  stop?: string[];                // Stop sequences
-  seed?: number;                  // Reproducibility
-  
+  stop?: string[]; // Stop sequences
+  seed?: number; // Reproducibility
+
   // Reasoning models only
   reasoning?: 'low' | 'medium' | 'high';
   include_reasoning?: boolean;
-  
+
   // Advanced
   top_k?: number;
   min_p?: number;
@@ -462,7 +514,7 @@ export interface Settings {
   keywords: Keyword[];
   searchInstructions: string;
   onlineEnabled: boolean;
-  modelParameters: ModelParameters;  // NEW!
+  modelParameters: ModelParameters; // NEW!
 }
 ```
 
@@ -483,8 +535,8 @@ body: JSON.stringify({
   top_p: settings.modelParameters?.top_p,
   frequency_penalty: settings.modelParameters?.frequency_penalty,
   presence_penalty: settings.modelParameters?.presence_penalty,
-  response_format: settings.modelParameters?.response_format === 'json_object' 
-    ? { type: 'json_object' } 
+  response_format: settings.modelParameters?.response_format === 'json_object'
+    ? { type: 'json_object' }
     : undefined,
   stop: settings.modelParameters?.stop,
   seed: settings.modelParameters?.seed,
@@ -505,22 +557,27 @@ Add new subtab: **"Model Parameters"**
 ### With Recommended Parameters:
 
 #### News Search Accuracy
+
 - **Before:** Variable quality, sometimes off-topic
 - **After:** Consistent, focused results with `temperature: 0.5`
 
 #### JSON Parsing Success Rate
+
 - **Before:** ~85% (requires fallback parsing)
 - **After:** ~99% with `response_format: json_object`
 
 #### Response Time
+
 - **Before:** Variable, sometimes hangs
 - **After:** Faster with `max_tokens: 2000`
 
 #### Cost per Keyword
+
 - **Before:** Unpredictable, often excessive
 - **After:** Controlled with `max_tokens`
 
 #### Output Quality
+
 - **Before:** Sometimes repetitive
 - **After:** More diverse with `frequency_penalty: 0.5`
 
@@ -529,6 +586,7 @@ Add new subtab: **"Model Parameters"**
 ## 📚 MODEL-SPECIFIC RECOMMENDATIONS
 
 ### For GPT-4/GPT-5:
+
 ```json
 {
   "temperature": 0.5,
@@ -540,6 +598,7 @@ Add new subtab: **"Model Parameters"**
 ```
 
 ### For O1/O3 Reasoning Models:
+
 ```json
 {
   "reasoning": "high",
@@ -549,6 +608,7 @@ Add new subtab: **"Model Parameters"**
 ```
 
 ### For Claude Models:
+
 ```json
 {
   "temperature": 0.7,
@@ -559,6 +619,7 @@ Add new subtab: **"Model Parameters"**
 ```
 
 ### For Budget Models (Haiku, etc):
+
 ```json
 {
   "temperature": 0.3,
