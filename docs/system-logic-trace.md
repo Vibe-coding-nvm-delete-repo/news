@@ -9,7 +9,7 @@ The client-side workflow orchestrated in `components/NewsTab.tsx` performs a det
 1. Validate configuration (API key, model, keyword state).
 2. Compose the OpenRouter payload by merging instructions, keyword text, and normalized model parameters.
 3. POST to `https://openrouter.ai/api/v1/chat/completions`.
-4. Decode and sanity-check the OpenRouter response payload.
+4. Aggregate the OpenRouter text response, surface API errors, and record usage metadata.
 5. Convert the plain-text stories into structured JSON using the user-provided conversion instructions.
 6. Transform each story into a `Card` entity and compute usage costs.
 7. Persist cards and metrics into the Zustand store.
@@ -18,16 +18,16 @@ The UI now renders each step's status, duration, and diagnostic notes so we can 
 
 ## Detailed Flow
 
-| Step | Name                             | Trigger                             | Success Output                                             | Failure Mode                                                          |
-| ---- | -------------------------------- | ----------------------------------- | ---------------------------------------------------------- | --------------------------------------------------------------------- |
-| 1    | Validate Configuration           | `searchKeyword` start               | Records selected model + attempt count                     | Missing API key/model short-circuits before worker launch             |
-| 2    | Compose Prompt Payload           | Before network call                 | Builds `{ model, messages, ...normalizedParameters }` body | Malformed parameters (should not happen after normalization)          |
-| 3    | POST OpenRouter Chat Completions | Fetch with abort + 20s timeout      | `Response.ok === true`                                     | HTTP error, timeout, abort, or network issue                          |
-| 4    | Read OpenRouter Response         | JSON decode or SSE aggregation      | Usage metadata + `choices[0].message.content`              | Streaming never completed, JSON parse error, OpenRouter `error` field |
-| 5    | Convert Plain Text to JSON       | `convertTextToStories(result)`      | Stories + rejection counts from conversion                 | Regex errors, zero detected stories, invalid conversion instructions  |
-| 6    | Parse Stories JSON               | `parseJSON(convertedJson)`          | Validated `stories[]` array                                | JSON syntax error or missing `stories` key                            |
-| 7    | Materialize Cards                | Map stories → `Card` objects        | Cards with ids, metadata, cost calculations                | Skipped if Step 6 fails                                               |
-| 8    | Persist & Update State           | Add cards to store, update progress | Cards appended, counters updated                           | Skipped if upstream failure                                           |
+| Step | Name                             | Trigger                             | Success Output                                             | Failure Mode                                                         |
+| ---- | -------------------------------- | ----------------------------------- | ---------------------------------------------------------- | -------------------------------------------------------------------- |
+| 1    | Validate Configuration           | `searchKeyword` start               | Records selected model + attempt count                     | Missing API key/model short-circuits before worker launch            |
+| 2    | Compose Prompt Payload           | Before network call                 | Builds `{ model, messages, ...normalizedParameters }` body | Malformed parameters (should not happen after normalization)         |
+| 3    | POST OpenRouter Chat Completions | Fetch with abort + 20s timeout      | `Response.ok === true`                                     | HTTP error, timeout, abort, or network issue                         |
+| 4    | Read OpenRouter Response         | Text aggregation or SSE stream read | Usage metadata + aggregated `choices[0].message.content`   | Streaming never completed, malformed text, OpenRouter `error` field  |
+| 5    | Convert Plain Text to JSON       | `convertTextToStories(result)`      | Stories + rejection counts from conversion                 | Regex errors, zero detected stories, invalid conversion instructions |
+| 6    | Parse Stories JSON               | `parseJSON(convertedJson)`          | Validated `stories[]` array                                | JSON syntax error or missing `stories` key                           |
+| 7    | Materialize Cards                | Map stories → `Card` objects        | Cards with ids, metadata, cost calculations                | Skipped if Step 6 fails                                              |
+| 8    | Persist & Update State           | Add cards to store, update progress | Cards appended, counters updated                           | Skipped if upstream failure                                          |
 
 ### Payload Composition (Step 2)
 

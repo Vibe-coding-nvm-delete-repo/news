@@ -53,7 +53,7 @@ export const SYSTEM_LOGIC_DEFINITIONS: StepDefinition[] = [
     id: 'read-response',
     label: 'Read OpenRouter Response',
     description:
-      'Decode JSON body, check for API errors, and capture token usage metadata.',
+      'Aggregate streamed text, surface API errors, and capture token usage metadata.',
   },
   {
     id: 'parse-json',

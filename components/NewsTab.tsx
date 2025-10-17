@@ -525,7 +525,10 @@ export default function NewsTab() {
           `[${keyword.text}] Response received in ${((Date.now() - keywordStartTime) / 1000).toFixed(1)}s`
         );
 
-        markStepStart('read-response', 'Decoding OpenRouter payload.');
+        markStepStart(
+          'read-response',
+          'Aggregating streamed text and monitoring usage metadata.'
+        );
         let parsedPayload: OpenRouterResponsePayload;
         let payloadMode: 'json' | 'stream' = 'json';
         try {
