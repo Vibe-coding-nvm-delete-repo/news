@@ -9,19 +9,20 @@
 
 ## Before Committing
 
-All commits automatically run:
+All commits automatically run via Husky git hooks:
 
-- ESLint (with auto-fix)
+- ESLint checks
 - Prettier formatting
-- TypeScript type checking
+- TypeScript type checking (on staged files only via lint-staged)
 
 To manually validate your changes before committing:
 
 ```bash
-npm run validate
+npm run type-check    # Check TypeScript types
+npm run lint          # Run ESLint
+npm run format:check  # Check Prettier formatting
+npm test              # Run tests
 ```
-
-This runs all checks: type-check, lint, format, and tests.
 
 ## Pull Request Process
 
@@ -42,9 +43,9 @@ This runs all checks: type-check, lint, format, and tests.
 ## Testing Requirements
 
 - Write tests for new features
-- Maintain minimum 70% code coverage
 - Use React Testing Library best practices
-- Mock external dependencies
+- Mock external dependencies (especially OpenRouter API calls)
+- Ensure tests pass before submitting PR: `npm run test:ci`
 
 ## Commit Messages
 

@@ -24,7 +24,8 @@ A simplified AI-powered news aggregation and intelligent reporting tool using Op
 ### Step 1: Add Your OpenRouter API Key
 
 - Get your API key from [openrouter.ai/keys](https://openrouter.ai/keys)
-- Paste it in the Settings tab and click "Validate"
+- Paste it in the Settings tab and click "Validate & Save"
+- The key is validated by fetching available models
 
 ### Step 2: Fetch & Select a Model
 
@@ -50,34 +51,47 @@ A simplified AI-powered news aggregation and intelligent reporting tool using Op
 
 ### Step 4: Generate Report
 
-- Switch to the "News" tab
+- Switch to the "News" tab → "Generate" sub-tab
 - Click "Generate Report"
-- Watch as the AI searches each keyword and generates a summary
-- **NEW**: See real-time progress with per-keyword timing and optimized parallel processing
+- Watch as the AI searches each keyword in parallel and generates summaries
+- See real-time progress with per-keyword timing and system logic steps
+- View generated news cards in "Active Cards" tab
 
 ## Features
 
-- ✅ **Simple Setup**: Just add your OpenRouter API key
-- ✅ **Model Selection**: Browse and select from all available models
+- ✅ **Simple Setup**: Just add your OpenRouter API key (get one free at openrouter.ai)
+- ✅ **Model Selection**: Browse and select from 100+ available AI models
 - ✅ **Model Parameters**: Fine-tune AI behavior with 13+ parameters for better accuracy
-- ✅ **Keyword Management**: Add, enable/disable, and remove keywords
-- ✅ **Cost Tracking**: See estimated and actual costs
-- ✅ **Local Storage**: All settings persist in your browser
-- ✅ **No Database Required**: Everything works locally
-- ✅ **Interactive Policy Viewer**: Browse autonomous agent policies with responsive design
-- ✅ **Optimized Parallel Processing**: Worker pool pattern with retry logic for 60-80% faster generation
+- ✅ **Keyword Management**: Add, enable/disable, and remove search keywords
+- ✅ **Cost Tracking**: See estimated costs before generation and actual costs after
+- ✅ **Local Storage**: All settings and data persist in your browser via Zustand
+- ✅ **No Backend Required**: Fully client-side application, no database or server needed
+- ✅ **Interactive Policy Viewer**: Browse autonomous agent policies with responsive, mobile-friendly design
+- ✅ **Parallel Processing**: True parallel API calls for faster report generation
+- ✅ **News Card Management**: Archive, restore, and delete individual news stories
+- ✅ **Date Filtering**: Filter news cards by date range
+- ✅ **Report History**: View all past reports with metadata and regenerate options
 
 ## Data Storage
 
-All your settings (API key, selected model, keywords, prompts) are stored in your browser's local storage using Zustand persist. No external database required!
+All your data is stored locally in your browser using Zustand persist middleware:
+
+- **Settings**: API key, selected model, model parameters, prompts
+- **Keywords**: Your search keywords and their enabled state
+- **News Cards**: Active and archived news stories
+- **Report History**: Metadata from all generated reports
+
+**No external database required!** Your data stays private on your device.
 
 ## Technology Stack
 
-- **Framework**: Next.js 14
-- **UI**: React + Tailwind CSS
-- **State Management**: Zustand (with persist)
-- **AI API**: OpenRouter
+- **Framework**: Next.js 14 (App Router)
+- **UI**: React 18 + Tailwind CSS 3
+- **State Management**: Zustand with persist middleware
+- **AI API**: OpenRouter (access to 100+ AI models)
 - **Icons**: Lucide React
+- **Testing**: Jest + React Testing Library
+- **Code Quality**: ESLint, Prettier, TypeScript, Husky
 
 ## Scripts
 
@@ -121,12 +135,28 @@ All code includes JSDoc comments for inline documentation. TypeScript types prov
 
 ```
 .
-├── app/              # Next.js App Router pages
-├── components/       # React components
-├── lib/              # Utility libraries (store, utils)
-├── __tests__/        # Test files
-├── docs/             # Comprehensive documentation
-└── public/           # Static assets
+├── app/                   # Next.js App Router pages
+│   ├── layout.tsx        # Root layout with metadata
+│   ├── page.tsx          # Home page with tab navigation
+│   └── globals.css       # Global styles
+├── components/            # React components
+│   ├── ui/               # Reusable UI primitives (button, input, etc.)
+│   ├── SettingsTab.tsx   # Settings configuration
+│   ├── NewsTab.tsx       # News generation and display
+│   ├── PolicyViewer.tsx  # Agent policy documentation viewer
+│   └── ...               # Other feature components
+├── lib/                   # Utility libraries
+│   ├── store.ts          # Zustand global state
+│   ├── openrouter.ts     # OpenRouter API utilities
+│   ├── utils.ts          # Helper functions
+│   └── ...               # Other utilities
+├── __tests__/             # Jest test files
+├── docs/                  # Comprehensive documentation
+│   ├── API.md            # OpenRouter integration docs
+│   ├── ARCHITECTURE.md   # System architecture
+│   ├── CODE_STYLE.md     # Coding standards
+│   └── agent-policies/   # Agent governance docs
+└── public/                # Static assets (if any)
 ```
 
 ## License
