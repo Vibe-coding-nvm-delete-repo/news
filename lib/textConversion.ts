@@ -1,3 +1,13 @@
+/**
+ * Text-to-JSON conversion utilities for parsing unstructured AI responses.
+ * Provides pattern-based extraction of story data from raw text when JSON parsing fails.
+ *
+ * @module textConversion
+ */
+
+/**
+ * Configuration for extracting a single field from text using regex.
+ */
 export interface JsonConversionFieldInstruction {
   pattern: string;
   flags?: string;
@@ -8,12 +18,18 @@ export interface JsonConversionFieldInstruction {
   trim?: boolean;
 }
 
+/**
+ * Pattern definition for identifying story boundaries in text.
+ */
 export interface JsonConversionStoryPattern {
   pattern: string;
   flags?: string;
   group?: number;
 }
 
+/**
+ * Complete configuration for text-to-JSON conversion.
+ */
 export interface JsonConversionInstructions {
   storyDelimiter?: string | JsonConversionStoryPattern;
   storyPattern?: JsonConversionStoryPattern;
@@ -22,6 +38,9 @@ export interface JsonConversionInstructions {
   trimValues?: boolean;
 }
 
+/**
+ * Result of converting text to structured story data.
+ */
 export interface ConversionOutcome {
   stories: Array<Record<string, unknown>>;
   rejectedStories: number;

@@ -1,32 +1,60 @@
+/**
+ * OpenRouter API response parsing utilities.
+ * Handles both JSON and streaming (SSE) response formats from OpenRouter.
+ *
+ * @module openrouterResponse
+ */
+
+/**
+ * Token usage information from OpenRouter API.
+ */
 export interface OpenRouterUsage {
   prompt_tokens?: number;
   completion_tokens?: number;
   total_tokens?: number;
 }
 
+/**
+ * A chat message in OpenRouter's format.
+ */
 export interface OpenRouterChatMessage {
   role?: string;
   content?: string;
 }
 
+/**
+ * A choice object in OpenRouter's response.
+ */
 export interface OpenRouterChoice {
   message?: OpenRouterChatMessage;
   delta?: OpenRouterChatMessage;
   finish_reason?: string;
 }
 
+/**
+ * Error payload from OpenRouter API.
+ */
 export interface OpenRouterErrorPayload {
   message?: string;
 }
 
+/**
+ * Complete OpenRouter API response structure.
+ */
 export interface OpenRouterResponsePayload {
   choices?: OpenRouterChoice[];
   usage?: OpenRouterUsage;
   error?: OpenRouterErrorPayload;
 }
 
+/**
+ * Type of response format from OpenRouter.
+ */
 export type OpenRouterPayloadMode = 'json' | 'stream';
 
+/**
+ * Parsed response with detected mode.
+ */
 export interface ParsedOpenRouterResponse {
   payload: OpenRouterResponsePayload;
   mode: OpenRouterPayloadMode;
@@ -143,6 +171,21 @@ const parseJsonResponse = async (
   }
 };
 
+/**
+ * Parses an OpenRouter API response, automatically detecting format.
+ * Supports both JSON and Server-Sent Events (SSE) streaming responses.
+ *
+ * @param response - The fetch Response object from OpenRouter API
+ * @returns Parsed response with payload and detected mode
+ * @throws {Error} If response cannot be parsed or is invalid
+ *
+ * @example
+ * ```ts
+ * const response = await fetch('https://openrouter.ai/api/v1/chat/completions', options);
+ * const parsed = await parseOpenRouterResponse(response);
+ * const content = parsed.payload.choices?.[0]?.message?.content;
+ * ```
+ */
 export const parseOpenRouterResponse = async (
   response: Response
 ): Promise<ParsedOpenRouterResponse> => {

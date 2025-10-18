@@ -1,3 +1,10 @@
+/**
+ * System logic step tracking for news generation workflow.
+ * Defines the sequential steps involved in fetching and processing news stories.
+ *
+ * @module systemLogic
+ */
+
 export type SystemLogicStepStatus =
   | 'pending'
   | 'in-progress'
@@ -75,6 +82,12 @@ export const SYSTEM_LOGIC_DEFINITIONS: StepDefinition[] = [
   },
 ];
 
+/**
+ * Creates initial system logic steps with 'pending' status.
+ * Used at the start of each keyword search operation.
+ *
+ * @returns Array of system logic steps in their initial state
+ */
 export const createInitialSystemLogicSteps = (): SystemLogicStep[] =>
   SYSTEM_LOGIC_DEFINITIONS.map(step => ({
     ...step,

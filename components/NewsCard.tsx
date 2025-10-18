@@ -1,3 +1,9 @@
+/**
+ * NewsCard component displays a single news story with metadata.
+ * Shows rating, category, title, summary, source, date, and optional archive action.
+ *
+ * @component
+ */
 'use client';
 
 import { Card as CardType } from '@/lib/store';
@@ -12,8 +18,11 @@ import {
 import { Button } from '@/components/ui/button';
 
 interface NewsCardProps {
+  /** The news card data to display */
   card: CardType;
+  /** Whether to show the "Mark as Read" button */
   showReadButton?: boolean;
+  /** Callback when card is marked as read */
   onMarkAsRead?: (cardId: string) => void;
 }
 

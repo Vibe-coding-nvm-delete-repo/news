@@ -213,6 +213,6 @@ This documentation reflects the current state of the codebase. For historical ch
 
 ---
 
-**Last Updated**: 2025-10-16
+**Last Updated**: 2025-10-18
 
-**Documentation Version**: 1.0.0
+**Documentation Version**: 1.1.0
