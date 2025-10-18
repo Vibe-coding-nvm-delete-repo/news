@@ -116,6 +116,10 @@ export default function NewsTab() {
   const [currentGenerationCardCount, setCurrentGenerationCardCount] =
     useState(0);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const globalTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [globalTimeoutError, setGlobalTimeoutError] = useState<string | null>(
+    null
+  );
 
   const updateLogicStep = (
     keywordText: string,
@@ -216,11 +220,22 @@ export default function NewsTab() {
     setEstimatedCost(estimatedCostValue);
   };
 
-  const stopAndReset = () => {
+  const stopAndReset = (errorMessage?: string) => {
     // Abort any ongoing API requests
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
+    }
+
+    // Clear global timeout
+    if (globalTimeoutRef.current) {
+      clearTimeout(globalTimeoutRef.current);
+      globalTimeoutRef.current = null;
+    }
+
+    // Set error message if provided
+    if (errorMessage) {
+      setGlobalTimeoutError(errorMessage);
     }
 
     // Reset all state
@@ -264,9 +279,35 @@ export default function NewsTab() {
     setShowCompletionAnimation(false);
     setShowSuccessBanner(false);
     setCurrentGenerationCardCount(0);
+    setGlobalTimeoutError(null);
 
     // Generate unique reportId for this generation
     const reportId = Date.now().toString();
+
+    // Set up global 30-second timeout for entire generation
+    // If no cards are generated within 30 seconds, stop and reset with error message
+    globalTimeoutRef.current = setTimeout(() => {
+      const completedKeywords = stage1Results.filter(
+        r => r.status === 'complete' || r.status === 'error'
+      ).length;
+      const totalKeywords = enabledKeywords.length;
+
+      const errorMsg =
+        `⏱️ Generation timeout after 30 seconds!\n\n` +
+        `📊 Status: ${completedKeywords}/${totalKeywords} keywords processed\n` +
+        `📦 Cards generated: ${currentGenerationCardCount}\n\n` +
+        `🔍 Issue: The system took too long to generate outputs. This could be due to:\n` +
+        `• Slow API responses from OpenRouter\n` +
+        `• Network connectivity issues\n` +
+        `• Model taking too long to search and respond\n\n` +
+        `💡 Suggestions:\n` +
+        `• Try again with fewer keywords\n` +
+        `• Check your internet connection\n` +
+        `• Try a different model\n` +
+        `• Review individual keyword results above for specific errors`;
+
+      stopAndReset(errorMsg);
+    }, 30000);
 
     // Initialize stage 1 results - all start as loading since they run in parallel
     const initialResults: Stage1Result[] = enabledKeywords.map(k => ({
@@ -507,10 +548,21 @@ export default function NewsTab() {
 
         if (!response.ok) {
           const errorText = await response.text();
-          markStepError(
-            'call-openrouter',
-            `HTTP ${response.status} ${response.statusText}: ${errorText.substring(0, 200)}`
-          );
+          const detailedError =
+            `🚫 Step: POST OpenRouter Chat Completions\n` +
+            `❌ Failure Point: HTTP ${response.status} ${response.statusText}\n` +
+            `📍 Location: OpenRouter API Request\n\n` +
+            `Error: ${errorText.substring(0, 200)}${errorText.length > 200 ? '...' : ''}\n\n` +
+            `💡 Common causes:\n` +
+            `• Invalid API key (401)\n` +
+            `• Rate limit exceeded (429)\n` +
+            `• Model not available (404)\n` +
+            `• Server error (500+)\n\n` +
+            `💡 Suggestions:\n` +
+            `• Verify your API key in Settings\n` +
+            `• Check OpenRouter status and billing\n` +
+            `• Try a different model`;
+          markStepError('call-openrouter', detailedError);
           throw new Error(
             `OpenRouter request failed with status ${response.status} ${response.statusText}`
           );
@@ -538,7 +590,20 @@ export default function NewsTab() {
         } catch (readError: any) {
           const decodingMessage =
             readError?.message ?? 'Unknown response decoding error';
-          markStepError('read-response', decodingMessage);
+          const detailedError =
+            `🚫 Step: Read OpenRouter Response\n` +
+            `❌ Failure Point: Response Decoding\n` +
+            `📍 Location: Parsing streaming or JSON response\n\n` +
+            `Error: ${decodingMessage}\n\n` +
+            `💡 This means:\n` +
+            `• The response format was unexpected\n` +
+            `• Network issues during streaming\n` +
+            `• Malformed JSON or SSE data\n\n` +
+            `💡 Suggestions:\n` +
+            `• Retry the request\n` +
+            `• Check network connection\n` +
+            `• Try a different model`;
+          markStepError('read-response', detailedError);
           throw new Error(
             `Unable to decode OpenRouter response: ${decodingMessage}`
           );
@@ -549,7 +614,14 @@ export default function NewsTab() {
         if (data.error) {
           logError(`[${keyword.text}] API Error:`, data.error);
           const apiMessage = data.error.message || 'API Error';
-          markStepError('read-response', apiMessage);
+          const detailedError =
+            `🚫 Step: Read OpenRouter Response\n` +
+            `❌ Failure Point: API Error in Response\n` +
+            `📍 Location: OpenRouter returned an error\n\n` +
+            `Error: ${apiMessage}\n\n` +
+            `💡 This means the API returned an error instead of content.\n` +
+            `Check the error message above for specific details.`;
+          markStepError('read-response', detailedError);
           throw new Error(apiMessage);
         }
 
@@ -563,10 +635,14 @@ export default function NewsTab() {
         const message = data.choices?.[0]?.message;
         if (!message || typeof message.content !== 'string') {
           logError(`[${keyword.text}] Invalid API response:`, data);
-          markStepError(
-            'read-response',
-            'Missing choices[0].message in API response'
-          );
+          const detailedError =
+            `🚫 Step: Read OpenRouter Response\n` +
+            `❌ Failure Point: Invalid Response Format\n` +
+            `📍 Location: Extracting message content from API response\n\n` +
+            `Error: Missing choices[0].message.content in API response\n\n` +
+            `💡 This is unusual - the API returned a response without content.\n` +
+            `This may indicate an API issue or unexpected response format.`;
+          markStepError('read-response', detailedError);
           throw new Error('Invalid API response format');
         }
 
@@ -593,8 +669,18 @@ export default function NewsTab() {
         } catch (configError: any) {
           const message =
             configError?.message ?? 'Invalid JSON conversion instructions.';
+          const detailedError =
+            `🚫 Step: Parse Stories JSON\n` +
+            `❌ Failure Point: JSON Conversion Configuration Validation\n` +
+            `📍 Location: Settings > JSON Conversion Instructions\n\n` +
+            `Error: ${message}\n\n` +
+            `💡 Fix: Ensure your JSON conversion instructions:\n` +
+            `• Are valid JSON format\n` +
+            `• Include a "fields" object\n` +
+            `• Define at least one field with pattern\n` +
+            `• Example: { "fields": { "title": { "pattern": "Title: (.+)" } } }`;
           logError(`[${keyword.text}] ❌ CONFIG ERROR:`, message);
-          markStepError('parse-json', message);
+          markStepError('parse-json', detailedError);
           updateLogicStep(keyword.text, 'build-cards', {
             status: 'error',
             detail: 'Skipped: conversion instructions invalid.',
@@ -615,7 +701,7 @@ export default function NewsTab() {
             cost: 0,
             totalStories: 0,
             rejectedStories: 0,
-            error: `JSON Conversion Configuration Error: ${message}`,
+            error: detailedError,
           };
         }
 
@@ -626,9 +712,24 @@ export default function NewsTab() {
           const message =
             conversionError?.message ??
             'Failed to convert text into structured stories.';
+          const detailedError =
+            `🚫 Step: Parse Stories JSON\n` +
+            `❌ Failure Point: Text-to-JSON Conversion\n` +
+            `📍 Location: Converting AI response to structured stories\n\n` +
+            `Error: ${message}\n\n` +
+            `🔍 AI Response Preview:\n${result.substring(0, 300)}${result.length > 300 ? '...' : ''}\n\n` +
+            `💡 This means:\n` +
+            `• The AI returned text that doesn't match your conversion instructions\n` +
+            `• No story segments were detected using your delimiter/pattern\n` +
+            `• The field patterns in your instructions don't match the AI output format\n\n` +
+            `💡 Suggestions:\n` +
+            `• Check browser console (F12) for full AI response\n` +
+            `• Update JSON conversion instructions to match AI output format\n` +
+            `• Try using simpler/clearer search instructions\n` +
+            `• Consider using a different model`;
           logError(`[${keyword.text}] ❌ CONVERSION ERROR:`, message);
           logError(`[${keyword.text}] 📄 FULL RESPONSE:`, result);
-          markStepError('parse-json', message);
+          markStepError('parse-json', detailedError);
           updateLogicStep(keyword.text, 'build-cards', {
             status: 'error',
             detail: 'Skipped: conversion to JSON failed.',
@@ -649,7 +750,7 @@ export default function NewsTab() {
             cost: 0,
             totalStories: 0,
             rejectedStories: 0,
-            error: `JSON Conversion Error: ${message}`,
+            error: detailedError,
           };
         }
 
@@ -668,9 +769,17 @@ export default function NewsTab() {
         } catch (parseError: any) {
           const message =
             parseError?.message ?? 'Failed to parse converted JSON payload.';
+          const detailedError =
+            `🚫 Step: Parse Stories JSON\n` +
+            `❌ Failure Point: JSON Parsing (After Conversion)\n` +
+            `📍 Location: Parsing the converted JSON structure\n\n` +
+            `Error: ${message}\n\n` +
+            `🔍 Converted JSON Preview:\n${convertedJsonPayload.substring(0, 300)}${convertedJsonPayload.length > 300 ? '...' : ''}\n\n` +
+            `💡 This is an internal error - the conversion produced invalid JSON.\n` +
+            `This should not normally happen. Please report this issue.`;
           logError(`[${keyword.text}] ❌ JSON PARSE ERROR:`, message);
           logError(`[${keyword.text}] 🧾 JSON PAYLOAD:`, convertedJsonPayload);
-          markStepError('parse-json', message);
+          markStepError('parse-json', detailedError);
           updateLogicStep(keyword.text, 'build-cards', {
             status: 'error',
             detail: 'Skipped: converted JSON parsing failed.',
@@ -691,7 +800,7 @@ export default function NewsTab() {
             cost: 0,
             totalStories: 0,
             rejectedStories: 0,
-            error: `Converted JSON Parse Error: ${message}`,
+            error: detailedError,
           };
         }
 
@@ -700,14 +809,26 @@ export default function NewsTab() {
           !parsedResult.stories ||
           !Array.isArray(parsedResult.stories)
         ) {
+          const detailedError =
+            `🚫 Step: Parse Stories JSON\n` +
+            `❌ Failure Point: Stories Array Validation\n` +
+            `📍 Location: Validating converted JSON structure\n\n` +
+            `Error: Missing or invalid 'stories' array in converted JSON\n\n` +
+            `🔍 Converted JSON Preview:\n${convertedJsonPayload.substring(0, 300)}${convertedJsonPayload.length > 300 ? '...' : ''}\n\n` +
+            `💡 Expected format:\n{\n  "stories": [\n    { "title": "...", "summary": "...", ... },\n    ...\n  ]\n}\n\n` +
+            `💡 This means:\n` +
+            `• The conversion succeeded but didn't produce a "stories" array\n` +
+            `• Your conversion instructions may need adjustment\n` +
+            `• The AI response format may not match expectations\n\n` +
+            `💡 Suggestions:\n` +
+            `• Check browser console (F12) for full details\n` +
+            `• Verify your JSON conversion instructions produce a stories array\n` +
+            `• Try adjusting story delimiter or pattern settings`;
           logError(
             `[${keyword.text}] Invalid JSON format after conversion. Payload:`,
             convertedJsonPayload.substring(0, 500)
           );
-          markStepError(
-            'parse-json',
-            "Invalid JSON format: missing 'stories' array"
-          );
+          markStepError('parse-json', detailedError);
           updateLogicStep(keyword.text, 'build-cards', {
             status: 'error',
             detail: 'Skipped: converted JSON missing stories array.',
@@ -728,7 +849,7 @@ export default function NewsTab() {
             cost: 0,
             totalStories: 0,
             rejectedStories: 0,
-            error: 'Converted JSON missing stories array.',
+            error: detailedError,
           };
         }
 
@@ -1007,6 +1128,12 @@ export default function NewsTab() {
     setIsGenerating(false);
     setCurrentStage(null);
     abortControllerRef.current = null;
+
+    // Clear global timeout on successful completion
+    if (globalTimeoutRef.current) {
+      clearTimeout(globalTimeoutRef.current);
+      globalTimeoutRef.current = null;
+    }
   };
 
   const toggleExpanded = useCallback((keyword: string) => {
@@ -1112,6 +1239,42 @@ export default function NewsTab() {
               </div>
             </div>
           </div>
+
+          {/* Global Timeout Error Banner */}
+          {globalTimeoutError && (
+            <div className="bg-gradient-to-r from-red-50 to-orange-50 p-6 rounded-xl border-2 border-red-400 shadow-2xl">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="bg-red-500 text-white rounded-full p-3">
+                      <XCircle className="h-8 w-8" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-red-900">
+                        Generation Timeout
+                      </p>
+                      <p className="text-sm mt-1 text-red-700">
+                        System automatically stopped after 30 seconds
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    onClick={() => setGlobalTimeoutError(null)}
+                    variant="outline"
+                    size="sm"
+                    className="border-red-300 text-red-700 hover:bg-red-100"
+                  >
+                    Dismiss
+                  </Button>
+                </div>
+                <div className="bg-white border-2 border-red-200 rounded-lg p-4">
+                  <pre className="text-sm text-red-800 whitespace-pre-wrap font-sans">
+                    {globalTimeoutError}
+                  </pre>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Success Banner */}
           {showSuccessBanner && (
@@ -1339,7 +1502,7 @@ export default function NewsTab() {
                 </Button>
                 {isGenerating && (
                   <Button
-                    onClick={stopAndReset}
+                    onClick={() => stopAndReset()}
                     variant="destructive"
                     size="lg"
                   >
