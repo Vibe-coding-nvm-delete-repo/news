@@ -34,6 +34,7 @@ import {
   Clock,
   GitBranch,
   FileCheck,
+  ScanSearch,
 } from 'lucide-react';
 
 interface Section {
@@ -808,6 +809,277 @@ Tests: [file]`}
                 body for review.
               </p>
             </div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: 'pqa-policy',
+      title: 'Proactive Quality Assurance (PQA) Policy',
+      emoji: '🔍',
+      icon: <ScanSearch className="w-5 h-5" />,
+      content: (
+        <div className="space-y-6">
+          <p className="text-lg">
+            The PQA Policy defines systematic codebase scanning and issue
+            identification procedures for quality assurance agents.
+          </p>
+
+          <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
+            <h4 className="font-semibold text-purple-900 dark:text-purple-100 mb-2 flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5" />
+              Mission: Identification Only (No Fixes)
+            </h4>
+            <p className="text-purple-800 dark:text-purple-200">
+              The agent in PQA mode MUST NOT attempt to fix any discovered
+              issues. Its task is strictly identification and reporting.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+              Scanning Modes
+            </h3>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              {[
+                {
+                  id: 'S-1',
+                  title: 'Code Scrutiny',
+                  focus: 'Technical Debt & Quality',
+                  color: 'blue',
+                  items: [
+                    'Unused variables/imports',
+                    'Excessive function complexity',
+                    'Code duplication',
+                    'Developer friction debt',
+                  ],
+                },
+                {
+                  id: 'S-2',
+                  title: 'Log & Runtime Analysis',
+                  focus: 'Live system errors',
+                  color: 'red',
+                  items: [
+                    'Build warnings/errors',
+                    'Security vulnerabilities',
+                    'External API contract failures',
+                    'Silent type coercion',
+                  ],
+                },
+                {
+                  id: 'S-3',
+                  title: 'Performance & Efficiency',
+                  focus: 'Resource usage',
+                  color: 'orange',
+                  items: [
+                    'Slow tests (≥2s)',
+                    'Large bundle sizes',
+                    'Excessive re-renders',
+                    'N+1 query patterns',
+                  ],
+                },
+                {
+                  id: 'S-4',
+                  title: 'Policy & Standards',
+                  focus: 'Standard violations',
+                  color: 'yellow',
+                  items: [
+                    'Hardcoded strings (i18n)',
+                    'Missing error handling',
+                    'Console statements',
+                    'CODE_STYLE.md violations',
+                  ],
+                },
+                {
+                  id: 'S-5',
+                  title: 'UX & Accessibility',
+                  focus: 'WCAG compliance',
+                  color: 'green',
+                  items: [
+                    'Missing ARIA attributes',
+                    'Poor color contrast',
+                    'Keyboard navigation gaps',
+                    'Confusing error messages',
+                  ],
+                },
+                {
+                  id: 'S-6',
+                  title: 'Environment & Legacy Drift',
+                  focus: 'Operational risk',
+                  color: 'purple',
+                  items: [
+                    'Config drift across environments',
+                    'Duplicate directories',
+                    'Orphaned/legacy code',
+                    'Deprecated dependencies',
+                  ],
+                },
+              ].map((mode, idx) => (
+                <div
+                  key={idx}
+                  className={`border border-${mode.color}-200 dark:border-${mode.color}-800 rounded-lg p-4 bg-${mode.color}-50 dark:bg-${mode.color}-900/20`}
+                >
+                  <h4
+                    className={`font-semibold text-${mode.color}-900 dark:text-${mode.color}-100 mb-2`}
+                  >
+                    {mode.id}: {mode.title}
+                  </h4>
+                  <p
+                    className={`text-sm text-${mode.color}-800 dark:text-${mode.color}-200 mb-3`}
+                  >
+                    <strong>Focus:</strong> {mode.focus}
+                  </p>
+                  <ul
+                    className={`text-sm space-y-1 text-${mode.color}-700 dark:text-${mode.color}-300`}
+                  >
+                    {mode.items.map((item, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="mt-1">•</span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+              Priority Scoring (1-10 Scale)
+            </h3>
+            <p className="text-gray-700 dark:text-gray-300">
+              <strong>Formula:</strong> Priority Score = Severity + Urgency
+            </p>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">
+                  Severity (Impact)
+                </h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="font-medium">5 - Critical</span>
+                    <span className="text-red-600 dark:text-red-400">
+                      Production down
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium">4 - Major</span>
+                    <span className="text-orange-600 dark:text-orange-400">
+                      Core feature broken
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium">3 - Medium</span>
+                    <span className="text-yellow-600 dark:text-yellow-400">
+                      Minor disruption
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium">2 - Minor</span>
+                    <span className="text-blue-600 dark:text-blue-400">
+                      Cosmetic issue
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium">1 - Trivial</span>
+                    <span className="text-gray-600 dark:text-gray-400">
+                      Style nit
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">
+                  Urgency (Time Sensitivity)
+                </h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="font-medium">5 - Immediate</span>
+                    <span className="text-red-600 dark:text-red-400">
+                      Exploitable now
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium">4 - High</span>
+                    <span className="text-orange-600 dark:text-orange-400">
+                      Next release cycle
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium">3 - Medium</span>
+                    <span className="text-yellow-600 dark:text-yellow-400">
+                      Before major refactor
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium">2 - Low</span>
+                    <span className="text-blue-600 dark:text-blue-400">
+                      Opportunistic
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium">1 - Future</span>
+                    <span className="text-gray-600 dark:text-gray-400">
+                      No immediate risk
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">
+              Data Governance
+            </h4>
+            <ul className="space-y-2 text-sm text-blue-800 dark:text-blue-200">
+              <li className="flex items-start gap-2">
+                <CheckCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                <span>
+                  <strong>PII Masking:</strong> All personally identifiable
+                  information must be sanitized (e.g., user-1234,
+                  [REDACTED_EMAIL])
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                <span>
+                  <strong>De-Duplication:</strong> Check for existing issues
+                  before creating new ones
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                <span>
+                  <strong>Security Principle:</strong> Never report sensitive
+                  production data
+                </span>
+              </li>
+            </ul>
+          </div>
+
+          <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+            <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">
+              Complete Policy Documentation
+            </h4>
+            <p className="text-gray-700 dark:text-gray-300 mb-3">
+              For comprehensive details on scanning modes, priority scoring,
+              issue templates, and execution guidelines, refer to the full PQA
+              Policy document.
+            </p>
+            <a
+              href="/docs/agent-policies/PQA_POLICY.md"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <FileText className="w-4 h-4" />
+              View Full PQA Policy
+            </a>
           </div>
         </div>
       ),
