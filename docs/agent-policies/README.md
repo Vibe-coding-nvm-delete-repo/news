@@ -1,7 +1,7 @@
 # Autonomous Agent Documentation Hub
 
-**Last Updated:** 2025-10-16  
-**Version:** 1.0
+**Last Updated:** 2025-10-18  
+**Version:** 1.1
 
 > 🌐 **NEW:** Interactive Policy Viewer now available! Access via the **🤖 Agent Policy** tab in the application for a responsive, searchable, mobile-optimized view of all policies. [Learn more](../POLICY_VIEWER_GUIDE.md)
 
@@ -37,6 +37,7 @@ This directory contains the complete documentation suite for scaling autonomous 
 12. **[File Allowlist/Denylist](./FILE_RULES.md)** - Complete file access rules per mode
 13. **[Acceptance Criteria Catalog](./ACCEPTANCE_CRITERIA.md)** - All quality gates and checks
 14. **[Continuous Improvement Protocol](./CONTINUOUS_IMPROVEMENT.md)** - Technical debt identification process
+15. **[Proactive Quality Assurance (PQA) Policy](./PQA_POLICY.md)** - Systematic codebase scanning and issue identification guidelines
 
 ---
 
@@ -69,6 +70,10 @@ This documentation suite enables:
 ### For Autonomous Agents
 
 - [Mode Reference](./MODE_REFERENCE.md) → [Workflow Guide](./WORKFLOW_GUIDE.md) → [Verification Checklist](./VERIFICATION_CHECKLIST.md)
+
+### For Quality Assurance Agents
+
+- [PQA Policy](./PQA_POLICY.md) → [Templates](./TEMPLATES.md) → [Metrics & KPIs](./METRICS.md)
 
 ---
 
