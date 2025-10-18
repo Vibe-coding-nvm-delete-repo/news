@@ -21,13 +21,11 @@ npm run dev
 | `npm run build`        | Build production bundle                           |
 | `npm run start`        | Start production server                           |
 | `npm run lint`         | Run ESLint                                        |
-| `npm run lint:fix`     | Fix ESLint errors automatically                   |
-| `npm run format`       | Format code with Prettier                         |
-| `npm run format:check` | Check code formatting                             |
+| `npm run format:check` | Check code formatting with Prettier               |
 | `npm run type-check`   | Run TypeScript compiler checks                    |
-| `npm test`             | Run tests in watch mode                           |
+| `npm test`             | Run tests (all tests run sequentially)            |
 | `npm run test:ci`      | Run tests with coverage for CI                    |
-| `npm run validate`     | Run all checks (type, lint, format, test)         |
+| `npm run prepare`      | Install Husky git hooks (runs automatically)      |
 
 ## Code Quality Tools
 
@@ -61,7 +59,8 @@ npm run dev
 
 - Configuration: `jest.config.js`
 - Setup: `jest.setup.js`
-- Coverage thresholds: 70% (branches, functions, lines, statements)
+- All tests run sequentially with `--runInBand` flag
+- Tests include component, integration, and unit tests
 
 ### Writing Tests
 
