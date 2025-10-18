@@ -32,7 +32,7 @@ The 30-second timeout is designed to catch scenarios where:
 - Models are taking too long to respond
 - The system is stuck in an error state
 
-Individual keyword searches already have their own 20-second timeouts, so the 30-second global timeout serves as a safety net.
+Each keyword search has its own 20-second timeout (per individual keyword request), so the 30-second global timeout serves as a safety net for the entire generation process across all keywords.
 
 ### Timeout Error Message
 
@@ -319,7 +319,7 @@ For developers interested in the implementation details:
 ### Files Modified
 
 - `components/NewsTab.tsx` - Main report generation logic with timeout and error handling
-- `lib/textConversion.ts` - JSON conversion validation (already had fields validation)
+- Note: `lib/textConversion.ts` already contains fields validation (not modified in this PR)
 
 ### Key Features
 
@@ -330,9 +330,9 @@ For developers interested in the implementation details:
 
 ### Testing
 
-- 247 tests covering all functionality
+- All 247 tests pass (238 original + 9 new)
 - 9 new tests specifically for timeout and error handling
-- All tests pass with no regressions
+- No regressions in existing functionality
 
 ## Related Documentation
 
