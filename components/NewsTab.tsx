@@ -181,7 +181,7 @@ export default function NewsTab() {
   // Calculate estimated cost whenever keywords or model changes
   useEffect(() => {
     calculateEstimatedCost();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- calculateEstimatedCost is not memoized; including it would cause infinite re-renders
   }, [settings.keywords, settings.selectedModel, models]);
 
   // Track elapsed time for search process
