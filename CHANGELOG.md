@@ -1,6 +1,16 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+### 2025-10-18
+
+- feature: Added global 30-second timeout mechanism for report generation with automatic reset
+- enhancement: Comprehensive error messages showing exact failure points with actionable suggestions
+- enhancement: Enhanced all error handling steps (HTTP, API, JSON conversion, validation) with detailed context
+- feature: Global timeout error banner with dismissible UI
+- documentation: Added comprehensive Report Generation Error Handling Guide
+- testing: Added 9 new tests for timeout and error handling functionality
+- All 247 tests passing, type checks and linting pass
+
+### 2025-10-16
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
