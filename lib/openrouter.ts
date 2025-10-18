@@ -33,6 +33,7 @@ const modelSupportsReasoning = (modelId?: string | null): boolean => {
  * - Removes undefined, null, empty, or invalid values so they are not serialized
  * - Converts response_format string into the OpenRouter object syntax
  * - Suppresses reasoning-only parameters for models that do not support them
+ * - Excludes response_format for models with :online suffix (web search conflicts with JSON mode)
  */
 export function normalizeModelParameters(
   parameters?: ModelParameters | null,
@@ -43,6 +44,7 @@ export function normalizeModelParameters(
   }
 
   const normalized: Record<string, unknown> = {};
+  const isOnlineModel = modelId?.includes(':online') ?? false;
 
   if (isFiniteNumber(parameters.temperature)) {
     normalized.temperature = parameters.temperature;
@@ -52,7 +54,8 @@ export function normalizeModelParameters(
     normalized.max_tokens = Math.floor(parameters.max_tokens);
   }
 
-  if (parameters.response_format === 'json_object') {
+  // Exclude response_format for :online models as web search conflicts with JSON mode
+  if (parameters.response_format === 'json_object' && !isOnlineModel) {
     normalized.response_format = { type: 'json_object' };
   }
 

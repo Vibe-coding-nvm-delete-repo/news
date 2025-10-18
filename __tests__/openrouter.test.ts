@@ -76,4 +76,45 @@ describe('normalizeModelParameters', () => {
       stop: ['END', 'DONE'],
     });
   });
+
+  it('excludes response_format for :online models to avoid web search conflict', () => {
+    const params: ModelParameters = {
+      response_format: 'json_object',
+      temperature: 0.5,
+    };
+
+    // With :online suffix, response_format should be excluded
+    expect(normalizeModelParameters(params, 'openai/gpt-4o:online')).toEqual({
+      temperature: 0.5,
+    });
+
+    expect(
+      normalizeModelParameters(params, 'openai/gpt-5-mini:online')
+    ).toEqual({
+      temperature: 0.5,
+    });
+
+    // Without :online suffix, response_format should be included
+    expect(normalizeModelParameters(params, 'openai/gpt-4o')).toEqual({
+      response_format: { type: 'json_object' },
+      temperature: 0.5,
+    });
+  });
+
+  it('excludes response_format for :online models with other parameters', () => {
+    const params: ModelParameters = {
+      response_format: 'json_object',
+      temperature: 0.7,
+      max_tokens: 2000,
+      top_p: 0.9,
+    };
+
+    expect(
+      normalizeModelParameters(params, 'anthropic/claude-3.5-sonnet:online')
+    ).toEqual({
+      temperature: 0.7,
+      max_tokens: 2000,
+      top_p: 0.9,
+    });
+  });
 });
