@@ -96,6 +96,7 @@ Comprehensive documentation is available in the `docs/` folder:
 ### For Users
 
 - **[README.md](README.md)** - This file - Quick start and user guide
+- **[Report Generation Error Handling Guide](REPORT_GENERATION_ERROR_HANDLING.md)** - Comprehensive guide to understanding and resolving report generation errors
 - **[Policy Viewer Guide](docs/POLICY_VIEWER_GUIDE.md)** - Interactive policy documentation guide
 
 ### For Developers
