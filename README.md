@@ -129,6 +129,10 @@ Comprehensive documentation is available in the `docs/` folder:
 
 - **[DEPLOYMENT.md](DEPLOYMENT.md)** - Deployment instructions and configuration
 
+### Historical Documentation
+
+The repository includes several implementation summaries and research documents (e.g., `PARALLELIZATION_IMPLEMENTATION_SUMMARY.md`, `MODEL_SETTINGS_OPTIONS.md`, `PQA_REPORT_2025-10-16.md`) that document the development history and design decisions. These are preserved for reference but are not required reading for end users.
+
 All code includes JSDoc comments for inline documentation. TypeScript types provide additional context and IDE support.
 
 ## Project Structure
