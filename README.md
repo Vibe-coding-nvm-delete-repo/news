@@ -109,6 +109,7 @@ Comprehensive documentation is available in the `docs/` folder:
 ### For Autonomous Agents
 
 - **[Agent Policies Hub](docs/agent-policies/README.md)** - Complete documentation suite for agent governance
+- **[PQA Policy](docs/agent-policies/PQA_POLICY.md)** - Proactive Quality Assurance policy for systematic codebase scanning
 - **Interactive Policy Viewer** - Access via the 🤖 Agent Policy tab in the application
 
 ### For Deployment
